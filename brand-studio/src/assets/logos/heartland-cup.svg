@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 228" role="img" aria-label="Heartland Invitational Soccer Cup">
+  <path d="M100 6 186 36v74c0 56-38 96-86 112C52 206 14 166 14 110V36Z" fill="#0E1B2C" stroke="#19C6B8" stroke-width="8"/>
+  <path d="M100 26 168 50v60c0 44-29 76-68 90-39-14-68-46-68-90V50Z" fill="none" stroke="#19C6B8" stroke-opacity=".35" stroke-width="2"/>
+  <circle cx="100" cy="92" r="34" fill="#FFFFFF"/>
+  <path d="m100 72 19 14-7 22H88l-7-22Z" fill="#0E1B2C"/>
+  <path d="m100 72v-14M119 86l13-5M112 108l9 11M88 108l-9 11M81 86l-13-5" stroke="#0E1B2C" stroke-width="4" stroke-linecap="round"/>
+  <text x="100" y="152" text-anchor="middle" font-family="'Arial Black','Helvetica Neue',Arial,sans-serif" font-weight="900" font-size="17" letter-spacing="1" fill="#FFFFFF">HEARTLAND</text>
+  <text x="100" y="178" text-anchor="middle" font-family="'Arial Black','Helvetica Neue',Arial,sans-serif" font-weight="900" font-size="13" letter-spacing="3" fill="#19C6B8">CUP · 2027</text>
+</svg>

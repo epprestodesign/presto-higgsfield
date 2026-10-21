@@ -1,4 +1,5 @@
 import { setup } from '@storybook/vue3-vite'
+import { createPinia } from 'pinia'
 import { Quasar, Notify, Dialog, Loading } from 'quasar'
 import * as QComponents from 'quasar'
 
@@ -12,6 +13,9 @@ import 'quasar/src/css/index.sass'
 
 // Our global styles + component-level overrides.
 import '../src/css/app.scss'
+// Brand Studio chrome tokens (--bs-*). Scoped to .bs-* classes / --bs-* vars,
+// so the Presto stories below render exactly as they do in presto-2026.
+import '../brand-studio/src/styles/studio.scss'
 
 // Register Quasar as a Vue plugin for every story, then globally
 // register every Q* component so any story template can use <q-*>
@@ -21,6 +25,9 @@ setup((app) => {
   // patterns used by the design system: Snackbar (Notify), programmatic
   // Dialog, and Backdrop/Loading overlays.
   app.use(Quasar, { plugins: { Notify, Dialog, Loading } })
+  // Brand Studio state. Storybook builds a fresh Vue app per story render, so
+  // every story starts from a clean store (stories seed it via decorators).
+  app.use(createPinia())
 
   for (const [name, component] of Object.entries(QComponents)) {
     if (
@@ -82,6 +89,21 @@ const preview = {
     options: {
       storySort: {
         order: [
+          // Presto Brand Studio — the product this repo builds — sits on top;
+          // the Presto design system it reuses follows unchanged.
+          'Brand Studio', [
+            'Overview', 'Architecture & Audit',
+            'Foundations', ['Studio Tokens', 'Brand Theme Engine', 'Imagery & Logos'],
+            'Marketing Site', ['Landing Page', 'Sections'],
+            'Onboarding', ['Event Intake', 'Brand Discovery'],
+            'Creative Concepts', ['Brand Hero', 'Directions', 'Concept Gallery', 'Compare'],
+            'Studio Editor', ['Editor', 'Panels', 'Toolbar', 'Device Preview'],
+            'Branded Preview', ['Landing', 'Browse Hotels', 'Hotel Details', 'Checkout & Confirmation', 'Preview Host'],
+            'Advertising', ['Ad Creative', 'Browse Layouts', 'Details Layouts', 'Sponsor Editor'],
+            'Accounts', ['Sign Up', 'Dashboard'],
+            'Publishing', ['Publish Flow', 'Checklist', 'Published Demo'],
+            'Flows',
+          ],
           'Getting Started', ['Introduction', 'Architecture & Conventions', 'User Journey & Build Spec', 'Story Template'],
           'Widgets & Embeds', ['R&D Overview'],
           'Foundations', [

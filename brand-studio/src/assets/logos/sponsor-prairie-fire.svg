@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Prairie Fire BBQ">
+  <circle cx="60" cy="60" r="56" fill="#7A1F12"/>
+  <path d="M60 22c10 16 22 22 22 40a22 22 0 0 1-44 0c0-10 6-16 10-20 0 8 4 12 8 12-4-10 0-22 4-32Z" fill="#F59E0B"/>
+  <text x="60" y="104" text-anchor="middle" font-family="'Arial Black',Arial,sans-serif" font-size="11" letter-spacing="1.5" fill="#FFF7ED">PRAIRIE FIRE</text>
+</svg>
