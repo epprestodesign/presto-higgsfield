@@ -1,0 +1,271 @@
+// =============================================================
+// Global styles + COMPONENT-LEVEL OVERRIDES.
+// This is where you reshape individual Quasar components beyond
+// what the SASS variables expose. Loaded after Quasar's CSS.
+// =============================================================
+
+// @use rules must come first in Sass.
+@use './tokens.scss';
+@use './typography.scss';
+// Atlassian-derived color system (auto-generated): primitives → semantic → utilities.
+@use './ds-palette.scss';        // Tier 1 — raw hue ramps (--ds-palette-*)
+@use './ds-color-tokens.scss';   // Tier 2 — semantic roles (--ds-color-*)
+@use './ds-utilities.scss';      // Tier 3 — bg-ds-*/text-ds-*/border-ds-* helpers
+
+// Custom font — PT Sans (matches EventPipe/Presto production). Ships 400 & 700.
+@import url('https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+body {
+  font-family: 'PT Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: var(--ds-color-text);
+  background-color: var(--ds-color-surface-canvas);
+}
+
+// --- Example component overrides -----------------------------
+// Buttons: crisp 4px corners (matches ref), no shouting caps, bold PT Sans labels.
+.q-btn {
+  border-radius: var(--ds-radius-button);
+  text-transform: none;
+  font-weight: var(--ds-font-weight-bold);
+  letter-spacing: 0;
+
+  &.q-btn--rounded {
+    border-radius: var(--ds-radius-pill);
+  }
+}
+
+// --- Flat-by-default: no elevation on buttons / button groups -
+// Quasar renders button elevation on the `:before` pseudo-element, and
+// bumps it on hover/active. Flatten it in every state so the unelevated
+// look is the default.
+.q-btn--standard:before,
+.q-btn--push:before,
+.q-btn--standard:hover:before,
+.q-btn--standard:focus:before,
+.q-btn--standard:active:before,
+.q-btn--standard.q-btn--active:before,
+.q-btn--push:hover:before,
+.q-btn--push:active:before,
+.q-btn-group--standard:before,
+.q-btn-group--push:before,
+.q-btn-group--standard,
+.q-btn-group--push,
+.q-btn-group {
+  box-shadow: none !important;
+}
+
+// Button group: a light divider between buttons to separate them. Uses the
+// button's own text color at 35% so it reads as a light line on both the dark
+// (Zinc) filled group and the light outline group.
+.q-btn-group > .q-btn-item:not(:first-child) {
+  border-left: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+}
+
+// Inputs: no shadow. The "standout" variant is shadow-based — flatten it
+// so fields stay on the same elevation as the rest of the form.
+.q-field--standout .q-field__control,
+.q-field--standout.q-field--highlighted .q-field__control {
+  box-shadow: none !important;
+}
+// Standout focus: Quasar hardcodes a #000 background (unreadable with our
+// near-black brand). Use a subtle light grey + dark text instead.
+.q-field--standout.q-field--highlighted .q-field__control {
+  background: var(--ds-palette-zinc-100);
+}
+.q-field--standout.q-field--highlighted .q-field__native,
+.q-field--standout.q-field--highlighted .q-field__input,
+.q-field--standout.q-field--highlighted .q-field__prefix,
+.q-field--standout.q-field--highlighted .q-field__suffix,
+.q-field--standout.q-field--highlighted .q-field__prepend,
+.q-field--standout.q-field--highlighted .q-field__append {
+  color: var(--ds-color-text);
+}
+
+// Cards: custom radius + elevation token.
+.q-card {
+  border-radius: var(--ds-radius-lg);
+  box-shadow: var(--ds-shadow-2);
+}
+
+// Inputs (outlined): consistent radius with the rest of the system.
+.q-field--outlined .q-field__control {
+  border-radius: var(--ds-radius-md);
+}
+
+// Field affix icons: one consistent size across every field. Quasar defaults
+// these to 24px, which makes heavier glyphs (e.g. the password `visibility`
+// eye) read larger than lighter ones (calendar/clock). 20px normalizes them.
+// Scoped to direct affix children so icons inside affix buttons keep their size.
+.q-field__prepend > .q-icon,
+.q-field__append > .q-icon {
+  font-size: 20px;
+}
+
+// Checkbox: 4px inner square so QCheckbox matches the DsCheckboxTree boxes
+// (both 4px radius, navy checked fill, white check) — one unified checkbox look.
+.q-checkbox__bg {
+  border-radius: var(--ds-radius-sm);
+}
+
+// Rating: no drop shadow on the icons, and default to the brand color
+// (Quasar ships a text-shadow + amber grade color).
+.q-rating__icon {
+  text-shadow: none;
+}
+.q-rating {
+  color: var(--q-primary);
+}
+
+// Alerts (QBanner): smaller, modern leading icon. Quasar defaults the
+// avatar-slot icon to 40px; bring it to 24px.
+.q-banner__avatar > .q-icon {
+  font-size: 24px;
+}
+// Vertically center the leading icon with the message (Quasar top-aligns
+// the avatar column by default).
+.q-banner__avatar {
+  align-self: center;
+}
+// 8px gap between the message and the action buttons when they stack below
+// (e.g. Banner with "Dismiss" / "Learn more").
+.q-banner__actions.col-all {
+  padding-top: 8px;
+}
+.q-banner__actions.col-all .q-btn-item {
+  margin-top: 0;
+}
+
+// Chips: medium (500) label + fixed 20px icons (leading, trailing, remove).
+// Quasar defaults chip text to 400 and icons to 1.5em (1.25em dense); we
+// lock the weight to medium and icons to 20px for consistency.
+.q-chip {
+  font-weight: var(--ds-font-weight-medium); // 500
+  // ~2px more padding all around: taller (2px top+bottom via height) and
+  // wider (2px each side). Quasar's fixed height caps vertical padding,
+  // so we grow the height too.
+  height: calc(2em + 4px);
+  padding-left: 0.9em;                 // 2px tighter on the left so it hugs content
+  padding-right: calc(0.9em + 2px);
+}
+.q-chip--dense {
+  height: calc(1.5em + 4px);
+}
+.q-chip__icon {
+  font-size: 20px;
+}
+// +2px gap between chip text and its icons (leading, trailing, remove).
+.q-chip__icon--left {
+  margin-right: calc(0.2em + 2px);
+}
+.q-chip__icon--right {
+  margin-left: calc(0.2em + 2px);
+}
+.q-chip__icon--remove {
+  margin-left: calc(0.1em + 2px);
+}
+
+/* ------------------------------------------------------------------ *
+ * Design-system Toast — Quasar Notify, styled to DS tokens.
+ * Apply via: $q.notify({ classes: 'ds-toast ds-toast--success', ... })
+ * Variants map to Quasar's semantic types but use our palette + radius.
+ * ------------------------------------------------------------------ */
+.ds-toast {
+  /* NB: do NOT set position here — Quasar's leave transition sets the
+     notification to position:absolute, and an override (same specificity,
+     loaded later) breaks the exit animation (it jumps sideways). */
+  border-radius: var(--ds-radius-md);
+  padding: 12px 16px;
+  min-height: 0;
+  font-weight: 600;
+  border: 1px solid var(--ds-color-border);
+  box-shadow: var(--ds-shadow-3, 0 8px 24px rgba(0, 0, 0, 0.18));
+}
+/* Progress bar flush along the bottom edge of the box. It lives inside
+   `.q-notification__wrapper`, which sits inside the `.ds-toast` padding (12/16) —
+   so offset by the negative padding to reach the box edges, and round the bottom
+   corners to tuck into the rounded box (no overflow clip, so the count badge
+   keeps its default outside-the-corner placement). Quasar defaults it to
+   z-index:-1 behind an opaque card — raise it above the bg. */
+.ds-toast .q-notification__progress {
+  top: auto;
+  bottom: -12px;
+  left: -16px;
+  right: -16px;
+  height: 3px;
+  z-index: 1;
+  background: currentColor;
+  opacity: 0.3;
+  border-radius: 0 0 var(--ds-radius-md) var(--ds-radius-md);
+}
+/* Force the accent color onto Quasar's message/caption/icon (Quasar defaults
+   notification text to white). */
+.ds-toast .q-notification__message,
+.ds-toast .q-notification__caption,
+.ds-toast .q-notification__icon,
+.ds-toast .q-icon { color: inherit !important; }
+.ds-toast .q-notification__message { font-weight: 600; font-size: 0.9375rem; }
+.ds-toast .q-notification__caption { opacity: 0.85; }
+.ds-toast--default { background: var(--ds-color-surface) !important; border-color: var(--ds-color-border); color: var(--ds-color-text) !important; }
+.ds-toast--success { background: var(--ds-color-background-success) !important; border-color: var(--ds-color-background-success-bold); color: var(--ds-color-text-success) !important; }
+.ds-toast--info    { background: var(--ds-color-background-info) !important; border-color: var(--ds-color-background-info-bold); color: var(--ds-color-text-info) !important; }
+.ds-toast--warning { background: var(--ds-color-background-warning) !important; border-color: var(--ds-color-background-warning-bold); color: var(--ds-color-text-warning) !important; }
+.ds-toast--error   { background: var(--ds-color-background-danger) !important; border-color: var(--ds-color-background-danger-bold); color: var(--ds-color-text-danger) !important; }
+
+/* ------------------------------------------------------------------ *
+ * DS Button color treatments — apply on a QBtn (`unelevated no-caps`); they set
+ * color only, so the button keeps its normal size:
+ *   <q-btn unelevated no-caps class="ds-btn--secondary" label="Secondary" />
+ *   <q-btn unelevated no-caps class="ds-btn--danger"    label="Delete" />
+ * ------------------------------------------------------------------ */
+.ds-btn--primary { background: var(--ds-color-background-brand-bold) !important; color: #fff !important; }
+.ds-btn--primary:hover { background: var(--ds-palette-navy-800) !important; }
+.ds-btn--secondary { background: var(--ds-palette-slate-100) !important; color: var(--ds-color-text) !important; }
+.ds-btn--secondary:hover { background: var(--ds-palette-slate-200) !important; }
+.ds-btn--danger { background: var(--ds-color-background-danger-bold) !important; color: #fff !important; }
+.ds-btn--danger:hover { filter: brightness(1.08); }
+
+/* Banner (Atlassian Flag-style) action links — underline on hover. */
+.ds-banner__link { text-decoration: none; }
+.ds-banner__link:hover { text-decoration: underline; }
+
+/* ------------------------------------------------------------------ *
+ * DS Dialog — spacious, rounded card with a primary/secondary action pair.
+ * Use as the QCard class inside a QDialog; buttons are normal-sized.
+ * ------------------------------------------------------------------ */
+.ds-dialog {
+  width: 92vw;
+  max-width: 460px;
+  padding: 32px;
+  border-radius: var(--ds-radius-md);
+  box-shadow: var(--ds-shadow-4, 0 24px 60px rgba(0, 0, 0, 0.25));
+}
+.ds-dialog__title { margin: 0 0 12px; font-size: 1.5rem; font-weight: 700; line-height: 1.2; color: var(--ds-color-text); }
+.ds-dialog__body { margin: 0 0 24px; font-size: 1rem; line-height: 1.5; color: var(--ds-color-text-subtle); }
+.ds-dialog__actions { display: flex; gap: 12px; }
+// Match the Button component's crisp corners (was pill) so dialog actions read
+// as the same component. Weight/height stay button-like.
+.ds-dialog__btn { flex: 1; min-height: 46px; border-radius: var(--ds-radius-button); font-weight: 700; font-size: 0.9375rem; }
+@media (max-width: 440px) { .ds-dialog { padding: 24px; } }
+
+/* ── Date Picker (QDate) — match the custom DateRangeCalendar ─────────────────
+   $primary is Navy 900, so selected endpoints are already navy circles. Recolor
+   the range band to the softer light-navy (navy-100) that flows under the
+   circles, and give "today" a navy ring — consistent with DateRangeCalendar. */
+.q-date__range:before,
+.q-date__range-from:before,
+.q-date__range-to:before {
+  background-color: var(--ds-palette-navy-100);
+  opacity: 1;
+}
+.q-date__today {
+  box-shadow: inset 0 0 0 2px var(--ds-palette-navy-300);
+}
+/* Selected day → bold on the navy circle. */
+.q-date__calendar-item .bg-primary { font-weight: 700; }
+/* Day hover → light-navy tint (skip the selected day). */
+.q-date__calendar-item button:not(.bg-primary):hover { background: var(--ds-palette-navy-50); }
+/* Weekday header → subtle, medium weight. */
+.q-date__calendar-weekdays > div { color: var(--ds-color-text-subtle); font-weight: 600; }
+/* Out-of-month days → muted. */
+.q-date__calendar-item--out { opacity: 0.5; }

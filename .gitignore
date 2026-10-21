@@ -1,0 +1,15 @@
+node_modules
+dist
+storybook-static
+*.log
+.DS_Store
+.vite
+coverage
+
+# Secrets — never commit API keys (Unsplash, Google Maps, Higgsfield, Supabase service role)
+.env
+.env.local
+.env.*.local
+
+# Design reference screenshots — kept local only, not tracked
+references/

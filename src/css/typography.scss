@@ -1,0 +1,54 @@
+// =============================================================
+// Typography layer (MUI "Typography" equivalent).
+// Quasar has no Typography component — it ships utility CLASSES
+// (text-h1..text-h6, text-subtitle1/2, text-body1/2, text-caption,
+// text-overline). We extend that with a few design-system tokens
+// so type stays consistent across prototypes.
+// =============================================================
+
+:root {
+  --ds-font-family: 'PT Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --ds-text-display: 3.5rem;
+  --ds-text-display-weight: 700;
+  --ds-text-lead: 1.25rem;
+}
+
+// A hero/display size beyond Quasar's h1.
+.text-display {
+  font-family: var(--ds-font-family);
+  font-size: var(--ds-text-display);
+  font-weight: var(--ds-text-display-weight);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+// Lead paragraph for intros.
+.text-lead {
+  font-size: var(--ds-text-lead);
+  line-height: 1.6;
+  color: var(--q-dark, #1c1b1f);
+  opacity: 0.8;
+}
+
+// Make Quasar's heading classes use the brand font + tighter tracking.
+// PT Sans is a 400/700 family, so headings go bold (matches Presto production
+// where section titles read as strong navy). Quasar's light default weights
+// (300–500) would fall back to 400 and look too thin otherwise.
+.text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6 {
+  font-family: var(--ds-font-family);
+  font-weight: var(--ds-font-weight-bold); // 700
+  letter-spacing: -0.01em;
+}
+
+// Subtitle / body / caption / overline → medium (500).
+// Quasar defaults these to 400 (subtitle2 is already 500); we make the
+// whole secondary type scale medium for a slightly stronger, on-brand read.
+.text-subtitle1,
+.text-subtitle2,
+.text-body1,
+.text-body2,
+.text-caption,
+.text-overline {
+  font-weight: var(--ds-font-weight-medium); // 500
+  letter-spacing: -0.01em;                    // tighter than Quasar defaults
+}

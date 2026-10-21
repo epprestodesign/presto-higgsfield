@@ -1,0 +1,53 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Team Name Qualifiers/Overview" />
+
+# Team Name Qualifiers
+
+A feature workstream exploring **where team names (and their qualifiers —
+age division · gender) live across the Presto booking experience**. The rigid
+Presto flow stays exactly as shipped; this area is a set of **forked copies** of
+the touchpoints that involve a team name, so the team-selection UX can be
+iterated on in isolation without risk to the live components.
+
+Everything here is scoped to one idea: finding the right elements and places to
+**capture, carry, and confirm the team a booker is travelling with**.
+
+## Touchpoints — by flow
+
+Organized the same way as the rest of the system: **Book Reservation** (a single
+team) vs **Group Block** (multiple teams).
+
+### Book Reservation
+| Folder | What it covers |
+| --- | --- |
+| **Booking Widget** | Single-team select (Registered Team Name), filter by name / age / gender. |
+| **Add a Team** | Register an unlisted team (duplicate-name error state). |
+| **Team Name Select** | The searchable **Team name** field on checkout ("My team isn't listed" → add with Age/Gender; "I'm not with a team"). |
+| **Checkout Contact & Qualifiers** | Guest type + Team name + guests (single + multiple reservations). |
+| **Order Rail Summary** | The cart / checkout **Team** summary card. |
+
+### Group Block
+| Folder | What it covers |
+| --- | --- |
+| **Booking Widget** | Multi-team select (Registered Team(s)) with My Teams / All-of-club toggles. |
+| **Add a Team** | Register several unlisted teams at once. |
+| **Contact & Teams** | The group-hold teams block (count → select & add; unlisted teams capture Age/Gender). |
+| **Group Block Details** | The order-rail "N registered teams · est. rooms needed" card. |
+
+> **Forked, not shared.** Components here live under `src/components/teamname/`
+> and are prefixed (`Team…`) so edits never touch the shipped Booking Widget,
+> cart, or checkout.
+
+<div style={{ background: '#01113E', color: '#fff', borderRadius: '12px', padding: '20px 24px', margin: '24px 0', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+  <div>
+    <div style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff' }}>▶ Team Name Qualifiers</div>
+    <div style={{ marginTop: '4px', maxWidth: '62ch' }}>
+      <span style={{ color: '#fff' }}>A focused, clickable prototype highlighting <strong style={{ color: '#fff' }}>every place a team name is captured, carried, and confirmed</strong> — booking widget, add-a-team, group block, and checkout qualifiers — built from these forked components.</span>
+    </div>
+  </div>
+  <a href="https://epprestodesign.github.io/presto-2026/prototype-team-qualifiers/" target="_blank" rel="noopener"
+     style={{ background: '#fff', color: '#01113E', fontWeight: 700, padding: '12px 20px', borderRadius: '8px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+    Launch prototype ↗
+  </a>
+</div>

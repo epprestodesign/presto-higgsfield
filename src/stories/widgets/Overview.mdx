@@ -1,0 +1,178 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import landing from './assets/landing.jpg'
+import conceptA from './assets/concept-a.jpg'
+import conceptB from './assets/concept-b.jpg'
+import conceptC from './assets/concept-c.jpg'
+import conceptD from './assets/concept-d.jpg'
+import conceptE from './assets/concept-e.jpg'
+import conceptF from './assets/concept-f.jpg'
+import confirmationImg from './assets/confirmation.jpg'
+
+<Meta title="Widgets & Embeds/R&D Overview" />
+
+export const BASE =
+  typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
+    ? 'http://localhost:6201/'
+    : 'https://epprestodesign.github.io/presto-2026/spartanRace-ticketsocket-ep-demo-v1/'
+
+export const INLINE_LINKS = [['checkout/addons', 'Add-ons step'], ['checkout/addons/hotels', 'Hotel finder']]
+export const SEPARATE_LINKS = [['checkout/order-confirmed', 'Ticket confirmation'], ['hotels', 'Hotel booking page']]
+
+export const CONCEPTS = [
+  { id: 'a', img: conceptA, title: 'A · Inline', skin: 'Presto colors', acc: '#01113E',
+    text: 'Turning on “Hotel room” expands the hotel finder right inside the checkout step. The order total updates as soon as a hotel and payment option are picked.' },
+  { id: 'b', img: conceptB, title: 'B · Modal', skin: 'Presto colors', acc: '#01113E',
+    text: 'The toggle opens the finder in a 900px modal (full-screen on phones). Picking a hotel moves to a review step: how to pay + confirm beside the stay summary.' },
+  { id: 'c', img: conceptC, title: 'C · Inline', skin: 'Spartan colors', acc: '#BE2D27',
+    text: 'Concept A’s UX with the widget re-pointed at Spartan’s red/black palette, so the add-on reads as part of the host checkout.' },
+  { id: 'd', img: conceptD, title: 'D · Modal', skin: 'Spartan colors', acc: '#BE2D27',
+    text: 'Concept B’s UX in Spartan’s palette. Same components, layout and type as B; only the brand colors change.' },
+  { id: 'e', img: conceptE, title: 'E · Separate hotel page', skin: 'Presto colors', acc: '#01113E', main: 'checkout/order-confirmed', links: SEPARATE_LINKS,
+    text: 'No hotel in the checkout: buy tickets (plus parking and photos), then the ticket confirmation features a “Book your hotel” card that opens a separate hotel page with the full Presto journey (browse, details, checkout, confirmation), paid on its own.' },
+  { id: 'f', img: conceptF, title: 'F · Separate hotel page', skin: 'Spartan colors', acc: '#BE2D27', main: 'hotels', links: SEPARATE_LINKS,
+    text: 'Concept E’s flow in Spartan’s palette: the same ticket confirmation hand-off and separate hotel booking page, wearing the host’s red/black.' },
+]
+
+# Widgets & Embeds — R&D
+
+<p style={{ margin: '-4px 0 0', fontSize: '13px', fontWeight: 600, color: '#64748b' }}>Last updated Oct 6, 2026 · see the Changelog at the bottom of this page</p>
+
+Eventpipe hotel booking today lives on its own site. This track explores the
+other direction: **putting Eventpipe inside a partner’s checkout** as an embedded
+widget, so a racer can add a hotel (plus parking and photos) to the same order
+they’re already completing, without leaving the event’s ticketing flow.
+
+The first case study is the **2026 San Antonio Spartan Trifecta Weekend**, sold on
+**TicketSocket**. We rebuilt Spartan’s event page and checkout pixel-for-pixel as
+the host, then embedded a Presto-built widget into a new step of that checkout.
+Six concepts compare **where the hotel booking happens** (inline in the checkout,
+in a modal over it, or on a separate page after the ticket purchase) and **whose
+colors it wears** (Presto vs. Spartan).
+
+<a href={BASE} target="_blank" rel="noopener" style={{ display: 'flex', alignItems: 'stretch', maxWidth: '760px', margin: '24px 0', borderRadius: '12px', overflow: 'hidden', background: '#0e0e10', textDecoration: 'none', boxShadow: '0 6px 18px rgba(1,17,62,0.10)' }}>
+  <img src={landing} alt="Prototype hub: six concepts grouped by Presto colors and Spartan colors" style={{ display: 'block', width: '300px', height: '200px', objectFit: 'cover', objectPosition: 'top left', flex: 'none' }} />
+  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px', padding: '20px 24px' }}>
+    <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ff5a5f' }}>Prototype hub</span>
+    <span style={{ color: '#fff', fontSize: '18px', fontWeight: 700, lineHeight: 1.3 }}>Spartan × Eventpipe hotel add-ons</span>
+    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '14px', lineHeight: 1.45 }}>All six concepts, with deep links to every screen.</span>
+    <span style={{ alignSelf: 'flex-start', marginTop: '4px', background: '#fff', color: '#0e0e10', fontWeight: 700, fontSize: '14px', padding: '9px 14px', borderRadius: '8px' }}>Open prototype ↗</span>
+  </div>
+</a>
+
+## What we were trying to learn
+
+1. **Where does a hotel belong in a ticket checkout?** We added a dedicated
+   **Add-ons** step (*Details › Add-ons › Extras › Payment*) with a “Make a
+   weekend of it” card: parking pass, photo package and hotel room as toggles.
+2. **Inline or modal?** Does browsing 20 hotels work better expanded in the
+   checkout column, or in a focused modal that hands a confirmed stay back?
+3. **Native or host-matched?** Should the widget look like Eventpipe (Presto
+   navy) or disappear into the host (Spartan red/black)?
+4. **One order, two payees.** Can the host total carry the hotel’s *due today*
+   amount while showing the *due at check-in* balance clearly?
+5. **Can the real library ship inside an embed?** Every hotel surface uses the
+   actual Presto components, not lookalikes, inside someone else’s page.
+6. **During checkout or after it?** Does a hotel convert better inside the ticket
+   checkout (A–D), or as its own booking, offered from the ticket confirmation (E/F)?
+
+## The six concepts
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '20px', margin: '20px 0 8px' }}>
+  {CONCEPTS.map((c) => (
+    <div key={c.id} style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', background: '#fff' }}>
+      <a href={`${BASE}#/${c.id}/${c.main || 'checkout/addons/hotels'}`} target="_blank" rel="noopener" style={{ display: 'block', borderBottom: `4px solid ${c.acc}` }}>
+        <img src={c.img} alt={`Concept ${c.title}, ${c.skin}`} style={{ display: 'block', width: '100%' }} />
+      </a>
+      <div style={{ padding: '16px 18px 18px' }}>
+        <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: c.acc }}>{c.skin}</div>
+        <div style={{ fontSize: '18px', fontWeight: 700, margin: '4px 0 6px', color: '#0f172a' }}>Concept {c.title}</div>
+        <div style={{ fontSize: '14px', lineHeight: 1.5, color: '#475569' }}>{c.text}</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '14px' }}>
+          <a href={`${BASE}#/${c.id}/event`} target="_blank" rel="noopener" style={{ background: c.acc, color: '#fff', fontWeight: 700, fontSize: '13px', padding: '8px 12px', borderRadius: '6px', textDecoration: 'none' }}>Start at event page ↗</a>
+          {(c.links || INLINE_LINKS).map(([path, label]) => (
+            <a key={path} href={`${BASE}#/${c.id}/${path}`} target="_blank" rel="noopener" style={{ border: '1px solid #cbd5e1', color: '#0f172a', fontWeight: 700, fontSize: '13px', padding: '7px 12px', borderRadius: '6px', textDecoration: 'none' }}>{label} ↗</a>
+          ))}
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
+Every screen of every concept has its own link (`#/a/…` through `#/f/…`), so
+feedback can point at an exact URL. The prototype banner switches concepts in
+place, keeping you on the same screen.
+
+### After Pay: confirmation
+
+Concepts A–D end on an Eventpipe confirmation (Spartan logo centered, *Manage booking* at the right),
+built from the library's **Confirmation / Single Reservation** with the full hotel stay and the race order.
+Concepts E/F end on a Spartan ticket receipt with the hotel hand-off card; the separate hotel page then
+finishes on the same library confirmation, for the hotel only.
+
+<a href={`${BASE}#/d/checkout/confirmed`} target="_blank" rel="noopener" style={{ display: 'block', maxWidth: '760px', margin: '12px 0 28px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+  <img src={confirmationImg} alt="Confirmation page after Pay, concept D" style={{ display: 'block', width: '100%' }} />
+</a>
+
+## How the embed works
+
+<table style={{ width: '100%', borderCollapse: 'collapse', margin: '12px 0 20px' }}>
+  <thead><tr><th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '2px solid #e2e8f0', fontSize: '14px' }}>Piece</th><th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '2px solid #e2e8f0', fontSize: '14px' }}>What it does</th></tr></thead>
+  <tbody>
+    <tr><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5, whiteSpace: 'nowrap' }}><strong>Host page</strong></td><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5 }}>Spartan’s event page and TicketSocket checkout, rebuilt from captures in plain Vue (no design-system code). It owns the order and the total.</td></tr>
+    <tr><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5, whiteSpace: 'nowrap' }}><strong>Widget page</strong> (<code>presto.html</code>)</td><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5 }}>The Eventpipe add-ons UI, built from the real Presto library (Quasar + <code>src/</code> components), rendered in an <strong>iframe</strong>. That keeps Quasar’s global CSS off the host and matches how a real third-party embed ships.</td></tr>
+    <tr><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5, whiteSpace: 'nowrap' }}><strong>postMessage bridge</strong></td><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5 }}>The widget reports <code>resize</code>, <code>state</code> (parking / photo / hotel), <code>open-overlay</code>, <code>confirm</code> and <code>modal</code>; the host replies with <code>sync</code>. The host is the source of truth for the order.</td></tr>
+    <tr><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5, whiteSpace: 'nowrap' }}><strong>Auto-height</strong></td><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5 }}>The inline embed is always exactly as tall as its content, so only the host page scrolls.</td></tr>
+    <tr><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5, whiteSpace: 'nowrap' }}><strong>Contained overlays</strong></td><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5 }}>In the inline concepts, the library’s Filters sheet and Map open inside the widget’s visible area, not over the whole checkout.</td></tr>
+    <tr><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5, whiteSpace: 'nowrap' }}><strong>Separate page (E/F)</strong></td><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5 }}>The ticket confirmation links to <code>/hotels</code>: a host page under the Spartan bar whose body is the Presto journey (<code>presto.html?view=journey</code>), auto-height. The widget reports <code>booked</code> and <code>back</code> so the receipt can show the hotel.</td></tr>
+    <tr><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5, whiteSpace: 'nowrap' }}><strong>Skins</strong></td><td style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', verticalAlign: 'top', fontSize: '14px', lineHeight: 1.5 }}>The Spartan skin re-points the Presto brand tokens (<code>{'--ds-palette-navy-*'}</code>, <code>{'--ds-color-*-brand'}</code>, <code>--q-primary</code>) and the Slate 50–950 neutral ramp at Spartan’s palette. It changes colors only, not components, type or spacing.</td></tr>
+  </tbody>
+</table>
+
+**Library components in the widget:** `SearchSummaryBar`, `FilterRail`,
+`SortDropdown`, `HotelCardHorizontal` (Group Block “Select Rooms”), `RoomAvailability`,
+`HotelMap`, `DsModal`, `HotelDetailPage` (gallery, rooms, amenities, policies),
+`CartReview` (hotel order summary), `QPagination`, Quasar toggles and selects.
+
+**Pricing used throughout:** nightly rate × 1.13 taxes & fees. “First night now”
+charges one night today and the balance at check-in. For example, Hill Country
+Lodge, 2 Queen beds, Nov 20–22: **$122.04 today** or **$244.08 paid in full**.
+
+## Library gaps this surfaced
+
+These are worked around inside the prototype with no library edits, and are worth fixing at the source:
+
+- **`DsModal`** has no ~900px size (sm 440 · md 600 · lg 1040 · xl 1200); the prototype re-sizes `lg` locally.
+- **`RoomsCarousel`** doesn’t re-emit `RoomCardReserve`’s `reserve` event, so “Reserve Room” clicks have to be caught by delegation.
+- **`HotelMap`** paints price pins with a hard-coded navy, so it can’t be themed, and its event-location pin has no visible label.
+- **`FilterRail`**’s inline mini-map uses library sample data, not the caller’s hotels.
+- **`CartReview`** clips the “Nights” column at phone width.
+
+## Open questions
+
+- **In checkout vs. after it (E/F):** a separate hotel page keeps the ticket checkout short and lets the hotel be paid on its own, but the racer has to come back for it. How many do?
+- **Inline vs. modal:** inline keeps context; the modal gives browsing room and a clear review-then-confirm moment. Which converts better for a single-room add-on?
+- **Presto vs. Spartan colors:** host-matched feels seamless but hides that Eventpipe is the hotel provider. Is a **“Powered by Eventpipe”** mark enough?
+- **Duplicate add-ons:** Spartan’s checkout already sells its own photo package; the Eventpipe card adds another. Who owns which add-ons?
+- **Payment:** the hotel is collected inside the host’s payment step. How does TicketSocket settle the hotel portion with Eventpipe?
+
+## Changelog
+
+**Oct 6, 2026**
+- **Concepts E and F (separate hotel page):** checkout is tickets only, with an Add-ons step for parking and photos and no hotel. Pay leads to a Spartan ticket receipt with a featured *Make a weekend of it* card (3 nearby hotels, from-prices). *Find a hotel* opens a separate hotel booking page in the same tab under the Spartan bar, with the full Presto journey built from library pieces: browse (filter rail, desktop listing cards, map, pagination) → Hotel Details → *Confirm and pay* → hotel-only confirmation. Back on the receipt, the card shows the booked hotel. E wears Presto colors, F Spartan colors.
+- **Itemized order summary:** the Spartan checkout's right rail now reads top-down like Spartan's receipt (Tickets, Add-ons, then a new *Hotel & weekend add-ons by Eventpipe* section with the stay fully itemized: dates and times, nights, room, rate × nights, taxes, stay total, charged today vs. due at check-in, cancellation), then Subtotal, fees and the Total at the bottom, with the pre-promo total struck through.
+- **Confirmation page:** Pay now leads to a confirmation step in every concept. A black bar with the Spartan logo centered and *Manage booking* at the right, over the library's Single Reservation confirmation with full hotel details (address, room, nightly rates, taxes, room cost, amount paid, balance due, policies) and a race-order card.
+- **Auto-fill forms toggle + Fill form button** in the prototype bar. On: each form step fills itself, and *Fill form* refills the current step on demand. Off: you type everything.
+- **Hosted maps:** the Google Maps key is now set for GitHub Pages, so the hotel maps load on the live prototypes.
+
+**Oct 5, 2026**
+- Spartan host page and TicketSocket checkout recreated from captures.
+- Eventpipe **Add-ons** step: parking, photo package and hotel finder (filters, map with the race venue, sort, pagination, hotel details, order summary, Edit reservation / Start over).
+- Concepts **A** (inline) and **B** (900px modal with a review step), then **C** and **D** in Spartan colors.
+- **Your Details** step: library checkout steps 1–4.
+- Prototype hub with deep links, prototype banner, and this R&D page.
+
+## Where it lives
+
+- **Source:** `spartanRace-ticketsocket-ep-demo-v1/` in this repo (see its README).
+- **Run locally:** `cd spartanRace-ticketsocket-ep-demo-v1 && npm run dev`, then open http://localhost:6201
+- **Hosted:** <a href="https://epprestodesign.github.io/presto-2026/spartanRace-ticketsocket-ep-demo-v1/" target="_blank" rel="noopener">epprestodesign.github.io/presto-2026/spartanRace-ticketsocket-ep-demo-v1/</a> — built and published with Storybook by the GitHub Pages deploy.

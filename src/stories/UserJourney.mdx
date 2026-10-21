@@ -1,0 +1,309 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Getting Started/User Journey & Build Spec" />
+
+# User Journey & Build Spec
+
+The stage-by-stage specification for building the **localized clickable
+prototype**. It covers **all three booking modes** end to end, with each stage's
+inputs, required fields, edge cases, emitted event, and the exact copy that must
+appear. Build the prototype from this doc; use **Architecture & Conventions** for
+where each component lives and the **mode-name cheat-sheet**.
+
+> **Reminder:** the three modes are **reserve** (single stay, charged), **hold**
+> (group/team block, *not* charged), **reservations** (multiple stays at once,
+> charged). Prop names differ per component — see the cheat-sheet in Architecture.
+
+---
+
+## The journey at a glance
+
+| Stage | reserve (single) | hold (Group Block) | reservations (multiple) |
+| --- | --- | --- | --- |
+| **0 · Landing** | Core widget → *Book Reservations* | Teams widget → *Hold Rooms for Group* | Core widget → *Book Reservations* |
+| **1 · Browse** | Reserve cards → *Choose Your Room* | Group cards → *Select Rooms* | Reserve cards (add several) |
+| **2 · Details** | Pick 1 room → checkout | Hold rooms/night across hotels → cart | Pick rooms at several hotels → cart |
+| **3 · Checkout** | Contact → **Payment** → Review | Review order → **Contact+Group** → Review (no payment) | Contact (per hotel) → **Payment** → Review |
+| **4 · Confirmation** | Reservation confirmed | Group Block held | Reservations confirmed |
+
+**Charged?** reserve ✓ · reservations ✓ · **hold ✗** (held, not charged — no
+payment step, no protection, no totals/taxes anywhere).
+
+---
+
+## Global chrome (every stage)
+
+- **App shell** — `PageFrame` wraps every page: `GlobalNav` + content + footer.
+  `cartMode` follows the journey mode (`reserve` / `hold` / `reservations`).
+- **Cart** — visible **only in `hold`** by default (rooms are held incrementally);
+  `reserve`/`reservations` add-to-cart-then-checkout, so the nav cart stays hidden
+  until something is added (`showCart` forces it). Landing always hides the cart.
+- **Contact Us dropdown** (nav) — EventPipe Travel: **Hours** (Mon–Fri
+  8:30am–5:30pm ET), **By Phone** `(888) 640-6400`, **By Email**
+  `support@eventpipe.com`.
+- **Checkout nav is different** — `PageFrame minimalNav brand="Secure Checkout"`:
+  centered brand only, no Manage Booking / cart / back arrow.
+- **Booking timer** — checkout shows **"Time left to book"** (default ~14:55,
+  `cart.heldSeconds ?? 895`) under the price details, with the note:
+  *"Book before the timer runs out to secure this rate. If the timer expires,
+  you'll need to run your search again."*
+
+---
+
+## Stage 0 · Landing Page
+
+**Component:** `LandingPage.vue` · **Story:** `Landing Page / Book Reservation` · `Group Block`
+
+- **Purpose:** introduce the event and launch a search.
+- **Reads:** `event` (name, dates, venue), `mode`.
+- **Content:** hero (event name + dates) → **Booking Widget** → intro / benefits /
+  *Who's Attending?* / *Event Information* (venue) → display ads → footer.
+- **Reference event:** *Virginia International Youth Soccer Cup 2026*, divisions
+  **U9–U19**, Fredericksburg Sportsplex (Fields 1–8), July 18–19 2026.
+- **Widget by mode:**
+  - `reserve` / `reservations` → `mode="reservations"`, **Core** widget
+    (`showTeams` may be true for a single registered team).
+  - `hold` → `mode="group"`, **Teams** widget (registered team[s] + Rooms Needed).
+- **Widget fields:** Registered Team(s) · Check-in–Check-out (date range +
+  flexible pills: *Exact dates, ± 1/2/3/7 days*) · **Travelers** (Adults/Children
+  steppers, multi-room) for reserve/reservations, **Rooms Needed** (number) for
+  hold.
+- **Action → next:** submit search → **Stage 1 (Browse)**. Persist the search
+  (teams, dates, travelers/rooms, mode) into journey state.
+- **Edge cases:**
+  - Team not in list → *"Dont see your team in the list? Add them"* opens an
+    add-a-team modal; duplicate name → *"This team name is already registered."*
+  - Group mode hides dates unless `showDates`; group swaps Travelers → Rooms Needed.
+
+---
+
+## Stage 1 · Browse Hotels
+
+**Component:** `HotelListPage.vue` + cards · **Stories:** `Browse Hotels / Book Reservation` · `Group Block`, `… / Result States`
+
+- **Purpose:** filter/sort results and start a booking.
+- **Reads:** search from Stage 0 (dates, guests/rooms, mode, event location).
+- **Left rail:** `Filter` / `FilterRail` (+ All Filters modal) and/or `HotelMap`
+  (price pills, clustering, **search-radius** circle two-way bound to a slider).
+- **Toolbar:** `SortDropdown` — **Distance** (default) · **Price: Low to High** ·
+  **Price: High to Low** · **Rating**. No pagination (single list).
+- **Cards by mode:**
+  - reserve/reservations → **`HotelCardReserve`**, CTA **"Choose Your Room"**,
+    emits **`choose`**. Price shows *From … nightly / … total / Total includes
+    taxes & fees*.
+  - hold → **`HotelCardGroup`** (`flow="group"`), CTA **"Select Rooms"**, emits
+    **`select`**. Price shows *STARTING PRICE / … per night / Low Rate Guarantee*.
+- **Availability edge cases (per card):**
+  - **Reserve card** (`availability`): `available` → green **"Fully Available"**;
+    `unmatched` → orange **"Adjust your search parameters"**; `unavailable` →
+    grey **"No availability for selected dates"** (card dimmed, CTA muted).
+  - **Group card** (`availability`, group flow): `matches` → green
+    **"\{n\} rooms available — matches request"**; `partial` → orange
+    **"\{max\} rooms max — \{requested\} requested"**; `unavailable` → grey
+    **"No availability for selected dates"** (dimmed, muted CTA).
+- **Expandable Availability panel** — the *Availability* toggle opens
+  `RoomAvailability` (per-room-type, per-night rooms-left) inline. Group results
+  can also open the `AvailabilityDialog` (summary + hold rooms grid).
+- **Result-list states** (`HotelListPage` `state`): `full` / `partial` / `empty`
+  / `error` / `loading`. Sections are separated by **firm rules + headings**:
+  - Reserve unmatched: *"The below hotels have availability for your selected
+    dates but do not match your selected filters"*
+  - No availability: *"The below hotels do not have availability for your
+    selected dates"*
+  - Group partial: *"The hotels below have availability but may not match your
+    selected filters or have enough rooms for all nights selected."*
+  - Empty: title *"No properties match your search"*, body *"Try adjusting your
+    filters, widening your search radius, or changing your dates to see more
+    hotels."*, button *"Clear all filters"*.
+  - Error: title *"We couldn't load results"*, body *"Something went wrong
+    fetching hotels for your selected dates. Check your connection and try
+    again."*, button *"Try again"*.
+- **Action → next:** `choose` / `select` → **Stage 2 (Details)** for that hotel.
+  Store the chosen hotel in journey state.
+
+---
+
+## Stage 2 · Hotel Details & Room Selection
+
+**Component:** `HotelDetailPage.vue` (`roomsFlow`) · **Stories:** `Hotel Details / Book Reservation` · `Group Block`
+
+- **Purpose:** show the hotel and pick room(s).
+- **Reads:** chosen hotel, dates, mode.
+- **Sections:** back link (*"Back to Hotel listing"*, emits **`back`**) → Photo
+  Gallery (mosaic + "see all photos" modal) → sticky Detail Tabs (Overview /
+  Rooms / Property / Amenities / Policies) → Summary Header → About → **Rooms** →
+  Amenities → Policies.
+- **Rooms** = `RoomsCarousel` (**responsive grid, not a carousel**), `flow`
+  selects the card:
+  - reserve/reservations → **`RoomCardReserve`** — per-night rooms-left + price
+    (per room/night, stay total) + *Price Details* (opens `PriceDetailsDialog`) +
+    **"Reserve Room"** (emits `reserve`).
+  - hold → **`RoomCardGroup`** — *Rooms per Night* list with per-night
+    `QuantityStepper` + STARTING PRICE + **"Add to Cart"** (emits `add`).
+- **Room cards contain no image and no amenities list** (removed). Header = room
+  type / bed config / max occupancy only.
+- **Sold-out edge case (both cards):** at least one night unavailable → a red
+  **"Sold Out"** night, a disabled **"Unavailable"** button, and the note *"At
+  least one night in your selected range is sold out at this property"*. The card
+  stays visible (never removed).
+- **Action → next by mode:**
+  - reserve → pick **one** room → **Stage 3 (Checkout, `reservation`)**.
+  - hold → add rooms per night; **can add across multiple hotels** (return to
+    Browse, repeat) — the cart accumulates; then → **Stage 3 (Checkout,
+    `group`)**.
+  - reservations → add rooms at **several hotels**, then → **Stage 3 (Checkout,
+    `reservations`)**.
+
+---
+
+## Stage 3 · Checkout ("Confirm and pay")
+
+**Component:** `CheckoutPage.vue` (`mode`) + `steps/*` + sticky `CartReview` rail
+· **Stories:** `Checkout Experience / Book Reservation` · `Group Block`
+
+The left column is a **stepped accordion**; the right is a **sticky order rail**
+(`CartReview`) with the **timer** and, for charged flows, **Edit reservation** /
+**Start over** actions. Header h1 = **"Confirm and pay"**. **Steps differ by
+mode:**
+
+### reserve (`mode="reservation"`) & reservations (`mode="reservations"`)
+
+1. **Enter contact information** — `StepContactInfo`.
+   - reserve → single guest party via `ReservationGuests` (one *"Room N — Guest
+     Information"* block per room; Additional Guests pre-seeded from occupancy).
+   - reservations → the same per-room forms **grouped by hotel/reservation**
+     (*"Reservation N — \{hotel\}"*).
+   - **Required per room:** First name, Last name, Mobile (+ Team Name and any
+     required event custom fields if enabled). Incomplete → inline errors, no
+     advance.
+2. **Add a payment method** — `StepPayment` → `PaymentForm` (**inline, credit
+   card only — no dialogs, no Google Pay, no alt-pay**). Sections: Credit Card
+   Information (accepted-card logos, Cardholder Name, Card Number, Expiration
+   Month/Year, Security Code + tooltip) and Billing (Address 1–3, Country,
+   City/State/Postal on one row). **No OneKeyCash, no discounts.**
+3. **Review your reservation** — `StepReviewReservation` (`flow="reserve"`):
+   - **Protect your stay** — Trip Protection Plan ($10.51, recommended) / No
+     protection. **Must choose one** to proceed.
+   - **Cancellation policy** — refundable-before badge + policy + special
+     check-in instructions.
+   - **Policies** — `PoliciesAgreement` single checkbox. Verbatim:
+     *"By clicking this checkbox, I acknowledge that I have read and agree to the
+     Reservation Policies and I authorize HoCoBook to charge the above credit
+     card."* CTA **"Book Now"** → emits **`confirm`**.
+   - Multi-hotel (`reservations`) uses a **per-hotel** checkbox instead: *"I have
+     read and agree to \{hotel\}'s Hotel and GrandStay Reservation Policies."*
+
+**Rail (`CartReview`):** reserve = single-stay summary + **Price details card**
+(nights × rooms × rate, discount, **Taxes & Fees** line + info tooltip, Total,
+"Rates are quoted in USD ($)"). reservations = multi-hotel per-night rows (fixed
+qty, no stepper) **with** the price card.
+
+### hold (`mode="group"` — Group Block)
+
+1. **Review order** — `StepReviewOrder` (`mode="hold"`) → `CartReview` in **hold**
+   mode: collapsible hotels → rooms → per-day `QuantityStepper` (editable, "N
+   left"). **Nightly cost only — no taxes, no fees, no totals, no price card.**
+2. **Enter contact & group information** — `StepContactInfo` (`mode="group"`) →
+   `GroupTeamsBlock`. **Required:** First, Last, Mobile, Email, **Organization
+   (mandatory)**, **Group Block Name**, and ≥1 team (unless the *no-team-block*
+   variant / `showTeams=false`). Supports **additional email addresses**.
+3. **Review your reservation** — `StepReviewReservation` (`flow="group"`):
+   - **No "Protect your stay"** (blocks aren't charged) — starts at Cancellation
+     policy (group release date).
+   - **Policies** — `PoliciesAgreement` **single** checkbox for all hotels.
+     Verbatim: *"By clicking this checkbox, I acknowledge that I have read and
+     agree to the Hotel and HoCo Book Reservation Policies."* CTA **"Hold Group
+     Block Now"** → emits **`confirm`**.
+
+**Group edge cases:** *no-team-block* variant (`showTeams=false`) = hold the block
+without holding teams (skips the teams requirement). No payment step exists in
+this mode at all.
+
+- **Action → next (all modes):** `confirm` → q-notify *"Reservation confirmed — a
+  confirmation has been emailed."* → **Stage 4 (Confirmation)**.
+- **Cross-cutting edge cases:** timer expiry → restart search; **Start over**
+  clears the cart; **Edit reservation** returns to the room selection.
+
+---
+
+## Stage 4 · Confirmation
+
+**Component:** `ConfirmationPage.vue` (`mode`) · **Stories:** `Confirmation / Book Reservation` · `Group Block`
+
+- **Structure (all modes):** success **banner** (check icon + title + *"A
+  confirmation email is on its way."* + CTA) → **Summary** (contact + ID + action
+  buttons + meta grid + per-hotel blocks listing rooms per night) → per-hotel
+  **Policies**. *(The old modules — rating, who's-going, calendar, live map, area
+  tips, FAQ, help — were removed.)*
+- **By mode:**
+  - **reserve** — banner *"Success! Your reservation is confirmed."*, CTA *"Book
+    Another Reservation"*, *Reservation Summary*, *Confirmation #*, Guest meta row,
+    "(N rooms)". Actions: Copy Booking Link · Print.
+  - **hold** — banner *"Success! Your Group Block is being held."*, CTA *"Hold
+    Another Group Block"*, *Group Block Summary*, *Group ID*, *Group Block Release
+    Date*, "(N rooms held)", meta Organization Name / Group Contact. Actions:
+    **Book in Block** (hold-only) · Copy Booking Link · Print.
+  - **reservations** — banner *"Success! Your reservations are confirmed."*,
+    *Reservations Summary*, one block per stay.
+- **Action → next:** the banner CTA restarts the relevant flow (Book Another /
+  Hold Another); *Manage Booking* (via nav on non-checkout pages) → the account
+  page.
+
+---
+
+## Journey state (single source of truth)
+
+Recommended shape for the shared reactive object threaded through every stage
+(see Architecture → *Building the localized prototype*). Remember each component's
+own prop name for `mode`.
+
+```js
+const journey = reactive({
+  mode: 'reserve',                 // reserve | hold | reservations (canonical)
+  event: { name, dates, venue, divisions },
+  search: { teams: [], dates: { from, to }, flexible, travelers: { adults, children }, roomsNeeded },
+  hotel: null,                     // chosen hotel (Stage 1 → 2)
+  rooms: [],                       // selected rooms/nights (Stage 2)
+  cart: { hotels: [] },            // accumulates for hold/reservations
+  contact: { first, last, mobile, email, organization, groupBlockName, additionalEmails: [], teams: [] },
+  guests: [],                      // per-room guest info (reserve/reservations)
+  payment: null,                   // card + billing (reserve/reservations only)
+  protection: null,                // reserve/reservations only
+  agreedToPolicies: false,
+  confirmation: null,              // set at Stage 4
+})
+```
+
+## Stage → emitted event → transition (wire these)
+
+| Stage | Component | Event | Go to |
+| --- | --- | --- | --- |
+| 0 Landing | `BookingWidget` (submit) | (search submit) | 1 Browse |
+| 1 Browse | `HotelCardReserve` | `choose` | 2 Details (reserve/reservations) |
+| 1 Browse | `HotelCardGroup` | `select` | 2 Details (hold) |
+| 2 Details | `HotelDetailPage` | `back` | 1 Browse |
+| 2 Details | `RoomCardReserve` | `reserve` | 3 Checkout (or cart) |
+| 2 Details | `RoomCardGroup` | `add` | cart (repeat 1–2), then 3 |
+| 3 Checkout | each `Step*` | `next` | next step |
+| 3 Checkout | `StepReviewReservation` | `confirm` | 4 Confirmation |
+| 4 Confirmation | banner CTA | (restart) | 0 Landing |
+
+## Edge-case checklist (don't ship the prototype without these)
+
+- [ ] **Browse** renders all five result states, including firm separators
+      between availability blocks (matches / doesn't-match-filters / no-availability).
+- [ ] Reserve and Group cards each show their three availability states with the
+      correct copy and dimming.
+- [ ] **Sold-out rooms** stay visible with the *Unavailable* state, not hidden.
+- [ ] **hold** shows **no payment step, no protection, no taxes/fees/totals** —
+      nightly cost only, everywhere (cart, review, confirmation).
+- [ ] **Group contact** enforces Organization + Group Block Name + ≥1 team
+      (unless no-team-block) and supports additional emails.
+- [ ] **reservations** groups guest forms and policy checkboxes **per hotel**.
+- [ ] **Payment** is credit-card-only — no Google Pay, OneKeyCash, or discounts.
+- [ ] The **timer**, **Edit reservation**, and **Start over** exist on charged
+      checkouts; the checkout nav is the minimal **Secure Checkout** bar (no back
+      arrow).
+- [ ] Confirmation copy/actions match the mode (Book in Block only for hold).
+- [ ] The **same fixture hotel** flows Browse → Details → Checkout →
+      Confirmation (build the shared fixtures layer to guarantee this).

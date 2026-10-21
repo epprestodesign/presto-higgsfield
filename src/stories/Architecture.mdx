@@ -1,0 +1,280 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Getting Started/Architecture & Conventions" />
+
+# Architecture & Conventions
+
+The machine-oriented map of this library. If you're an **AI agent** extending the
+system or **building the localized prototype**, read this first — it tells you
+**where things live, what to reuse, the conventions to match, and how the booking
+modes map across components** so new work is indistinguishable from existing work.
+
+For the stage-by-stage journey requirements (all flows, all edge cases), read
+**Getting Started → User Journey & Build Spec**.
+
+---
+
+## Reading the system efficiently
+
+1. **Find the surface** in the sidebar — primitives (`Components → …`,
+   `Foundations`) or experience flows (`Landing Page … Manage Booking`). See
+   **Introduction** for the category map.
+2. **Locate the source** — every story maps ~1:1 to a component (tables below).
+3. **Reuse before rebuilding** — check *Shared building blocks*; most new screens
+   compose existing pieces.
+4. **Match the conventions** — tokens, naming, story shape, and the **mode
+   cheat-sheet** below.
+
+---
+
+## Booking modes — the naming cheat-sheet (READ THIS)
+
+There are three conceptual modes (**reserve · hold · reservations**), but the
+prop **name and accepted values differ per component**. Passing the wrong string
+silently renders the wrong flow. Canonical mapping:
+
+| Component | Prop | Single stay | Group/team block | Multiple reservations |
+| --- | --- | --- | --- | --- |
+| `LandingPage`, `BookingWidget` | `mode` | `reservations`¹ | `group` | `reservations`¹ |
+| `CheckoutPage` | `mode` | `reservation` | `group` | `reservations` |
+| `CartReview`, `ConfirmationPage` | `mode` | `reserve` | `hold` | `reservations` |
+| `HotelDetailPage` | `roomsFlow` | `reserve` | `group` | `reserve` |
+| `RoomsCarousel` | `flow` | `reserve` | `group` | `reserve` |
+| `HotelCardReserve` | `availability` | `available` / `unmatched` / `unavailable` | — | — |
+| `HotelCardGroup` | `flow` + `availability` | `flow="reserve"` | `flow="group"`, `matches`/`partial`/`unavailable` | — |
+| `StepReviewOrder` | `mode` | `reserve` | `hold` | `reserve` |
+| `StepReviewReservation` | `flow` | `reserve` | `group` | `reserve` |
+| `StepContactInfo` | `mode` | `reservation` | `group` | `reservations` |
+| `GlobalNav` / `PageFrame` | `cartMode` | `reserve` | `hold` | `reservations` |
+| `PoliciesAgreement` | `flow` | `reserve` | `group` | `reserve` |
+
+¹ The **Book Reservation** landing/widget uses `mode="reservations"` — the widget
+has only two toggle options (`reservations` = *Book Reservations*, `group` =
+*Hold Rooms for Group or Team*); the single-vs-multi distinction is a checkout
+concern, not a widget one.
+
+**Rules of thumb:** cart/confirmation/room components speak
+`reserve | hold | reservations`; the checkout page speaks
+`reservation | group | reservations`; the widget/landing speak
+`reservations | group`. When in doubt, grep the component's `defineProps`.
+
+---
+
+## Task → location
+
+| If you need to… | Go to | Reuse |
+| --- | --- | --- |
+| The app shell (nav + footer) around a page | `App Shell / Page Frame` | `PageFrame.vue` (`brand`, `cartMode`, `showCart`, `minimalNav`) |
+| The top nav / cart fly-out | `App Shell / Global Nav & Cart` | `GlobalNav.vue` (+ `CartFlyout`); `minimal` = checkout nav; Contact Us dropdown |
+| The event landing page | `Landing Page / *` | `LandingPage.vue` (`mode`, `showTeams`) |
+| The tournament search widget | `Landing Page / Components` | `BookingWidget.vue` (`mode`, `showTeams`, `showDates`) |
+| A surface card | `Components / Layout & Structure / Card` | `DsCard` |
+| A centered modal / dialog | `Components / Actions / Modal` | `DsModal` (backdrop, ESC, click-out, scroll-lock, header/footer slots, teleported) |
+| A slide-over / drawer | `Components / Actions / Side Panel` | `DsSidePanel` (`side="right" / "left" / "center"`) |
+| A list / setting row | `Components / Layout & Structure / List Item` | `DsListItem` |
+| A review score (★ x/y) | `Components / Media & Visuals / Rating` | `DsRating` |
+| Expand/collapse rows | `Components / Layout & Structure / Accordion` | `DsAccordion` |
+| Chip toggle group | `Components / Forms / Choice Chips` | `DsChoiceChips` |
+| A dual-handle range | `Components / Forms / Range` | `DsRange` |
+| Nested checkboxes | `Components / Forms / Checkbox Tree` | `DsCheckboxTree` |
+| A quantity control | `Components / Forms / Quantity Stepper` | `QuantityStepper.vue` |
+| A phone field w/ country code | `Components / Forms / Phone Field` | `checkout/PhoneField.vue` |
+| A toast / banner | `Components / Feedback & Status / Toast · Banner` | `ds-toast--*` classes; Banner hue map |
+| Filter or sort results | `Browse Hotels / Components / Left Rail` | `browse/Filter.vue` (`type` prop), `browse/AllFiltersDialog.vue`, `browse/SortDropdown.vue` |
+| A consolidated "All filters" modal | `Browse Hotels / Components / Left Rail / Search & Filters` | `browse/AllFiltersDialog.vue` (accordions + live count; on `DsModal`) |
+| A result list w/ states | `Browse Hotels / Components / Results / Result States` | `browse/HotelListPage.vue` (`state`) |
+| A result card | `Browse Hotels / Components / Results / Hotel Listing Card` | `browse/HotelCardReserve.vue`, `browse/HotelCardGroup.vue` |
+| Group availability inventory | `Browse Hotels / Components / Results / Availability Dialog` | `AvailabilityDialog.vue` (summary + hold rooms grid) |
+| A map with pins / search radius | `Browse Hotels / Components / Left Rail / Hotel Map` | `HotelMap.vue` (+ `lib/googleMaps.js`) — native +/- zoom, `clusterMaxZoom`, `searchRadius` (two-way) |
+| A full hotel detail screen | `Hotel Details / *` | `details/HotelDetailPage.vue` (`roomsFlow`) |
+| A room card / rooms grid | `Hotel Details / Components / {Book Reservation,Group Block}` | `details/RoomCardReserve.vue`, `details/RoomCardGroup.vue`, `details/RoomsCarousel.vue` (`flow`) |
+| A hero photo gallery (mosaic + modal) | `Hotel Details / Components / Photo Gallery` | `details/GalleryHero.vue` (+ `DsImageList`) |
+| An amenity (icon + label) / list | `Components / Typography & Content / Amenity` | `Amenity.vue` + `lib/amenities.js` (catalog) |
+| A stepped checkout | `Checkout Experience / *` | `checkout/CheckoutPage.vue` (`mode`) + `checkout/steps/*` |
+| A cart / order summary | `Checkout Experience` & nav | `CartReview` (body — `reserve`/`hold`/`reservations`) + `CartFlyout` (chrome) |
+| An inline card payment form | `Checkout Experience / Components / Book Reservation / Payment` | `checkout/PaymentForm.vue` (+ `lib/paymentLogos.js`) — **not** the old dialogs |
+| Per-room reservation guest info | `Checkout Experience / Components / Book Reservation / Reservation Guests` | `checkout/ReservationGuests.vue` |
+| The group teams block | `Checkout Experience / Components / Group Block / Contact Info / Teams Block` | `checkout/GroupTeamsBlock.vue` |
+| The policies acknowledgement | `Checkout Experience / Components / … / Review Reservation / Policies` | `checkout/PoliciesAgreement.vue` (`flow`) |
+| The success page | `Confirmation / *` | `confirmation/ConfirmationPage.vue` (`mode`) |
+| The account page | `Manage Booking / Account` | `managebooking/ManageBooking.vue` + `ProfileEditModal.vue` |
+
+---
+
+## File & folder layout
+
+| Path | Holds |
+| --- | --- |
+| `src/components/*.vue` | Top-level components — primitives (`Ds*`, `Amenity`, `QuantityStepper`) and core booking pieces (`GlobalNav`, `PageFrame`, `LandingPage`, `BookingWidget`, `CartReview`, `CartFlyout`, `AvailabilityDialog`, `HotelMap`, `RoomBookingDialog`, `DateRangeCalendar`, `DisplayAd`). |
+| `src/components/browse/` | Discovery: `HotelListPage`, `HotelCardReserve`, `HotelCardGroup`, `Filter`, `FilterRail`, `AllFiltersDialog`, `SortDropdown`, `ResultsToolbar`, `RoomAvailability`. |
+| `src/components/details/` | Hotel Details: `HotelDetailPage`, `GalleryHero`, `DetailTabs`, `HotelSummaryHeader`, `AboutProperty`, `RoomsCarousel`, `RoomCardReserve`, `RoomCardGroup`, `AmenitiesSection`, `PoliciesSection`, `PriceDetailsDialog`. |
+| `src/components/checkout/` | Checkout: `CheckoutPage`, `OrderSummary`, `ContactGroupForm`, `GroupTeamsBlock`, `ReservationGuests`, `PhoneField`, `PaymentForm`, `PoliciesAgreement`, `steps/` (`StepReviewOrder`, `StepContactInfo`, `StepPayment`, `StepReviewReservation`), and **retired** `AddPaymentDialog` / `PaymentMethodDialog` / `PayWith` (Old Designs). |
+| `src/components/confirmation/` | `ConfirmationPage` (all three modes). |
+| `src/components/managebooking/` | `ManageBooking`, `ProfileEditModal`. |
+| `src/stories/<category>/*.stories.js` | One story file per component; folder ≈ sidebar category. `_fixtures.js` / `_rooms-sample.js` / `_tokens-data.js` hold shared story data. |
+| `src/stories/*.mdx` | Docs-only pages (Introduction, this file, User Journey & Build Spec). |
+| `src/lib/` | Non-visual helpers: `amenities.js` (catalog — source of truth), `imagery.js`, `paymentLogos.js`, `googleMaps.js`, `unsplash.js`. |
+| `src/css/` | Theme: `ds-palette.scss` → `ds-color-tokens.scss` → `tokens.scss`, `quasar.variables.scss` (brand), `app.scss` (global + overrides), `typography.scss`. |
+| `.storybook/preview.js` | `storySort` controls sidebar order; global Quasar plugin + Q-component registration. |
+
+---
+
+## Design tokens & theming
+
+- **Always use DS tokens**, never hardcoded hex. Tokens are CSS custom properties
+  named `--ds-*`:
+  - Palette ramps: `--ds-palette-<hue>-<step>` (e.g. `--ds-palette-navy-900`).
+  - Semantic roles: `--ds-color-text`, `--ds-color-text-subtle`,
+    `--ds-color-surface`, `--ds-color-border`, `--ds-color-border-bold`,
+    `--ds-color-background-brand-bold`, `--ds-color-background-danger-bold`,
+    `--ds-color-text-danger`, `--ds-color-text-success`.
+  - Scales: `--ds-radius-*`, `--ds-duration-fast`, `--ds-ease-standard`, `--ds-shadow-*`.
+- **Primary brand = Navy** (`#01113E`). Reach for `--ds-color-background-brand-bold`
+  for actions and `--ds-color-text-brand` for brand headings.
+- Page canvas uses `--ds-palette-slate-100`; foreground cards use
+  `--ds-color-surface` with a `--ds-color-border` outline (the checkout/account pattern).
+
+---
+
+## Component conventions
+
+- **Vue 3 SFC, `<script setup>`.** Props via `defineProps`, events via
+  `defineEmits`, imperative API via `defineExpose`.
+- **Quasar is globally registered** — use `<q-*>` tags directly (no per-file
+  import). Plugins available: `Notify`, `Dialog`, `Loading` (see `preview.js`).
+- **Scoped styles**, BEM-ish naming: one **prefix per component**, then
+  `prefix__element` / `prefix--modifier` (e.g. `.hc__footer`, `.rcr__cta`,
+  `.pmf__grid`). Teleported content (menus, tooltips, notifies) needs an
+  **unscoped** `<style>` block.
+- **State sync** patterns in use: `v-model:<name>`, parent-owned reactive lists
+  passed as props + `remove`/`update` events, and `defineExpose({ … })` for
+  imperative APIs like `clear()`.
+- **Modals & panels are primitives.** Centered dialogs use **`DsModal`**;
+  slide-overs use **`DsSidePanel`**. Don't hand-roll overlay chrome.
+- **Amenities come from one catalog** (`src/lib/amenities.js`) — reference by
+  `key` and render via `Amenity`. Don't hardcode amenity lists.
+- Match the **comment density and idiom** of the file you're editing.
+
+## Story conventions
+
+- One `*.stories.js` per component. `title: 'Category/Name'` decides placement;
+  add `tags: ['autodocs']` for a generated Docs tab.
+- **Variants are named exports** (`export const GroupBlock = …`). Full-page
+  components set `parameters: { layout: 'fullscreen' }`.
+- **Flow-first hierarchy:** each experience flow has a top-level
+  `Book Reservation` + `Group Block` story and a `Components` folder; inside
+  Components, Book Reservation and Group Block **sub-folders** list their pieces
+  in the same order (Review Order → Contact Info → … ).
+- Live/interactive demos use a `render()` with a `setup()` returning reactive
+  state.
+- Sidebar order is **explicit** in `preview.js` `storySort` — anything after
+  `'*'` sorts last (e.g. `Manage Booking`).
+
+---
+
+## Shared building blocks (reuse these)
+
+### Standardized primitives
+| Component | Path | Story |
+| --- | --- | --- |
+| `DsCard` | `components/DsCard.vue` | Layout & Structure / Card |
+| `DsModal` | `components/DsModal.vue` | Actions / Modal — centered dialog shell |
+| `DsSidePanel` | `components/DsSidePanel.vue` | Actions / Side Panel — slide-over (right/left/center) |
+| `DsListItem` | `components/DsListItem.vue` | Layout & Structure / List Item |
+| `DsRating` | `components/DsRating.vue` | Media & Visuals / Rating |
+| `DsAccordion` | `components/DsAccordion.vue` | Layout & Structure / Accordion |
+| `DsChoiceChips` | `components/DsChoiceChips.vue` | Forms / Choice Chips |
+| `DsRange` | `components/DsRange.vue` | Forms / Range |
+| `DsCheckboxTree` | `components/DsCheckboxTree.vue` | Forms / Checkbox Tree |
+| `QuantityStepper` | `components/QuantityStepper.vue` | Forms / Quantity Stepper |
+
+### Composite / domain building blocks
+| Component / lib | Path | What it is |
+| --- | --- | --- |
+| `PageFrame` | `components/PageFrame.vue` | App shell: `GlobalNav` + content slot + footer. `minimalNav` → the checkout "Secure Checkout" nav. |
+| `GlobalNav` + `CartFlyout` | `components/` | Nav (brand + Contact Us dropdown + Manage Booking + cart) with a right slide-over cart. Cart shows only for `hold` unless `showCart` forces it. |
+| `BookingWidget` | `components/BookingWidget.vue` | Tournament search — teams, date range + flexible-date pills, travelers/rooms. `mode` reservations/group. |
+| `CartReview` | `components/CartReview.vue` | Recyclable cart body — `reserve` (summary + price card), `hold` (accordion + per-night steppers, **no totals/taxes**), `reservations` (multi-hotel per-night rows, **with** price card). Shared by fly-out, review-order step, rail. |
+| `HotelCardReserve` / `HotelCardGroup` | `components/browse/` | Horizontal result cards — Book Reservations (Choose Your Room) & Group Block (Select Rooms). Each: 3 availability edge cases + expandable Availability panel. |
+| `HotelListPage` | `components/browse/HotelListPage.vue` | Result list with `state` (full/partial/empty/error/loading) + firm separators between availability blocks. |
+| `HotelMap` | `components/HotelMap.vue` | Google map w/ price pills, clustering, native +/- zoom, **search-radius** circle (two-way: map zoom ⇄ slider), no-key fallback. |
+| `Filter` / `SortDropdown` / `AllFiltersDialog` | `components/browse/` | All filter types via `type`; sort (Distance / Price: Low→High / Price: High→Low / Rating); consolidated modal. |
+| `Amenity` + `lib/amenities` | `components/Amenity.vue`, `src/lib/amenities.js` | Icon+label unit + the **catalog** (helpers `getAmenities`, `popularAmenities`, `filterAmenities`, `amenityGroups`). |
+| Hotel Details set | `components/details/` | `HotelDetailPage`, `GalleryHero`, `DetailTabs`, `HotelSummaryHeader`, `AboutProperty`, `RoomsCarousel`, `RoomCard{Reserve,Group}`, `AmenitiesSection`, `PoliciesSection`, `PriceDetailsDialog`. |
+| `AvailabilityDialog` | `components/AvailabilityDialog.vue` | Group availability modal (on `DsModal`) — hotel summary + a `hold` rooms grid. |
+| `CheckoutPage` + `steps/*` | `components/checkout/` | Stepped "Confirm and pay" + sticky order rail; steps differ by `mode` (see Build Spec). |
+| `PaymentForm` | `components/checkout/PaymentForm.vue` | Inline card + billing form (accepted-card logos, expiration, CVC tooltip). Credit card only — replaces the dialogs. |
+| `ReservationGuests` | `components/checkout/ReservationGuests.vue` | Per-room guest forms, aware of the widget's room/traveler selection; groups by reservation for `reservations`. |
+| `GroupTeamsBlock` | `components/checkout/GroupTeamsBlock.vue` | The teams block inside the group contact step. |
+| `PoliciesAgreement` | `components/checkout/PoliciesAgreement.vue` | Single (group / reserve) or multi-hotel policy acknowledgement; `flow`-specific text. |
+| `ConfirmationPage` | `components/confirmation/ConfirmationPage.vue` | Success banner + Summary + per-hotel Policies; `mode` reserve/hold/reservations. |
+| `lib/imagery` · `lib/paymentLogos` · `lib/googleMaps` | `src/lib/` | `loadImagery()` → categorized hotel photos; `paymentLogo(name)` → card SVG; `loadGoogleMaps()` + `hasMapsKey()`. |
+
+---
+
+## Building the localized prototype
+
+The library is currently a **prop-driven** component gallery — pages take fixed
+data as props and emit events; there is **no router and no shared store**. To wire
+a clickable end-to-end journey you add three things on top of the existing
+components. **Prototype mechanism is deliberately undecided** — the same
+building blocks support all of these:
+
+- **In-Storybook** — a `Prototype/User Journey` story that mounts the pages and
+  swaps them on the emitted events (`choose`, `select`, `back`, step `next`,
+  `confirm`). Zero new tooling; lives beside the docs.
+- **Separate Vue app** — a `src/app/` entry with `vue-router` importing these
+  components as a library. Closest to production.
+- **Figma** — assemble screenshots of these stories into a click-through via the
+  Figma MCP. No code.
+
+Whichever you pick, you need **navigation**, **shared booking state**, and
+**shared data**:
+
+1. **Shared booking state (recommended: a single reactive object).** One source
+   of truth threaded through every page: `{ mode, event, hotel, dates, guests,
+   rooms[], cart, contact, payment }`. A plain reactive module
+   (`src/lib/journeyState.js`) with `provide`/`inject` is enough for a prototype;
+   promote to Pinia only if the app grows. **`mode` lives here** and every page
+   reads it (remember the per-component name mapping above).
+2. **Navigation.** Map the emitted events to transitions — the Build Spec lists
+   the exact event per stage. In-Storybook: a `ref` of the current screen. App:
+   `vue-router` routes `/ → /browse → /hotel/:id → /checkout → /confirmation`.
+3. **Shared data (recommended: a fixtures layer).** Today mock data is written
+   **inline per story**, which drifts between screens. For a coherent journey,
+   extract it to `src/lib/fixtures/` (`events.js`, `hotels.js`, `rooms.js`,
+   `guests.js`) as the single dataset both the stories and the prototype read —
+   so the hotel you pick in Browse is the hotel you see in Details and Checkout.
+   The existing `_fixtures.js` / `_rooms-sample.js` / `lib/amenities.js` are the
+   starting seeds. (`references/` is gitignored — screenshots only.)
+
+The **User Journey & Build Spec** doc specifies each stage's inputs, required
+fields, edge cases, and the event it emits — build the prototype from that.
+
+---
+
+## Adding a component (checklist)
+
+1. Create the SFC in `src/components/` (or the right `<area>/`).
+2. Use DS tokens + the prefix naming convention; reuse a shared block if one fits.
+3. Respect the **mode cheat-sheet** — accept the same prop name/values as sibling
+   components in that flow.
+4. Add `src/stories/<category>/Name.stories.js` with `title`, `tags: ['autodocs']`, variants.
+5. If it's a new category, add it to `storySort` in `.storybook/preview.js`.
+6. Verify with `pnpm build-storybook` (the deploy gate).
+
+## Gotchas
+
+- **`<filter>` is a native SVG tag** — register the Filter under a distinct tag
+  (e.g. `<browse-filter>`), or Vue renders an empty SVG instead of your component.
+- **Mode-name drift** — the same journey uses `reserve`/`reservation`,
+  `hold`/`group` on different components. Check the cheat-sheet.
+- **Notify/menus/tooltips are teleported** — style them from an **unscoped**
+  `<style>` or global `app.scss` (e.g. `.ds-toast`, `.pmf__tooltip`, `.cr__tooltip`).
+- **Don't set `position` on a notification** (`.ds-toast`) — Quasar's leave
+  transition sets `position:absolute`; an override breaks the exit animation.
+- **Maps need an API key** — `HotelMap` degrades to a placeholder; never assume a key exists.
+- **`hold` never shows totals/taxes** — the group block is held, not charged. No
+  payment step, no protection, nightly cost only.
+- **`references/` is local-only** (gitignored) — design screenshots live on disk.
+- **Run from a git branch**, not `main`; deploy happens automatically on merge to `main`.

@@ -1,0 +1,37 @@
+// =============================================================
+// Quasar SASS variables — THE control panel for your brand.
+// This file is injected ahead of Quasar's own SASS, so anything
+// you set here overrides Quasar's defaults globally.
+// Docs: https://quasar.dev/style/sass-scss-variables
+// =============================================================
+
+// --- Brand color palette -------------------------------------
+// Tier-3 bridge: Quasar brand vars mapped to Atlassian (ADS) light
+// SEMANTIC values so every Quasar component reskins. The full token
+// system lives in ds-palette.scss + ds-color-tokens.scss.
+// (Quasar's SASS color fns need solid hex, so literals are used here;
+//  alpha tokens stay as CSS custom properties only.)
+// Brand = Navy (Presto). Primary is the deep navy anchor (#01113E) for strong
+// contrast on actions; neutrals use Slate; status colors use palette defaults.
+$primary:   #01113E;   // background.brand.bold → Navy 900
+$secondary: #475569;   // Slate 600
+$accent:    #2C4380;   // Navy 500 (mid brand accent)
+
+$dark:      #01113E;   // Navy 900
+$dark-page: #030A26;   // Navy 950
+
+$positive:  #16A34A;   // success.bold → Green 600
+$negative:  #DC2626;   // danger.bold  → Red 600
+$info:      #2563EB;   // info.bold    → Blue 600
+$warning:   #FACC15;   // warning.bold → Yellow 400 (needs dark text)
+
+// --- Typography ----------------------------------------------
+// Font family is imported in app.scss; here we tell Quasar to use it.
+// PT Sans ships only 400 & 700, so "semibold" UI resolves to 700.
+$typography-font-family: 'PT Sans', -apple-system, BlinkMacSystemFont,
+  'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+// --- Shape / spacing tokens ----------------------------------
+$generic-border-radius: 4px;    // uniform 4px system, matches Presto reference
+$button-border-radius:  4px;    // crisp button corners, matches Presto reference
+$button-font-weight:    700;

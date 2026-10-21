@@ -1,0 +1,232 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Getting Started/Introduction" />
+
+# Presto Design System
+
+A **themed [Quasar](https://quasar.dev) component library** for a youth-sports
+**event travel — hotel booking & reservation** experience (EventPipe / Presto
+branding), documented and QA'd in Storybook.
+
+Every example, label, and edge case is written around one real journey: a team
+or family traveling to a tournament — searching hotels near the venue, comparing
+rooms, **reserving a single stay**, **holding a room block for a group/team**, or
+**booking several rooms at once**, then paying (when applicable), confirming, and
+managing the booking afterward. The reference event throughout is the
+**Virginia International Youth Soccer Cup 2026** (divisions **U9–U19**,
+Fredericksburg Sportsplex, July 18–19 2026).
+
+<div style={{ background: '#01113E', color: '#fff', borderRadius: '12px', padding: '20px 24px', margin: '24px 0', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+  <div>
+    <div style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff' }}>▶ Try the interactive prototype</div>
+    <div style={{ marginTop: '4px', maxWidth: '62ch' }}>
+      <span style={{ color: '#fff' }}>A clickable, end-to-end booking journey — <strong style={{ color: '#fff' }}>Book Reservation</strong>, <strong style={{ color: '#fff' }}>Group Block</strong>, and <strong style={{ color: '#fff' }}>Multiple Reservations</strong> — built entirely from the real library components at 1440px. Search hotels on a live map, filter, pick rooms, checkout, and confirm.</span>
+    </div>
+  </div>
+  <a href="https://epprestodesign.github.io/presto-2026/prototype/" target="_blank" rel="noopener"
+     style={{ background: '#fff', color: '#01113E', fontWeight: 700, padding: '12px 20px', borderRadius: '8px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+    Launch prototype ↗
+  </a>
+</div>
+
+<div style={{ background: '#0b1020', color: '#fff', borderRadius: '12px', padding: '20px 24px', margin: '24px 0', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+  <div>
+    <div style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff' }}>📱 New — Mobile prototype</div>
+    <div style={{ marginTop: '4px', maxWidth: '62ch' }}>
+      <span style={{ color: '#fff' }}>The same end-to-end booking journey in a <strong style={{ color: '#fff' }}>phone frame (360–414px)</strong>, showcasing the <strong style={{ color: '#fff' }}>responsive design system</strong>. Toggle device widths, watch the mock browser URL track each stage, and drive all three flows on mobile. Every component is the same one you QA here at the <em>Mobile — 390</em> viewport.</span>
+    </div>
+  </div>
+  <a href="https://epprestodesign.github.io/presto-2026/prototype-mobile/" target="_blank" rel="noopener"
+     style={{ background: '#fff', color: '#0b1020', fontWeight: 700, padding: '12px 20px', borderRadius: '8px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+    Launch mobile ↗
+  </a>
+</div>
+
+<div style={{ background: '#123B2E', color: '#fff', borderRadius: '12px', padding: '20px 24px', margin: '24px 0', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+  <div>
+    <div style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff' }}>💸 New — Custom Fees Request</div>
+    <div style={{ marginTop: '4px', maxWidth: '62ch' }}>
+      <span style={{ color: '#fff' }}>A <strong style={{ color: '#fff' }}>fork of the booking journey</strong> that serves as the working canvas for the <strong style={{ color: '#fff' }}>Custom Fees Request</strong> concept. It starts as an exact duplicate of the journey above (source in <code style={{ color: '#fff' }}>prototype-custom-fees/</code>), kept separate so fee explorations never regress the shipped flows.</span>
+    </div>
+  </div>
+  <a href="https://epprestodesign.github.io/presto-2026/prototype-custom-fees/" target="_blank" rel="noopener"
+     style={{ background: '#fff', color: '#123B2E', fontWeight: 700, padding: '12px 20px', borderRadius: '8px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+    Launch custom fees ↗
+  </a>
+</div>
+
+> **Building the localized prototype or a full user journey?** Read
+> **Getting Started → User Journey & Build Spec** — it specifies every stage of
+> every flow (all three booking modes) and its edge cases. Read **Architecture &
+> Conventions** for the machine-oriented map (task → file, conventions, and the
+> shared components to reuse instead of rebuild). The **interactive prototype**
+> above (source in `prototype/`) is a working reference implementation of all
+> three flows.
+
+---
+
+## The three booking modes (learn these first)
+
+Three modes run through every flow and are named on nearly every component.
+**The concept is stable; the exact prop name/value differs by component** — see
+the cheat-sheet in **Architecture & Conventions** before wiring anything.
+
+| Mode | Plain meaning | Charged? | Seen as |
+| --- | --- | --- | --- |
+| **reserve** | One **single stay** — one hotel, one check-in/out, one guest party. | Yes — credit card at checkout. | `reserve` / `reservation` |
+| **hold** | **Hold a block of rooms** for a group or team — multiple hotels, rooms held **per night** via steppers, optional teams block. | No — the organizer holds; attendees pay later. | `hold` / `group` |
+| **reservations** | **Multiple room reservations** at once — several hotels/rooms booked together, per-hotel guest info, one checkout. | Yes — credit card at checkout. | `reservations` |
+
+The single biggest source of bugs is mode-name drift across components
+(`reserve` vs `reservation`, `hold` vs `group`). The Build Spec and Architecture
+doc both carry the canonical mapping.
+
+---
+
+## How to read this library
+
+The sidebar is organized the way product and design think, not alphabetically.
+It has **two layers**:
+
+**1. Primitives** — the design-system building blocks, all under one
+**Components** parent: **Actions, Forms, Feedback & Status, Layout & Structure,
+Media & Visuals, Typography & Content** (plus **Foundations** for the raw tokens).
+
+**2. Experience flows** — the booking journey, in order:
+
+`Landing Page` → `Browse Hotels` → `Hotel Details` → `Checkout Experience` → `Confirmation` → `Manage Booking`
+
+Every experience flow follows the **same shape**: a top-level **Book Reservation**
+and **Group Block** story (the composed page for that mode) plus a **Components**
+folder holding the pieces that page is built from. **App Shell** holds the chrome
+(Global Nav & Cart, Page Frame) shared by all flows.
+
+---
+
+## Sidebar map
+
+| Category | What it's for |
+| --- | --- |
+| **Getting Started** | Introduction (this page), Architecture & Conventions, User Journey & Build Spec. |
+| **Widgets & Embeds** | R&D on embedding Eventpipe inside partner checkouts. **R&D Overview** covers the Spartan × Eventpipe hotel add-on concepts (A–F), how the embed works, library gaps found and open questions, with links to the hosted prototype. |
+| **Foundations** | Design tokens made visible — colors, palette, type, icons, imagery, spacing, radius, elevation, breakpoints, motion. |
+| **Components → Actions** | Button, Dialog, **Modal** (`DsModal`), **Side Panel** (`DsSidePanel`), Backdrop. |
+| **Components → Forms** | Text/Area/Select/Autocomplete, Checkbox + **Checkbox Tree**, Radio, **Choice Chips**, Switch, Date/Time Picker, Slider, **Range**, Rating, **Quantity Stepper**, **Phone Field**, Transfer List. |
+| **Components → Feedback & Status** | Alert, Banner, Badge, Snackbar, **Toast**, Progress, Skeleton. |
+| **Components → Layout & Structure** | Box, **Card** (`DsCard`), Container, Grid, Stack, Divider, Section Header, List, **List Item**, **Accordion**, Tabs, Table. |
+| **Components → Media & Visuals** | Avatar, Icon, **Image List**, Display Ad, Hero Banner, Rating. |
+| **Components → Typography & Content** | Typography, Chip, **Amenity**, Tooltip. |
+| **App Shell** | **Global Nav & Cart** (Book Reservation / Group Block variants) and **Page Frame** (the nav + content + footer shell). |
+| **Landing Page** | The event landing page (Book Reservation / Group Block) + its Booking Widgets (Core / Teams). |
+| **Browse Hotels** | Discovery — booking widget, filters (+ "All Filters" modal), listing cards, map (search-radius), availability, result states. |
+| **Hotel Details** | The chosen hotel — photo gallery, summary header, detail tabs, room selection (rooms grid + room cards), amenities, policies. |
+| **Checkout Experience** | The stepped checkout — review order, contact/group info, payment, review reservation; Old Designs holds the retired payment dialogs. |
+| **Confirmation** | Post-booking success page (Book Reservation / Group Block). |
+| **Manage Booking** | The account page (pinned last) — profile, communications, payment, security, help. |
+
+---
+
+## Experience flows
+
+### Landing Page
+**The event entry point.** Global nav → hero (event name + dates) → **Booking
+Widget** → event description / who's attending / venue info → display ads →
+footer. `mode` picks the widget + cart behavior: **Group Block** shows the
+**Teams Booking Widget** (registered teams + rooms-needed); **Book Reservation**
+shows the **Core Booking Widget** (travelers + rooms). No cart badge here —
+nothing has been added yet.
+
+### Browse Hotels
+**Discover and choose where to stay.** Search entry, filter, compare on cards or
+a map, and start a booking.
+
+- **Hotel Listing Card** — the core **horizontal** result card (vertical is a
+  legacy variant kept for reference). **Book Reservations** cards CTA **"Choose
+  Your Room"**; **Group Block** cards CTA **"Select Rooms"**. Each has three
+  availability edge cases and an expandable **Availability** panel
+  (`RoomAvailability` — per-room, per-night rooms-left).
+- **Result States** — Full / Partial / No Results / Error / Loading, with firm
+  section separators between availability blocks (matches → doesn't-match-filters
+  → no-availability). Exact copy is in the Build Spec.
+- **Hotel Map** — price-pill markers, clustering, native +/- zoom, and a
+  **search-radius** circle two-way bound to a slider (Google Maps, graceful
+  no-key fallback).
+- **Search & Filters** — one `Filter` component for every filter type (amenities
+  with inline search, room-type chips ordered least→max occupancy, ratings,
+  brands tree, budget with per-night ⇄ total toggle + histogram). An **All
+  Filters** modal consolidates them with a live "Show N results" count.
+- Pagination exists as a primitive (**Components → Footer → Pagination**) but the
+  composed browse pages **no longer paginate** — results render as one list.
+
+### Hotel Details
+**The chosen hotel, end to end.** `HotelDetailPage` composes: optional booking
+widget band → back link → **Photo Gallery** (mosaic + "see all" modal) → sticky
+**Detail Tabs** (Overview / Rooms / Property / Amenities / Policies) → **Summary
+Header** → About → **Rooms** → Amenities → Policies. `roomsFlow` (`reserve` /
+`group`) selects the room card + widget mode.
+
+- **Rooms** — the "Select Your Room" section is a **responsive grid** (not a
+  carousel): up to 3 cards per row, wrapping. Sold-out rooms stay visible and
+  disabled, never removed.
+- **Room Card** — no room-type image, no amenities list. Header (room type / bed
+  config / occupancy) + per-night rooms-left + price + CTA. Sold-out shows a red
+  **"Sold Out"** night, a disabled **"Unavailable"** button, and a note.
+
+### Checkout Experience
+**Turn a selection into a booking.** An Airbnb-style "Confirm and pay" — a
+stepped accordion on the left, a sticky order-summary rail on the right, and a
+minimal centered **"Secure Checkout"** nav (no Manage Booking / cart). A **"Time
+left to book"** timer sits under the price details.
+
+- **Book Reservation** (`reserve`) & **Multiple Room Reservations**
+  (`reservations`): **Contact info → Payment (credit card only) → Review
+  reservation** (trip protection + cancellation + policies). Rail shows the order
+  + Edit reservation / Start over.
+- **Group Block** (`hold`): **Review order → Contact & group info → Review
+  reservation**. **No payment, no protection, no totals/taxes** — nightly cost
+  only. Requires a **Group Block Name**, a **mandatory Organization**, supports
+  **additional emails**, and a **single** policies checkbox for all hotels.
+- **Old Designs** holds the retired Instacart-style payment dialogs (superseded
+  by the inline `PaymentForm`).
+
+### Confirmation
+**The post-booking success page.** Redesigned to match production: a success
+**banner** → **Summary** (booking/group ID, release date, action buttons —
+Book in Block (hold) / Copy Booking Link / Print — meta grid, and per-hotel rooms
+held/booked per night) → per-hotel **Policies**. The older post-booking modules
+(rating, who's-going, calendar, live map, area tips, FAQ, help) were removed.
+
+### Manage Booking
+**The account home** (pinned last). Two-column page: avatar + name + Edit profile
+on the left; section content on the right — **Profile**, **Communications**,
+**Payment methods**, **Security**, **Help & feedback**.
+
+---
+
+## Where to customize
+
+| What you want to change | File |
+| --- | --- |
+| Brand colors, base font, global radius | `src/css/quasar.variables.scss` |
+| Design tokens (palette, roles, spacing, radius, type) | `src/css/ds-palette.scss`, `src/css/ds-color-tokens.scss`, `src/css/tokens.scss` |
+| Per-component overrides & global CSS (incl. `.ds-toast`) | `src/css/app.scss` |
+| Sidebar order / category IA | `.storybook/preview.js` (`storySort`) |
+| Amenities (catalog, filter list, popular set) | `src/lib/amenities.js` (single source of truth) |
+| Hotel imagery | `src/lib/imagery.js` (+ hosted manifest, see `README.md`) |
+| Components | `src/components/` (primitives + `browse/`, `details/`, `checkout/`, `confirmation/`, `managebooking/`) |
+| Stories | `src/stories/<category>/*.stories.js` |
+
+## Workflow
+
+1. `pnpm storybook` → open <a href="http://localhost:6006" target="_blank">localhost:6006</a>.
+2. Edit any file above — the canvas hot-reloads instantly.
+3. Use the **Controls** / **Docs** tabs on each story to QA props and variants.
+4. When happy, `pnpm build-storybook` produces a static site in `storybook-static/`.
+
+## Deploy
+
+The build output is a plain static site. Pushing to `main` deploys to GitHub
+Pages via `.github/workflows/deploy.yml`, together with the prototypes nested
+under the same site: `/prototype/`, `/prototype-mobile/`, `/prototype-custom-fees/`
+and the Widgets & Embeds concepts at `/spartanRace-ticketsocket-ep-demo-v1/`.
+See `README.md` for details.
