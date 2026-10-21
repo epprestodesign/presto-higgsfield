@@ -6,6 +6,10 @@
 //
 // Demo assist: auto-fill (tap any empty field to fill it with sample data) and
 // a "Skip with sample" shortcut on every step.
+//
+// Deep links (flows/deepLink.js): each screen's view state is mirrored into the
+// hash — e.g. #/studio?example=heartland&concept=0&page=browse&panel=ads — so
+// any view can be shared as feedback and reopened exactly ("Copy link").
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { useProjectStore } from '../stores/project.js'
@@ -15,6 +19,7 @@ import { enableDemoAutofill, personaFromSample } from './demoAutofill.js'
 import { getVertical } from '../data/verticals/index.js'
 import { getSampleEvent } from '../data/sampleEvents.js'
 import { conceptsFor } from '../stories/_helpers.js'
+import { parseHash, buildHash, shareUrl } from './deepLink.js'
 import MarketingLanding from '../components/marketing/MarketingLanding.vue'
 import IntakeWizard from '../components/intake/IntakeWizard.vue'
 import BrandDiscovery from '../components/brand-kit/BrandDiscovery.vue'
@@ -52,21 +57,67 @@ const journeyIndex = computed(() => JOURNEY.findIndex((s) => s.id === step.value
 // Full-bleed screens bring their own chrome.
 const showBar = computed(() => ['intake', 'brand', 'concepts', 'publish'].includes(step.value))
 
-// ── Navigation (+ hash sync) ──────────────────────────────────────────────
-const readHash = () => {
-  const h = (window.location.hash || '').replace(/^#\/?/, '')
-  return STEPS.includes(h) ? h : null
+// ── Navigation (+ hash sync / deep links) ─────────────────────────────────
+const params = ref({})
+const readRoute = () => {
+  const r = parseHash(window.location.hash)
+  return STEPS.includes(r.step) ? r : null
 }
-function go(next, { replace = false } = {}) {
+function writeHash(replace = false) {
+  if (!props.syncHash) return
+  const url = buildHash(step.value, params.value)
+  if (url === window.location.hash) return
+  replace ? history.replaceState(null, '', url) : history.pushState(null, '', url)
+}
+// The example + concept follow you between steps; view params belong to a screen.
+const carried = (p) => ({ example: p.example, concept: p.concept })
+function go(next, { replace = false, params: p } = {}) {
   if (!STEPS.includes(next)) return
   step.value = next
-  if (props.syncHash) {
-    const url = `#/${next}`
-    replace ? history.replaceState(null, '', url) : history.pushState(null, '', url)
-  }
+  params.value = p ?? carried(params.value)
+  writeHash(replace)
   window.scrollTo({ top: 0, behavior: 'instant' })
 }
-const onPop = () => { const h = readHash(); if (h) step.value = h }
+/** Update view params in place (no new history entry). */
+function setParams(patch) {
+  params.value = { ...params.value, ...patch }
+  writeHash(true)
+}
+
+/** Load the example a link names (+ its concepts, selecting `concept`). */
+const loadedExample = ref('')
+function applyExample(p) {
+  if (!p.example || !getSampleEvent(p.example)) return false
+  if (loadedExample.value !== p.example || !project.project.concepts.items.length) {
+    project.loadSample(p.example)
+    project.setConcepts(conceptsFor(project.project))
+    loadedExample.value = p.example
+  }
+  const items = project.project.concepts.items
+  const i = Math.min(Number(p.concept || 0), items.length - 1)
+  if (items[i] && project.project.concepts.selectedId !== items[i].id) project.selectConcept(items[i].id)
+  return true
+}
+const onPop = () => {
+  const r = readRoute()
+  if (!r) return
+  applyExample(r.params)
+  step.value = r.step
+  params.value = r.params
+}
+
+// Selected concept → concept=N, so concept-specific feedback links reopen it.
+watch(() => project.project.concepts.selectedId, (id) => {
+  if (!['concepts', 'studio', 'publish'].includes(step.value)) return
+  const i = project.project.concepts.items.findIndex((c) => c.id === id)
+  setParams({ concept: i >= 0 ? String(i) : '' })
+})
+
+async function copyLink() {
+  const url = shareUrl(buildHash(step.value, params.value))
+  try { await navigator.clipboard.writeText(url) } catch { window.prompt('Copy this link', url) }
+  $q.notify({ message: 'Link to this view copied', caption: url.replace(/^https?:\/\//, ''), icon: 'link', color: 'dark', timeout: 2200, position: 'top' })
+}
 
 // ── Demo assist ───────────────────────────────────────────────────────────
 const autofillOn = ref(props.autofill)
@@ -85,13 +136,14 @@ watch(autofillOn, toggleAutofill)
 /** Jump ahead with a complete sample project (for "just show me" taps). */
 function useSample({ key = 'heartland', to = 'concepts', withConcepts = false } = {}) {
   project.loadSample(key)
+  loadedExample.value = key
   if (withConcepts) {
     // Concept 0 is the Presto Banner (Brand Signature) on the example's own banner.
     const items = conceptsFor(project.project)
     project.setConcepts(items)
     project.selectConcept(items[0].id)
   }
-  go(to)
+  go(to, { params: { example: key, concept: withConcepts ? '0' : '' } })
 }
 function skipStep() {
   if (step.value === 'intake') { if (!project.project.event.name) project.loadSample('heartland'); go('brand') }
@@ -110,7 +162,8 @@ function skipStep() {
 function startNew() {
   project.reset()
   project.persistence.clear?.()
-  go('intake')
+  loadedExample.value = ''
+  go('intake', { params: {} })
 }
 function onFix(target) {
   const map = { intake: 'intake', brand: 'brand', concepts: 'concepts', studio: 'studio' }
@@ -119,7 +172,8 @@ function onFix(target) {
 function openProject(id) {
   const p = session.projects.find((x) => x.id === id)
   if (p) project.load(JSON.parse(JSON.stringify(p)))
-  go('studio')
+  loadedExample.value = ''
+  go('studio', { params: {} })
 }
 const sponsorsOpen = ref(false)
 
@@ -128,10 +182,15 @@ onMounted(async () => {
   if (props.syncHash) {
     window.addEventListener('popstate', onPop)
     const restored = await project.restoreDraft().catch(() => false)
-    const h = readHash()
-    // Deep links into the journey need a project; fall back to home otherwise.
-    if (h && (restored || ['home', 'intake', 'dashboard'].includes(h))) step.value = h
-    else go(step.value, { replace: true })
+    const r = readRoute()
+    // A link naming an example loads it (overriding the draft); other deep
+    // links into the journey need a saved project, else fall back to home.
+    const hasExample = r ? applyExample(r.params) : false
+    if (r && (hasExample || restored || ['home', 'intake', 'dashboard'].includes(r.step))) {
+      step.value = r.step
+      params.value = r.params
+      writeHash(true)
+    } else go(step.value, { replace: true })
   }
 })
 onBeforeUnmount(() => { disposeAutofill?.(); window.removeEventListener('popstate', onPop) })
@@ -157,6 +216,9 @@ onBeforeUnmount(() => { disposeAutofill?.(); window.removeEventListener('popstat
       >
         <q-icon name="auto_fix_high" size="16px" /><span>Fill {{ autofillOn ? 'on' : 'off' }}</span>
       </button>
+      <button v-if="syncHash" type="button" class="fa__link bs-focusable" aria-label="Copy link to this view" title="Copy link to this view (for feedback)" @click="copyLink">
+        <q-icon name="link" size="18px" />
+      </button>
       <button v-if="['intake', 'brand', 'concepts'].includes(step)" type="button" class="fa__skip bs-focusable" @click="skipStep">
         Skip <q-icon name="fast_forward" size="16px" />
       </button>
@@ -165,7 +227,10 @@ onBeforeUnmount(() => { disposeAutofill?.(); window.removeEventListener('popstat
     <main class="fa__screen">
       <marketing-landing v-if="step === 'home'" @start="startNew" @sample="(key) => useSample({ key: key || 'heartland', to: 'studio', withConcepts: true })" @signin="go('dashboard')" />
 
-      <intake-wizard v-else-if="step === 'intake'" @complete="go('brand')" @cancel="go('home')" />
+      <intake-wizard
+        v-else-if="step === 'intake'" :initial-step="Math.max(0, Number(params.step || 1) - 1)"
+        @step="(n) => setParams({ step: String(n + 1) })" @complete="go('brand')" @cancel="go('home')"
+      />
 
       <brand-discovery v-else-if="step === 'brand'" @next="go('concepts')" @back="go('intake')" />
 
@@ -173,6 +238,11 @@ onBeforeUnmount(() => { disposeAutofill?.(); window.removeEventListener('popstat
 
       <studio-editor
         v-else-if="step === 'studio'"
+        :view="params"
+        @update:view="setParams"
+        @example="(key) => { loadedExample = key; setParams({ example: key, concept: '' }) }"
+        :show-copy-link="syncHash"
+        @copy-link="copyLink"
         @publish="go('publish')" @back="go('concepts')" @change-concept="go('concepts')" @edit-sponsors="sponsorsOpen = true"
       />
 
@@ -220,6 +290,7 @@ onBeforeUnmount(() => { disposeAutofill?.(); window.removeEventListener('popstat
 
 .fa__fill { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--bs-accent-line); background: var(--bs-accent-soft); color: var(--bs-accent); border-radius: 999px; padding: 6px 10px; min-height: 32px; font: 700 0.8125rem var(--bs-font); cursor: pointer; white-space: nowrap; }
 .fa__fill[aria-pressed='false'] { background: var(--bs-surface); color: var(--bs-ink-soft); border-color: var(--bs-line); }
+.fa__link { display: inline-grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--bs-line); background: var(--bs-surface); border-radius: 999px; color: var(--bs-ink); cursor: pointer; flex: none; }
 .fa__sponsors { width: min(960px, 100vw); max-width: 100vw; }
 
 /* Phones: compact bar — dots only, current label shown. */

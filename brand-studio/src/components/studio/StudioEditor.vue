@@ -27,8 +27,12 @@ const props = defineProps({
   autosave: { type: Boolean, default: true },
   autosaveMs: { type: Number, default: 1500 },
   previewSrc: { type: String, default: '' }, // override the Preview Host URL (future app: /preview)
+  // Deep-link view state (flows/deepLink.js): { page, device, panel, dialog, pdevice }.
+  // Wins over the initial* props; every change is emitted as update:view.
+  view: { type: Object, default: null },
+  showCopyLink: { type: Boolean, default: false },
 })
-const emit = defineEmits(['publish', 'back', 'change-concept', 'edit-sponsors'])
+const emit = defineEmits(['publish', 'back', 'change-concept', 'edit-sponsors', 'update:view', 'example', 'copy-link'])
 
 const store = useProjectStore()
 const history = useHistory(store)
@@ -40,10 +44,11 @@ const onNarrow = (e) => (narrow.value = e.matches)
 onMounted(() => narrowQuery?.addEventListener('change', onNarrow))
 onBeforeUnmount(() => narrowQuery?.removeEventListener('change', onNarrow))
 
-const page = ref(props.initialPage)
-const device = ref(props.initialDevice || (narrow.value ? 'mobile' : 'desktop'))
-const tab = ref(props.initialTab)
-const sheetOpen = ref(props.initialSheetOpen)
+const page = ref(props.view?.page || props.initialPage)
+const device = ref(props.view?.device || props.initialDevice || (narrow.value ? 'mobile' : 'desktop'))
+const tab = ref(props.view?.panel || props.initialTab)
+// A deep link naming a panel opens the bottom sheet on phones.
+const sheetOpen = ref(props.initialSheetOpen || (!!props.view?.panel && narrow.value))
 
 // ── Industry examples (data/verticals) ───────────────────────────────────
 const examplesOpen = ref(false)
@@ -52,6 +57,7 @@ function loadExample(key) {
   store.loadSample(key)
   exampleKey.value = key
   page.value = 'landing'
+  emit('example', key)
 }
 
 const pages = computed(() => ['landing', 'browse', 'details', 'checkout', 'confirmation'].filter((id) => store.pages[id]?.enabled))
@@ -110,6 +116,34 @@ watch([previewOpen, previewDevice], ([open, d]) => {
 })
 
 const rename = (name) => store.updateEvent({ name })
+
+// ── Deep link (view ⇄ URL) ───────────────────────────────────────────────
+if (props.view?.dialog === 'examples') examplesOpen.value = true
+if (props.view?.dialog === 'export') exportOpen.value = true
+if (props.view?.dialog === 'preview') {
+  previewDevice.value = props.view.pdevice || (device.value === 'mobile' ? 'mobile' : 'desktop')
+  previewOpen.value = true
+}
+const dialog = computed(() => (previewOpen.value ? 'preview' : exportOpen.value ? 'export' : examplesOpen.value ? 'examples' : ''))
+const currentView = computed(() => ({
+  page: page.value,
+  device: device.value,
+  panel: tab.value,
+  dialog: dialog.value,
+  pdevice: previewOpen.value ? previewDevice.value : '',
+}))
+watch(currentView, (v) => emit('update:view', v), { immediate: true })
+// Back/forward between links: apply the incoming view.
+watch(() => props.view, (v) => {
+  if (!v) return
+  if (v.page && v.page !== page.value) page.value = v.page
+  if (v.device && v.device !== device.value) device.value = v.device
+  if (v.panel && v.panel !== tab.value) tab.value = v.panel
+  examplesOpen.value = v.dialog === 'examples'
+  exportOpen.value = v.dialog === 'export'
+  previewOpen.value = v.dialog === 'preview'
+  if (v.dialog === 'preview' && v.pdevice) previewDevice.value = v.pdevice
+}, { deep: true })
 </script>
 
 <template>
@@ -136,6 +170,8 @@ const rename = (name) => store.updateEvent({ name })
       @publish="emit('publish')"
       @examples="examplesOpen = true"
       @export="exportOpen = true"
+      :can-share="showCopyLink"
+      @copy-link="emit('copy-link')"
     />
 
     <div class="sed__body">
@@ -149,7 +185,7 @@ const rename = (name) => store.updateEvent({ name })
         @focus-page="focusPage"
       />
       <main class="sed__canvas" aria-label="Live preview">
-        <DevicePreview v-model:page="page" :device="device" :src="previewSrc" :padding="narrow ? 14 : 28" />
+        <DevicePreview v-model:page="page" :device="device" :src="previewSrc" :padding="narrow ? 14 : 28" backdrop="lavender" />
       </main>
     </div>
 
@@ -174,7 +210,7 @@ const rename = (name) => store.updateEvent({ name })
           <q-btn flat round icon="close" aria-label="Close preview" class="sed__fp-close" v-close-popup />
         </header>
         <div class="sed__fp-body">
-          <DevicePreview v-model:page="page" :device="previewDevice" :src="previewSrc" :padding="20" />
+          <DevicePreview v-model:page="page" :device="previewDevice" :src="previewSrc" :padding="20" backdrop="lavender" />
         </div>
       </div>
     </q-dialog>

@@ -5,7 +5,7 @@
 // the right (BrandHero) and the autosaved draft are always current. Fields
 // validate on blur and on Continue; Continue with errors shows an error
 // summary and moves focus to the first invalid field.
-import { ref, reactive, computed, nextTick, useId } from 'vue'
+import { ref, reactive, computed, nextTick, useId, watch } from 'vue'
 import { useProjectStore } from '../../stores/project.js'
 import { EVENT_CATEGORIES, validateEvent, validateOrganizer, normalizeWebsiteUrl, formatDateRange, locationLabel } from '../../models/event.js'
 import { verticalsForCategory, getVertical } from '../../data/verticals/index.js'
@@ -21,7 +21,7 @@ const props = defineProps({
   // Show every error immediately (as if Continue had been pressed).
   showErrors: { type: Boolean, default: false },
 })
-const emit = defineEmits(['complete', 'cancel'])
+const emit = defineEmits(['complete', 'cancel', 'step'])
 
 const project = useProjectStore()
 const ev = computed(() => project.event)
@@ -43,6 +43,8 @@ const LABELS = {
 const ATTENDANCE = ['Under 100', '100–500', '500–1,000', '1,000–5,000', '5,000+']
 
 const step = ref(Math.min(Math.max(props.initialStep, 0), STEPS.length - 1))
+// Deep links (#/intake?step=N) follow the current step; 0-based here.
+watch(step, (n) => emit('step', n), { immediate: true })
 const current = computed(() => STEPS[step.value])
 const touched = reactive({})
 const attempted = reactive(Object.fromEntries(STEPS.map((s) => [s.id, props.showErrors])))

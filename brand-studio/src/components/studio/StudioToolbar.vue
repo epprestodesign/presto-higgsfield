@@ -21,8 +21,10 @@ const props = defineProps({
   dirty: { type: Boolean, default: false },
   // Narrow screens: page + device move to a second row; labels collapse to icons.
   compact: { type: Boolean, default: false },
+  // Prototype: show "Copy link to this view" (deep link for feedback).
+  canShare: { type: Boolean, default: false },
 })
-const emit = defineEmits(['back', 'rename', 'update:page', 'update:device', 'undo', 'redo', 'save', 'preview', 'publish', 'examples', 'export'])
+const emit = defineEmits(['back', 'rename', 'update:page', 'update:device', 'undo', 'redo', 'save', 'preview', 'publish', 'examples', 'export', 'copy-link'])
 
 const DEVICES = [
   { id: 'desktop', icon: 'desktop_windows', label: 'Desktop', width: 1280 },
@@ -99,6 +101,9 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
           <span v-if="!compact" class="stb__status" :class="`stb__status--${status}`">
             <q-icon :name="statusMeta.icon" size="14px" /> {{ statusMeta.label }}
           </span>
+          <q-btn v-if="canShare" flat round dense icon="link" class="stb__icon" aria-label="Copy link to this view" data-copy-link @click="emit('copy-link')">
+            <q-tooltip>Copy link to this view (for feedback)</q-tooltip>
+          </q-btn>
         </div>
       </div>
 
@@ -145,7 +150,7 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
         </template>
         <q-btn
           flat no-caps no-wrap class="bs-btn stb__btn stb__examples" icon="auto_awesome_mosaic"
-          :label="compact ? undefined : 'Examples'" :aria-label="compact ? 'Examples by industry' : undefined"
+          :label="compact ? undefined : 'Examples'" aria-label="Examples by industry"
           @click="emit('examples')"
         >
           <q-tooltip>Start from an industry example</q-tooltip>
@@ -160,7 +165,7 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
           class="bs-btn bs-btn--ghost stb__btn stb__export"
           icon="download"
           :label="compact ? undefined : 'Export'"
-          :aria-label="compact ? 'Export assets' : undefined"
+          aria-label="Export assets"
           @click="emit('export')"
         >
           <q-tooltip>Preview and download your banners and ads as a ZIP</q-tooltip>
@@ -251,4 +256,11 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
 .stb__page-select { flex: 1; min-width: 0; }
 .stb__page-select :deep(.q-field__control) { min-height: 36px; border-radius: var(--bs-radius-sm); }
 @media (prefers-reduced-motion: reduce) { .stb__spin { animation: none; } }
+/* Mid-width desktops: Examples / Export collapse to icons and the save state to
+   its icon, so the centred page + device switcher never collides. */
+@media (max-width: 1599px) {
+  .stb__examples :deep(.block), .stb__export :deep(.block) { display: none; }
+  .stb__examples :deep(.q-icon), .stb__export :deep(.q-icon) { margin: 0; }
+}
+@media (max-width: 1439px) { .stb__save-label { display: none; } }
 </style>

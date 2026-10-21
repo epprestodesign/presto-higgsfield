@@ -92,8 +92,10 @@ function setLetterSpacing(ctx, px) {
  *   size                  'landing' | 'compact' (BrandHero size)
  *   withCopy              false → background only (upload-ready for Presto)
  *   scale                 pixel density (1 = exact size)
+ *   logoSrc               draw this logo instead of the kit's (contrast checks)
+ * The returned canvas carries `logoRect` ({ x, y, w, h }) when a logo was drawn.
  */
-export async function renderBanner(hero, { width = 1440, height = 400, size = 'landing', withCopy = true, scale = 1 } = {}) {
+export async function renderBanner(hero, { width = 1440, height = 400, size = 'landing', withCopy = true, scale = 1, logoSrc: logoOverride } = {}) {
   const { canvas, ctx } = canvasOf(width, height, scale)
   const concept = hero.concept || {}
   const t = concept.treatment || {}
@@ -173,7 +175,7 @@ export async function renderBanner(hero, { width = 1440, height = 400, size = 'l
   const tagFont = `400 ${tagPx}px ${bodyFamily}`
   await Promise.all([ensureFont(headFont), ensureFont(metaFont), ensureFont(tagFont)])
 
-  const logoSrc = hero.showLogo === false ? '' : hero.brandKit?.logoOnDark?.src || hero.brandKit?.logo?.src || ''
+  const logoSrc = hero.showLogo === false ? '' : logoOverride || hero.brandKit?.logoOnDark?.src || hero.brandKit?.logo?.src || ''
   const logo = await loadImage(logoSrc)
   const meta = [hero.showDates !== false && hero.dates, hero.location].filter(Boolean).join('  ·  ').toUpperCase()
   const tagline = compact ? '' : hero.tagline || ''
@@ -184,7 +186,18 @@ export async function renderBanner(hero, { width = 1440, height = 400, size = 'l
   const tagLines = tagline ? wrap(ctx, tagline, textMax, 2) : []
 
   const blocks = []
-  if (logo) blocks.push({ h: logoH, draw: (y) => drawContain(ctx, logo, (W - Math.min(W * 0.6, compact ? 180 : W * 0.6)) / 2, y, Math.min(W * 0.6, compact ? 180 : W * 0.6), logoH), gapAfter: gap })
+  if (logo) {
+    const boxW = Math.min(W * 0.6, compact ? 180 : W * 0.6)
+    const boxX = (W - boxW) / 2
+    blocks.push({
+      h: logoH,
+      gapAfter: gap,
+      draw: (y) => {
+        const r = drawContain(ctx, logo, boxX, y, boxW, logoH)
+        canvas.logoRect = { x: boxX + (boxW - r.w) / 2, y: y + (logoH - r.h) / 2, w: r.w, h: r.h }
+      },
+    })
+  }
   const lh = headPx * 1.05
   blocks.push({ h: lh * headLines.length, font: headFont, lines: headLines, lineH: lh, spacing: -0.01 * headPx, gapAfter: textGap })
   if (meta) blocks.push({ h: metaPx * 1.2, font: metaFont, lines: [meta], lineH: metaPx * 1.2, spacing: 0.06 * metaPx, alpha: 0.9, gapAfter: textGap })

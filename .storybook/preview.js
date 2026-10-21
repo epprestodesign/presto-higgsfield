@@ -96,7 +96,7 @@ const preview = {
             'Higgsfield', ['Setup Guide', 'Connection', 'Banner Generator'],
             'Verticals', ['Gallery', 'Gallery · Mobile', 'All heroes'],
             'Foundations', ['Studio Tokens', 'Brand Theme Engine', 'Typeface Tester', 'Typeface Tester · Mobile', 'Imagery & Logos'],
-            'Marketing Site', ['Option A - Landing Page', 'Option B - Reasons to Travel', 'Option C - Templates', 'Option D - For Organizers', 'Sections'],
+            'Marketing Site', ['Option A - Landing Page', 'Option B - Reasons to Travel', 'Option C - Templates', 'Option D - For Organizers', 'Option E - Group Booking', 'Sections'],
             'Onboarding', ['Event Intake', 'Brand Discovery'],
             'Creative Concepts', ['Brand Hero', 'Directions', 'Concept Gallery', 'Compare'],
             'Studio Editor', ['Editor', 'Panels', 'Toolbar', 'Device Preview'],
