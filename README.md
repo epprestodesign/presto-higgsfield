@@ -10,8 +10,8 @@ Built with **Vue 3 + Quasar 2 + Vite + Pinia**, documented in **Storybook 10.6.3
 
 | | Live (GitHub Pages) | Local |
 |---|---|---|
-| Storybook | https://girardjustin1.github.io/presto-higgsfield/ | http://localhost:6006 (`pnpm storybook`) |
-| Mobile prototype | https://girardjustin1.github.io/presto-higgsfield/prototype/ | http://localhost:6210 (`pnpm prototype`) |
+| Storybook | https://epprestodesign.github.io/presto-higgsfield/ | http://localhost:6006 (`pnpm storybook`) |
+| Mobile prototype | https://epprestodesign.github.io/presto-higgsfield/prototype/ | http://localhost:6210 (`pnpm prototype`) |
 
 The **prototype** is the whole journey as a phone-first app: marketing → event intake → brand discovery → AI concepts → studio editor → publish → published demo. Tap-to-fill (top bar) fills any empty field with sample data, and Skip jumps a step, so you can walk it without typing.
 
