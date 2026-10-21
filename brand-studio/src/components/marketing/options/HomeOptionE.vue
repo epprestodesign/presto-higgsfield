@@ -9,7 +9,7 @@
 // Steps are an accordion with a per-step mock (OptionESteps); the footer is
 // switchable between concepts (OptionEFooter `footer` prop).
 // Emits: start({ websiteUrl? }), sample(key), signin.
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import BrandHero from '../../brand/BrandHero.vue'
 import OptionESteps from './OptionESteps.vue'
 import OptionEFooter from './OptionEFooter.vue'
@@ -22,10 +22,10 @@ import epLogo from '@lib/assets/eventpipe logos/eventpipe-logo.svg'
 const props = defineProps({
   // Footer concept (OptionEFooter: classic | brands | cascade | skyline | spectrum); B · cascade was chosen.
   footer: { type: String, default: 'cascade' },
-  // Demo prefill for the website field on tap (host only, e.g. heartlandcup.example.com).
-  exampleSite: { type: String, default: 'heartlandcup.example.com' },
+  // Demo example (sample key) the website field prefills and the result card shows.
+  example: { type: String, default: 'heartland' },
 })
-const emit = defineEmits(['start', 'sample', 'signin'])
+const emit = defineEmits(['start', 'sample', 'signin', 'example'])
 
 const NAV = [
   { label: 'How it works', href: '#oe-how' },
@@ -56,14 +56,30 @@ const submitSite = () => emit('start', { websiteUrl: website.value.trim() })
 // Demo: tapping the empty field fills the example's website (selected, so
 // typing replaces it); "Brand my page" then carries that brand through.
 function prefillSite(e) {
-  if (website.value || !props.exampleSite) return
-  website.value = props.exampleSite
+  if (website.value) return
+  website.value = siteFor(active.value)
   requestAnimationFrame(() => e.target.select?.())
 }
 
+// Demo switcher: which example brand the field + result card use.
+const DEMOS = [
+  { key: 'heartland', label: 'Soccer tournament', icon: 'sports_soccer' },
+  { key: 'wedding', label: 'Wedding', icon: 'favorite' },
+]
+const active = ref(props.example || 'heartland')
+watch(() => props.example, (k) => { if (k) active.value = k })
+const siteFor = (key) => {
+  try { return new URL(sampleProject(key).event.websiteUrl).hostname } catch { return '' }
+}
+function pickDemo(key) {
+  active.value = key
+  website.value = siteFor(key)
+  emit('example', key)
+}
+
 // Example result under the hero field.
-const demo = sampleProject('heartland')
-const demoHero = heroProps(demo, { size: 'card' })
+const demo = computed(() => sampleProject(active.value) || sampleProject('heartland'))
+const demoHero = computed(() => heroProps(demo.value, { size: 'card' }))
 
 // Fictional organizers (vertical catalog examples) for the trust strip + cards.
 const orgs = VERTICAL_EXAMPLES.map((v) => {
@@ -168,10 +184,18 @@ function onAnchor(e) {
             </label>
             <q-btn type="submit" unelevated no-caps rounded class="oe__btn oe__btn--dark oe__btn--go" icon-right="arrow_forward" label="Brand my page" />
           </form>
+          <div class="oe__demos" role="radiogroup" aria-label="Demo example">
+            <span>Demo with</span>
+            <button
+              v-for="d in DEMOS" :key="d.key" type="button" role="radio" class="oe__demo bs-focusable"
+              :class="{ 'is-on': active === d.key }" :aria-checked="active === d.key" :data-demo="d.key" @click="pickDemo(d.key)"
+            ><q-icon :name="d.icon" size="16px" /> {{ d.label }}</button>
+            <a class="oe__demo oe__demo--more" href="#oe-industries">More examples</a>
+          </div>
           <button type="button" class="oe__scratch bs-focusable" @click="emit('start', {})">or start from scratch</button>
 
           <figure class="oe__result">
-            <figcaption><q-icon name="auto_awesome" size="14px" /> What you’ll get · <strong>book.eventpipe.com/heartland</strong></figcaption>
+            <figcaption><q-icon name="auto_awesome" size="14px" /> What you’ll get · <strong>book.eventpipe.com/{{ demo.publishing.slug }}</strong></figcaption>
             <brand-hero v-bind="demoHero" :heading-level="2" class="oe__result-hero" />
           </figure>
         </div>
@@ -311,6 +335,12 @@ function onAnchor(e) {
 .oe__field-label input { border: 0; outline: 0; padding: 0; font: 400 1rem var(--oe-head); color: var(--oe-ink); background: transparent; width: 100%; }
 .oe__field:focus-within { box-shadow: 0 10px 30px rgb(15 23 42 / 0.12), 0 0 0 2px var(--oe-accent); }
 .oe__btn--go { flex: none; min-height: 48px; }
+.oe__demos { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; font-size: 0.8125rem; color: var(--oe-soft); }
+.oe__demos > span { font-weight: 600; }
+.oe__demo { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--oe-line); background: #fff; font: 600 0.8125rem var(--oe-head); color: var(--oe-ink); cursor: pointer; text-decoration: none; }
+.oe__demo .q-icon { color: var(--oe-accent); }
+.oe__demo.is-on { border-color: var(--oe-accent); background: color-mix(in srgb, var(--oe-accent) 8%, #fff); box-shadow: 0 0 0 1px var(--oe-accent); }
+.oe__demo--more { color: var(--oe-soft); }
 .oe__scratch { border: 0; background: none; padding: 2px 4px; font: 600 0.8125rem var(--oe-head); color: var(--oe-soft); text-decoration: underline; cursor: pointer; }
 .oe__result { margin: 10px 0 0; width: min(460px, 100%); padding: 10px; border-radius: 18px; background: #fff; box-shadow: 0 12px 34px rgb(15 23 42 / 0.12); display: grid; gap: 8px; }
 .oe__result figcaption { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--oe-soft); text-align: left; }

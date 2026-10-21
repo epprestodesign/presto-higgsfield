@@ -161,9 +161,7 @@ function skipStep() {
 }
 
 // ── Screen events ─────────────────────────────────────────────────────────
-// The example's website for the homepage prefill: the ?example= one, else Heartland.
 const hostOf = (url) => { try { return new URL(url).hostname } catch { return '' } }
-const exampleSite = computed(() => hostOf(getSampleEvent(params.value.example || 'heartland')?.event?.websiteUrl || '') || 'heartlandcup.example.com')
 /** The example whose site this is (for a brand that stays consistent end to end). */
 function exampleForSite(url) {
   const host = hostOf(url)
@@ -249,7 +247,7 @@ onBeforeUnmount(() => { disposeAutofill?.(); window.removeEventListener('popstat
     </header>
 
     <main class="fa__screen">
-      <home-option-e v-if="step === 'home'" :example-site="exampleSite" @start="startNew" @sample="(key) => useSample({ key: key || 'heartland', to: 'studio', withConcepts: true })" @signin="go('dashboard')" />
+      <home-option-e v-if="step === 'home'" :example="params.example || 'heartland'" @example="(key) => setParams({ example: key, concept: '' })" @start="startNew" @sample="(key) => useSample({ key: key || 'heartland', to: 'studio', withConcepts: true })" @signin="go('dashboard')" />
 
       <intake-wizard
         v-else-if="step === 'intake'" :initial-step="Math.max(0, Number(params.step || 1) - 1)"
