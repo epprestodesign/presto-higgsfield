@@ -6,29 +6,41 @@ import { shade, tint, mix } from '../../theme/color.js'
 import { getDirection } from '../../models/brandKit.js'
 import { IMAGERY, imagesTagged } from '../../assets/imagery/index.js'
 
-// Two templates per direction → the six-concept gallery.
+// Two templates per direction → the six-concept gallery. Every concept uses
+// the one Presto layout (logo + copy centered over a full-bleed background,
+// matching presto-2026); directions differ only in the background treatment.
+//   image: 'photo' | 'abstract' | null (solid brand field)
 const TEMPLATES = {
   signature: [
-    { title: 'Presto Banner', layout: 'presto', overlay: 'dim', pattern: 'none', useImage: true, rationale: 'The Presto standard: a minimal, system-safe background with your logo and headline centered on top.' },
-    { title: 'Brand Split', layout: 'split', overlay: 'tint', pattern: 'lines', useImage: true, rationale: 'A brand-color panel carries the headline while a tinted photo hints at the event.' },
+    { title: 'Presto Banner', layout: 'presto', image: 'photo', overlay: 'dim', pattern: 'none', rationale: 'The Presto standard: a minimal, system-safe background with your logo and headline centered on top.' },
+    { title: 'Brand Field', layout: 'presto', image: null, overlay: 'none', pattern: 'dots', rationale: 'A solid field in your primary color with a quiet dot texture at the edges — no photo needed.' },
   ],
   energy: [
-    { title: 'Matchday Band', layout: 'band', overlay: 'duotone', pattern: 'chevrons', useImage: true, rationale: 'High-contrast band with forward chevrons and a duotone action photo — urgency without clutter.' },
-    { title: 'Breakaway Angles', layout: 'angled', overlay: 'duotone', pattern: 'speed', useImage: true, rationale: 'Diagonal cuts in your secondary and accent colors give the page motion and promo energy.' },
+    { title: 'Duotone Photo', layout: 'presto', image: 'photo', overlay: 'duotone', pattern: 'none', rationale: 'Your event photo pushed into a brand-color duotone — bold and on-identity, copy still centered.' },
+    { title: 'Abstract Brand Art', layout: 'presto', image: 'abstract', overlay: 'none', pattern: 'none', rationale: 'Generated abstract artwork in your palette: energetic texture that never fights the logo.' },
   ],
   premium: [
-    { title: 'Editorial Full-Bleed', layout: 'editorial', overlay: 'scrim', pattern: 'none', useImage: true, serif: true, rationale: 'Full-bleed photography with a soft scrim and refined serif headline — magazine calm.' },
-    { title: 'Gallery Frame', layout: 'framed', overlay: 'none', pattern: 'none', useImage: true, serif: true, rationale: 'A framed photograph beside generous whitespace; the type does the talking.' },
+    { title: 'Soft Focus', layout: 'presto', image: 'photo', overlay: 'soft', pattern: 'none', serif: true, rationale: 'A softly defocused photo under a refined serif headline — calm, atmospheric, easy to read.' },
+    { title: 'Brand Tint', layout: 'presto', image: 'photo', overlay: 'tint', pattern: 'none', serif: true, rationale: 'Photography washed in your primary color for a cohesive, premium feel.' },
   ],
 }
 
-const CATEGORY_TAG = { sports: 'sports', conference: 'conference', wedding: 'wedding', festival: 'city', other: 'city' }
+// Fallback image sets (Higgsfield-generated) when a brand kit has no imagery:
+// the event's vertical first, else a representative sample per event type.
+const CATEGORY_SET = { sports: 'heartland', conference: 'fintech', wedding: 'wedding', festival: 'music-festival', other: 'camps' }
+const isAbstract = (a) => a.kind === 'pattern' || /abstract/.test(a.id)
 
-function pickImage(brandKit, event, offset) {
-  const own = (brandKit.imagery || []).filter((a) => a.kind !== 'logo')
+function pickImage(brandKit, event, offset, prefer = 'photo') {
+  const usable = (list) => {
+    const noLogos = list.filter((a) => a.kind !== 'logo')
+    const preferred = noLogos.filter((a) => (prefer === 'abstract' ? isAbstract(a) : !isAbstract(a)))
+    return preferred.length ? preferred : noLogos
+  }
+  const own = usable(brandKit.imagery || [])
   if (own.length) return own[offset % own.length]
-  const pool = imagesTagged(CATEGORY_TAG[event?.category] || 'city')
-  const list = pool.length ? pool : IMAGERY
+  const generated = IMAGERY.filter((a) => a.generated)
+  const set = usable(imagesTagged(event?.vertical || CATEGORY_SET[event?.category] || 'heartland').filter((a) => a.generated))
+  const list = set.length ? set : usable(generated.length ? generated : IMAGERY)
   return list[offset % list.length]
 }
 
@@ -36,24 +48,20 @@ const SERIF_FALLBACK = 'playfair'
 
 function treatmentFor(tpl, palette, image, variant) {
   const shift = (variant % 3) * 0.08
+  const art = tpl.image && image ? image : null
   const t = {
-    background: palette.primary,
-    foreground: palette.onPrimary,
+    background: art ? shade(palette.primary, 0.3 + shift) : variant % 2 ? mix(palette.primary, palette.secondary, 0.2) : palette.primary,
+    foreground: art ? '#FFFFFF' : palette.onPrimary,
     accent: palette.secondary,
     highlight: palette.accent,
-    imageId: tpl.useImage && image ? image.id : null,
-    imageSrc: tpl.useImage && image ? image.src : null,
-    imageAlt: tpl.useImage && image ? image.alt : '',
-    overlay: tpl.overlay,
-    pattern: tpl.layout === 'presto' && !(tpl.useImage && image) ? 'dots' : tpl.pattern,
+    imageId: art?.id || null,
+    imageSrc: art?.src || null,
+    imageAlt: art?.alt || '',
+    // Abstracts were generated with room for the logo; a photo always gets an overlay.
+    overlay: !art ? 'none' : tpl.overlay !== 'none' ? tpl.overlay : isAbstract(art) ? 'none' : 'dim',
+    pattern: art ? tpl.pattern : 'dots',
   }
-  if (tpl.layout === 'band') t.background = shade(palette.primary, 0.35 + shift)
-  if (tpl.layout === 'angled') t.background = mix(palette.primary, palette.secondary, 0.15 + shift)
-  if (tpl.layout === 'framed') {
-    t.background = tint(palette.primary, 0.94)
-    t.foreground = palette.ink
-  }
-  if (variant % 2 === 1 && tpl.layout !== 'framed') {
+  if (variant % 2 === 1) {
     // Variation flips accent/highlight for a visibly different take.
     ;[t.accent, t.highlight] = [t.highlight, t.accent]
   }
@@ -68,7 +76,7 @@ export function artworkPrompt({ direction, layout, event, brandKit, image }) {
   return [
     `Wide website hero background for a ${event?.category || 'event'} booking page (${event?.name || 'event'}, ${event?.city || ''}).`,
     `Creative direction: ${d.name} — ${d.summary}`,
-    `Layout: ${layout}; leave clear negative space for an HTML headline and logo.`,
+    `Layout: ${layout}; keep the center calm and uncluttered for a centered HTML logo and headline.`,
     `Palette: ${p.primary}, ${p.secondary}, ${p.accent}.`,
     keywords && `Mood: ${keywords}.`,
     image && `Reference photo: ${image.alt}.`,
@@ -80,7 +88,7 @@ export function buildConcept({ direction, templateIndex = 0, brandKit, event, va
   const tpl = TEMPLATES[direction][templateIndex % TEMPLATES[direction].length]
   const palette = resolvePalette(brandKit.colors)
   // Variations step through the photo pool so each one is visibly different.
-  const image = pickImage(brandKit, event, templateIndex + variant * 2 + (direction === 'premium' ? 1 : 0))
+  const image = tpl.image ? pickImage(brandKit, event, templateIndex + variant * 2 + (direction === 'premium' ? 1 : 0), tpl.image) : null
   const seed = Math.floor(Math.random() * 1e6)
   const headingFont = tpl.serif && !/serif|playfair|lora|dm-serif/.test(brandKit.typography?.heading || '') ? SERIF_FALLBACK : brandKit.typography?.heading
   return {

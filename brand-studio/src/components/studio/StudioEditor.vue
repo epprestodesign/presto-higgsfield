@@ -13,6 +13,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useProjectStore } from '../../stores/project.js'
 import { useHistory } from './useHistory.js'
 import StudioToolbar from './StudioToolbar.vue'
+import ExamplesGallery from './ExamplesGallery.vue'
 import StudioSidebar from './StudioSidebar.vue'
 import DevicePreview from './DevicePreview.vue'
 
@@ -41,6 +42,15 @@ const page = ref(props.initialPage)
 const device = ref(props.initialDevice || (narrow.value ? 'mobile' : 'desktop'))
 const tab = ref(props.initialTab)
 const sheetOpen = ref(props.initialSheetOpen)
+
+// ── Industry examples (data/verticals) ───────────────────────────────────
+const examplesOpen = ref(false)
+const exampleKey = ref('')
+function loadExample(key) {
+  store.loadSample(key)
+  exampleKey.value = key
+  page.value = 'landing'
+}
 
 const pages = computed(() => ['landing', 'browse', 'details', 'checkout', 'confirmation'].filter((id) => store.pages[id]?.enabled))
 watch(pages, (list) => { if (!list.includes(page.value)) page.value = 'landing' })
@@ -119,6 +129,7 @@ const rename = (name) => store.updateEvent({ name })
       @save="save"
       @preview="openPreview"
       @publish="emit('publish')"
+      @examples="examplesOpen = true"
     />
 
     <div class="sed__body">
@@ -135,6 +146,8 @@ const rename = (name) => store.updateEvent({ name })
         <DevicePreview v-model:page="page" :device="device" :src="previewSrc" :padding="narrow ? 14 : 28" />
       </main>
     </div>
+
+    <ExamplesGallery v-model="examplesOpen" :current-key="exampleKey" @select="loadExample" />
 
     <q-dialog v-model="previewOpen" maximized transition-show="fade" transition-hide="fade">
       <div class="sed__fullpreview">

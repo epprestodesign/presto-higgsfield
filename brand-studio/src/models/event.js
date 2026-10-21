@@ -5,7 +5,7 @@ export const EVENT_CATEGORIES = [
   { value: 'conference', label: 'Conference or meeting', icon: 'groups', hint: 'Summits, trade shows, annual meetings' },
   { value: 'wedding', label: 'Wedding or celebration', icon: 'favorite', hint: 'Weddings, reunions, milestone parties' },
   { value: 'festival', label: 'Festival or concert', icon: 'music_note', hint: 'Music, food and cultural festivals' },
-  { value: 'other', label: 'Something else', icon: 'event', hint: 'Any event that needs a block of rooms' },
+  { value: 'other', label: 'Something else', icon: 'event', hint: 'Crews, healthcare, camps, memorials, graduations and more' },
 ]
 
 export const categoryLabel = (value) => EVENT_CATEGORIES.find((c) => c.value === value)?.label || 'Event'
@@ -14,6 +14,7 @@ export function createEvent(overrides = {}) {
   return {
     name: '',
     category: '',
+    vertical: '', // industry vertical id (data/verticals/catalog.js), refines `category`
     venue: '',
     city: '',
     region: '',

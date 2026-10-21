@@ -11,10 +11,9 @@ import { FONT_OPTIONS, getFont } from '../../theme/fonts.js'
 import { CREATIVE_DIRECTIONS } from '../../models/brandKit.js'
 import { formatDateRange, locationLabel } from '../../models/event.js'
 import { starterContent } from '../../models/content.js'
-import { buildConcept } from '../../providers/ai/conceptFactory.js'
 import { IMAGERY } from '../../assets/imagery/index.js'
 import BrandThemeProvider from '../../theme/BrandThemeProvider.vue'
-import BrandHero from '../brand/BrandHero.vue'
+import BannerPreviews from '../brand/BannerPreviews.vue'
 import AssetDropzone from '../intake/AssetDropzone.vue'
 import ColorRoleField from './ColorRoleField.vue'
 import BrandScanPanel from './BrandScanPanel.vue'
@@ -83,13 +82,6 @@ function addKeyword(word) {
 const removeKeyword = (k) => project.updateBrandKit({ keywords: bk.value.keywords.filter((x) => x !== k) })
 
 // ── Live preview ──────────────────────────────────────────────────────────
-const layoutVariant = ref(0)
-const heroAsset = computed(() => photos.value.find((p) => p.id === bk.value.heroImageId) || null)
-const previewConcept = computed(() => {
-  const c = buildConcept({ direction: bk.value.direction, templateIndex: layoutVariant.value, brandKit: bk.value, event: ev.value })
-  if (c.treatment.imageSrc && heroAsset.value) c.treatment.imageSrc = heroAsset.value.src
-  return c
-})
 const heroProps = computed(() => ({
   brandKit: bk.value,
   headline: ev.value.name || 'Your event name',
@@ -97,7 +89,6 @@ const heroProps = computed(() => ({
   dates: formatDateRange(ev.value.startDate, ev.value.endDate),
   location: locationLabel(ev.value),
 }))
-const directionName = computed(() => CREATIVE_DIRECTIONS.find((d) => d.id === bk.value.direction)?.name)
 </script>
 
 <template>
@@ -303,36 +294,10 @@ const directionName = computed(() => CREATIVE_DIRECTIONS.find((d) => d.id === bk
         </div>
       </div>
 
-      <!-- Sticky preview -->
+      <!-- Sticky preview: the Presto banner where it renders (no alternate layouts) -->
       <aside class="bd__preview" aria-label="Brand preview">
-        <div class="bd__preview-head">
-          <p class="bs-eyebrow">Live preview</p>
-          <div class="bd__seg" role="group" aria-label="Preview layout">
-            <button v-for="i in [0, 1]" :key="i" type="button" class="bs-focusable" :aria-pressed="layoutVariant === i" :class="{ 'is-on': layoutVariant === i }" @click="layoutVariant = i">Layout {{ i === 0 ? 'A' : 'B' }}</button>
-          </div>
-        </div>
-        <div class="bd__frame">
-          <brand-hero v-bind="heroProps" :concept="previewConcept" size="card" :heading-level="2" />
-        </div>
-        <p class="bd__frame-cap">{{ directionName }} · {{ previewConcept.title }}</p>
-
-        <brand-theme-provider :brand-kit="bk" class="bd__ui">
-          <p class="bd__ui-label">Booking UI accents</p>
-          <div class="bd__ui-card">
-            <div class="bd__ui-row">
-              <strong>Hilton Garden Inn Downtown</strong>
-              <span class="bd__ui-badge">Preferred</span>
-            </div>
-            <span class="bd__ui-meta">0.4 mi from venue · Free breakfast</span>
-            <div class="bd__ui-row">
-              <a href="#" class="bd__ui-link" @click.prevent>View details</a>
-              <q-btn unelevated no-caps color="primary" label="Choose your room" size="md" tabindex="-1" />
-            </div>
-          </div>
-        </brand-theme-provider>
-
-        <brand-hero v-bind="heroProps" :concept="previewConcept" size="compact" :heading-level="2" class="bd__band" />
-        <p class="bd__frame-cap">Hotel results banner</p>
+        <p class="bs-eyebrow">Live preview</p>
+        <banner-previews v-bind="heroProps" :slug="project.project.publishing.slug || 'your-event'" />
       </aside>
     </div>
   </div>
@@ -423,27 +388,11 @@ const directionName = computed(() => CREATIVE_DIRECTIONS.find((d) => d.id === bk
 
 /* Preview */
 .bd__preview { position: sticky; top: 24px; display: flex; flex-direction: column; gap: 10px; }
-.bd__preview-head { display: flex; justify-content: space-between; align-items: center; }
-.bd__seg { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--bs-surface); border: 1px solid var(--bs-line); }
-.bd__seg button { min-height: 28px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; font: 700 0.75rem var(--bs-font); color: var(--bs-ink-soft); cursor: pointer; }
-.bd__seg button.is-on { background: var(--bs-brand); color: #fff; }
-.bd__frame { border-radius: var(--bs-radius-lg); overflow: hidden; box-shadow: var(--bs-shadow-3); }
-.bd__frame-cap { margin: 0 0 8px; font-size: 0.75rem; color: var(--bs-ink-soft); }
-.bd__band { border-radius: var(--bs-radius-md); overflow: hidden; box-shadow: var(--bs-shadow-2); }
-.bd__ui { padding: 14px; border-radius: var(--bs-radius-lg); background: var(--bs-surface); border: 1px solid var(--bs-line); }
-.bd__ui-label { margin: 0 0 10px; font: 700 0.6875rem var(--bs-font); letter-spacing: 0.1em; text-transform: uppercase; color: var(--bs-ink-soft); font-family: var(--bs-font); }
-.bd__ui-card { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--ds-color-border); border-radius: 4px; }
-.bd__ui-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.bd__ui-row strong { font-family: var(--brand-font-heading); color: var(--ds-color-text); font-size: 1rem; }
-.bd__ui-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; background: var(--ds-color-background-brand-subtlest); color: var(--ds-color-text-brand); }
-.bd__ui-meta { font-size: 0.8125rem; color: var(--ds-color-text-subtle); }
-.bd__ui-link { color: var(--ds-color-link); font-weight: 700; font-size: 0.875rem; }
 
 @media (max-width: 1100px) {
   .bd__grid { grid-template-columns: minmax(0, 1fr); }
   .bd__preview { position: static; order: -1; }
-  .bd__band, .bd__band + .bd__frame-cap, .bd__ui { display: none; }
-}
+  }
 @media (max-width: 600px) {
   .bd { padding: 20px 12px 40px; }
   .bd__img-add { grid-template-columns: 1fr; }

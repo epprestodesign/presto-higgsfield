@@ -22,7 +22,7 @@ const props = defineProps({
   // Narrow screens: page + device move to a second row; labels collapse to icons.
   compact: { type: Boolean, default: false },
 })
-const emit = defineEmits(['back', 'rename', 'update:page', 'update:device', 'undo', 'redo', 'save', 'preview', 'publish'])
+const emit = defineEmits(['back', 'rename', 'update:page', 'update:device', 'undo', 'redo', 'save', 'preview', 'publish', 'examples'])
 
 const DEVICES = [
   { id: 'desktop', icon: 'desktop_windows', label: 'Desktop', width: 1280 },
@@ -143,6 +143,13 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
           </q-btn>
           <span class="stb__divider" aria-hidden="true" />
         </template>
+        <q-btn
+          flat no-caps class="bs-btn stb__btn stb__examples" icon="auto_awesome_mosaic"
+          :label="compact ? undefined : 'Examples'" :aria-label="compact ? 'Examples by industry' : undefined"
+          @click="emit('examples')"
+        >
+          <q-tooltip>Start from an industry example</q-tooltip>
+        </q-btn>
         <button type="button" class="stb__save bs-focusable" :aria-label="`Save draft. ${savedLabel}`" @click="emit('save')">
           <q-icon :name="savedIcon" size="18px" :class="{ 'stb__spin': saving }" />
           <span v-if="!compact" class="stb__save-label" aria-live="polite">{{ savedLabel }}</span>

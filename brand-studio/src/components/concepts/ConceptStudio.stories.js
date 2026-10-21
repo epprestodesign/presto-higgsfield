@@ -10,6 +10,8 @@ export default {
   parameters: {
     layout: 'fullscreen',
     docs: {
+      // The step footer is position: fixed — render each docs story in its own iframe.
+      story: { inline: false, height: '900px' },
       description: {
         component:
           'The **Creative concepts** step (spec 4D). Pick directions, generate six concepts through the AI provider abstraction (demo generator — no API key, no cost), then favorite, compare, regenerate, branch variations and preview on desktop/mobile before selecting one. Emits `next` once a concept is selected, plus `back` and `signup`. Artwork is background only — logos, headlines and buttons stay editable DOM.',

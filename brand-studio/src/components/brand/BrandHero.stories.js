@@ -25,7 +25,7 @@ export default {
     docs: {
       description: {
         component:
-          'The branded event banner. One component renders all six concept layouts (Signature: centered/split · Energy: band/angled · Premium: editorial/framed) for any Brand Kit, at three sizes: **landing**, **compact** (the Browse/Details band from the reference screens) and **card** (gallery thumbnails). Artwork is a background layer; logo, headline and dates are live, editable DOM. Heroes carry no call-to-action button (the booking search below is the action).',
+          'The branded event banner. One centered layout — the Presto hero standard (logo, event name, dates stacked over a full-bleed background, as in presto-2026) — with six background treatments (Signature: photo dim / brand field · Energy: duotone / abstract · Premium: soft focus / brand tint) for any Brand Kit, at three sizes: **landing**, **compact** (the Browse/Details band from the reference screens) and **card** (gallery thumbnails). Artwork is a background layer; logo, headline and dates are live, editable DOM. Heroes carry no call-to-action button (the booking search below is the action).',
       },
     },
   },
@@ -41,10 +41,10 @@ export const NoConceptYet = {
   args: propsFor('heartland', null),
 }
 
-const LAYOUT_NAMES = ['Signature · Centered', 'Signature · Split', 'Energy · Band', 'Energy · Angled', 'Premium · Editorial', 'Premium · Framed']
+const LAYOUT_NAMES = ['Signature · Presto Banner', 'Signature · Brand Field', 'Energy · Duotone Photo', 'Energy · Abstract Brand Art', 'Premium · Soft Focus', 'Premium · Brand Tint']
 
 export const AllLayouts = {
-  name: 'All six layouts',
+  name: 'All six treatments (centered)',
   render: () => ({
     components: { BrandHero },
     setup: () => ({ items: LAYOUT_NAMES.map((name, i) => ({ name, props: propsFor('heartland', i) })) }),

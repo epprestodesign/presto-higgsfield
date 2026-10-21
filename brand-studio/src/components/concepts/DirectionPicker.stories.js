@@ -9,7 +9,7 @@ export default {
     docs: {
       description: {
         component:
-          'Choose which creative directions to explore — **Brand Signature** (clean, on-identity), **Event Energy** (bold, promotional) and **Premium Experience** (editorial, photographic). Checkbox semantics; at least one stays selected. The Brand Kit’s current direction is badged *Suggested*.',
+          'Choose which creative directions to explore — **Brand Signature** (clean, on-brand), **Event Energy** (bold, promotional) and **Premium Experience** (soft, photographic). Card art comes from the approved Higgsfield theme pass (see Direction Themes). Checkbox semantics; at least one stays selected. The Brand Kit’s current direction is badged *Suggested*.',
       },
     },
   },

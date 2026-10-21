@@ -14,7 +14,7 @@ const emit = defineEmits(['start', 'sample'])
   <section id="top" class="mh" aria-labelledby="mh-title">
     <div class="mh__copy">
       <p class="mh__kicker"><span class="bs-pill bs-pill--ai"><q-icon name="auto_awesome" size="14px" /> AI-assisted creative concepts</span></p>
-      <h1 id="mh-title" class="bs-display-1 mh__title">Your event’s hotel booking page, branded in minutes.</h1>
+      <h1 id="mh-title" class="bs-display-1 mh__title">Your event’s hotel booking page, branded in seconds.</h1>
       <p class="bs-lead mh__lead">
         Add your logo, colors and photos. Brand Studio turns them into a complete Presto booking site with a landing
         page, hotel search and room details. Customize it, preview it on any device, and share a live demo.

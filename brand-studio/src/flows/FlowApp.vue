@@ -11,7 +11,9 @@ import { useQuasar } from 'quasar'
 import { useProjectStore } from '../stores/project.js'
 import { useGenerationStore } from '../stores/generation.js'
 import { useSessionStore } from '../stores/session.js'
-import { enableDemoAutofill } from './demoAutofill.js'
+import { enableDemoAutofill, personaFromSample } from './demoAutofill.js'
+import { getVertical } from '../data/verticals/index.js'
+import { getSampleEvent } from '../data/sampleEvents.js'
 import { conceptsFor } from '../stories/_helpers.js'
 import MarketingLanding from '../components/marketing/MarketingLanding.vue'
 import IntakeWizard from '../components/intake/IntakeWizard.vue'
@@ -71,17 +73,23 @@ const autofillOn = ref(props.autofill)
 let disposeAutofill = null
 const toggleAutofill = (on) => {
   disposeAutofill?.()
-  disposeAutofill = on ? enableDemoAutofill({ onFill: () => $q.notify({ message: 'Filled with sample data', icon: 'auto_fix_high', color: 'dark', timeout: 900, position: 'top', group: false }) }) : null
+  // Tap-to-fill follows the industry picked in intake step 1.
+  const persona = () => {
+    const v = getVertical(project.project.event.vertical)
+    return personaFromSample(v ? getSampleEvent(v.sample || v.id) : null)
+  }
+  disposeAutofill = on ? enableDemoAutofill({ persona, onFill: () => $q.notify({ message: 'Filled with sample data', icon: 'auto_fix_high', color: 'dark', timeout: 900, position: 'top', group: false }) }) : null
 }
 watch(autofillOn, toggleAutofill)
 
 /** Jump ahead with a complete sample project (for "just show me" taps). */
-function useSample({ to = 'concepts', withConcepts = false } = {}) {
-  project.loadSample('heartland')
+function useSample({ key = 'heartland', to = 'concepts', withConcepts = false } = {}) {
+  project.loadSample(key)
   if (withConcepts) {
+    // Concept 0 is the Presto Banner (Brand Signature) on the example's own banner.
     const items = conceptsFor(project.project)
     project.setConcepts(items)
-    project.selectConcept(items[2].id)
+    project.selectConcept(items[0].id)
   }
   go(to)
 }
@@ -92,7 +100,7 @@ function skipStep() {
     if (!project.selectedConcept) {
       const items = conceptsFor(project.project)
       project.setConcepts(items)
-      project.selectConcept(items[2].id)
+      project.selectConcept(items[0].id)
     }
     go('studio')
   }
@@ -155,7 +163,7 @@ onBeforeUnmount(() => { disposeAutofill?.(); window.removeEventListener('popstat
     </header>
 
     <main class="fa__screen">
-      <marketing-landing v-if="step === 'home'" @start="startNew" @sample="useSample({ to: 'studio', withConcepts: true })" @signin="go('dashboard')" />
+      <marketing-landing v-if="step === 'home'" @start="startNew" @sample="(key) => useSample({ key: key || 'heartland', to: 'studio', withConcepts: true })" @signin="go('dashboard')" />
 
       <intake-wizard v-else-if="step === 'intake'" @complete="go('brand')" @cancel="go('home')" />
 

@@ -29,6 +29,34 @@ export const DEMO_PERSONA = {
   tagline: 'Official event hotels. Book early, stay close to the action.',
 }
 
+/** Persona for a sample / vertical example (data/sampleEvents ALL_EXAMPLES entry). */
+export function personaFromSample(sample) {
+  if (!sample) return DEMO_PERSONA
+  const e = sample.event || {}
+  const o = sample.organizer || {}
+  const slug = String(e.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48)
+  return {
+    ...DEMO_PERSONA,
+    eventName: e.name || DEMO_PERSONA.eventName,
+    venue: e.venue || DEMO_PERSONA.venue,
+    city: e.city || DEMO_PERSONA.city,
+    region: e.region || DEMO_PERSONA.region,
+    startDate: e.startDate || DEMO_PERSONA.startDate,
+    endDate: e.endDate || DEMO_PERSONA.endDate,
+    // Matches the mock brand extractor, so "Scan my website" finds this example's kit.
+    website: (e.websiteUrl || '').replace(/^https?:\/\//, '').replace(/\/$/, '') || DEMO_PERSONA.website,
+    firstName: o.firstName || DEMO_PERSONA.firstName,
+    lastName: o.lastName || DEMO_PERSONA.lastName,
+    fullName: [o.firstName, o.lastName].filter(Boolean).join(' ') || DEMO_PERSONA.fullName,
+    email: o.email || DEMO_PERSONA.email,
+    phone: o.phone || DEMO_PERSONA.phone,
+    organization: o.organization || DEMO_PERSONA.organization,
+    role: o.role || DEMO_PERSONA.role,
+    slug: slug || DEMO_PERSONA.slug,
+    tagline: sample.copy?.tagline || DEMO_PERSONA.tagline,
+  }
+}
+
 // Ordered: first match wins. `test` runs against "autocomplete|type|label|placeholder|aria|name".
 const RULES = [
   { test: /password/i, key: 'password' },
@@ -84,6 +112,7 @@ const FILLABLE = 'input:not([type=checkbox]):not([type=radio]):not([type=range])
 
 /**
  * Enable auto-fill under `root` (default: document). Returns a disposer.
+ * `persona` may be a function (re-read on every tap, e.g. to follow the chosen vertical).
  * `onFill(el, value)` lets the host show a little confirmation.
  */
 export function enableDemoAutofill({ root = document, persona = DEMO_PERSONA, onFill } = {}) {
@@ -91,7 +120,7 @@ export function enableDemoAutofill({ root = document, persona = DEMO_PERSONA, on
     const el = e.target
     if (!(el instanceof Element) || !el.matches?.(FILLABLE)) return
     if (el.value) return
-    const value = valueFor(el, persona)
+    const value = valueFor(el, typeof persona === 'function' ? persona() : persona)
     if (value == null) return
     fillInput(el, value)
     onFill?.(el, value)

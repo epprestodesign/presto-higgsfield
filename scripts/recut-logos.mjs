@@ -15,7 +15,11 @@ const DIR = path.join(ROOT, 'brand-studio/src/assets/logos/generated')
 const manifest = JSON.parse(fs.readFileSync(path.join(DIR, 'manifest.json'), 'utf8'))
 
 // Logos whose wordmark sits outside the badge in a dark ink → white for dark heroes.
-const DARK_VARIANT = { fintech: { ink: [27, 31, 94], fromX: 0.32 } }
+// fromX / fromY: only recolor to the right of / below that fraction of the logo.
+const DARK_VARIANT = {
+  fintech: { ink: [27, 31, 94], fromX: 0.32 },
+  commencement: { ink: [122, 0, 25], fromY: 0.9 },
+}
 
 const browser = await chromium.launch()
 const page = await browser.newPage()
@@ -76,7 +80,7 @@ for (const entry of manifest) {
     if (variant) {
       const fd = fctx.getImageData(0, 0, f.width, f.height); const q = fd.data
       const [ir, ig, ib] = variant.ink
-      for (let y = 0; y < f.height; y++) for (let x = Math.floor(f.width * variant.fromX); x < f.width; x++) {
+      for (let y = Math.floor(f.height * (variant.fromY || 0)); y < f.height; y++) for (let x = Math.floor(f.width * (variant.fromX || 0)); x < f.width; x++) {
         const i = (y * f.width + x) * 4
         // Letter counters (the white inside o, a, e…) aren't edge-connected, so clear any pale pixel here.
         const lo = Math.min(q[i], q[i + 1], q[i + 2])

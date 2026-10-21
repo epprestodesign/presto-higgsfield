@@ -19,7 +19,7 @@ import GenerationStatus from './GenerationStatus.vue'
 import UsageMeter from './UsageMeter.vue'
 import ProviderSelect from './ProviderSelect.vue'
 
-defineProps({
+const props = defineProps({
   // Hide the step header/footer when embedded (e.g. inside the Studio editor).
   embedded: { type: Boolean, default: false },
   stepLabel: { type: String, default: 'Step 3 of 5' },
@@ -85,7 +85,7 @@ async function run(kind, request, conceptId) {
     if (job?.status === 'succeeded') {
       const n = job.results?.length || 0
       const msg = kind === 'concepts' ? `${n} concepts ready` : kind === 'variations' ? `${n} variations added` : 'Concept regenerated'
-      $q.notify({ message: msg, icon: 'auto_awesome', color: 'deep-purple-7', timeout: 1800, position: 'bottom' })
+      $q.notify({ message: msg, icon: 'auto_awesome', color: 'deep-purple-7', timeout: 1800, position: 'bottom', classes: props.embedded ? '' : 'cs-notify--above-footer' })
     }
   } finally {
     pending.value = null
@@ -372,9 +372,15 @@ function pickWinner(c) {
 .cs__ghost--c { right: 0; top: 28px; background: linear-gradient(160deg, #E9E4DA, #B9A88A); transform: rotate(8deg); }
 .cs__empty-spark { position: absolute; z-index: 2; left: 50%; top: 50%; transform: translate(-50%, -50%); color: #fff; background: var(--bs-accent); padding: 10px; border-radius: 999px; box-shadow: 0 0 0 6px rgb(124 58 237 / 0.18); }
 
+/* Footer — fixed to the viewport (sticky-bottom on the last child of a page-height
+   column is unreliable in Safari / embedded webviews); .cs reserves its height. */
+.cs:not(.cs--embedded) { padding-bottom: calc(var(--cs-footer-h) + env(safe-area-inset-bottom)); }
+.cs { --cs-footer-h: 77px; }
 .cs__footer {
-  position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 16px;
-  padding: 12px var(--cs-pad); background: rgb(255 255 255 / 0.94); backdrop-filter: blur(8px); border-top: 1px solid var(--bs-line);
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 1500; display: flex; align-items: center; gap: 16px;
+  padding: 12px var(--cs-pad); padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: rgb(255 255 255 / 0.94); backdrop-filter: blur(8px); border-top: 1px solid var(--bs-line);
+  box-shadow: 0 -4px 16px rgb(15 23 42 / 0.06);
 }
 .cs__footer-sel { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-size: 0.9375rem; color: var(--bs-ink); min-width: 0; }
 .cs__footer-sel > span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -392,10 +398,17 @@ function pickWinner(c) {
   .cs__tools { margin-left: auto; }
 }
 @media (max-width: 600px) {
+  .cs { --cs-footer-h: 112px; }
   .cs__footer { flex-wrap: wrap; gap: 8px; }
   .cs__footer-sel { order: -1; flex-basis: 100%; justify-content: flex-start; }
   .cs__footer .bs-btn--lg { flex: 1; }
   .cs__sort { min-width: 130px; }
 }
 @media (prefers-reduced-motion: reduce) { .cs__shimmer { animation: none; } }
+</style>
+
+<style>
+/* Toasts render in a body-level portal — lift them above the fixed step footer. */
+.cs-notify--above-footer { margin-bottom: 96px !important; }
+@media (max-width: 860px) { .cs-notify--above-footer { margin-bottom: 128px !important; } }
 </style>

@@ -8,22 +8,22 @@ export const CREATIVE_DIRECTIONS = [
   {
     id: 'signature',
     name: 'Brand Signature',
-    summary: 'Clean and consistent with your identity.',
-    description: 'Your colors and logo lead. Solid brand fields, crisp type and restrained texture, so the booking page feels like an extension of your website.',
+    summary: 'Clean and on-brand.',
+    description: 'Your colors and logo lead: solid brand fields and calm photography, so the page feels like your website.',
     icon: 'verified',
   },
   {
     id: 'energy',
     name: 'Event Energy',
-    summary: 'Bold, promotional, built to drive bookings.',
-    description: 'High-contrast graphics, motion-inspired angles and big headlines. Best for tournaments, races and festivals that want urgency.',
+    summary: 'Bold and promotional.',
+    description: 'Vivid duotones and abstract brand art. Best for tournaments, races and festivals.',
     icon: 'bolt',
   },
   {
     id: 'premium',
     name: 'Premium Experience',
-    summary: 'Editorial and photographic.',
-    description: 'Full-bleed photography, generous whitespace and refined serif headlines. Best for conferences, weddings and hospitality-led events.',
+    summary: 'Soft, photographic and refined.',
+    description: 'Soft-focus and tinted photography with serif headlines. Best for conferences and weddings.',
     icon: 'diamond',
   },
 ]

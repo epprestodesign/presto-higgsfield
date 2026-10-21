@@ -94,6 +94,7 @@ const preview = {
           'Brand Studio', [
             'Overview', 'Architecture & Audit',
             'Higgsfield', ['Setup Guide', 'Connection', 'Banner Generator'],
+            'Verticals', ['Gallery', 'Gallery · Mobile', 'All heroes'],
             'Foundations', ['Studio Tokens', 'Brand Theme Engine', 'Typeface Tester', 'Typeface Tester · Mobile', 'Imagery & Logos'],
             'Marketing Site', ['Landing Page', 'Sections'],
             'Onboarding', ['Event Intake', 'Brand Discovery'],

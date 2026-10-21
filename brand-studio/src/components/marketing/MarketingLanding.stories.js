@@ -24,7 +24,7 @@ export default {
 export const Desktop = {
   play: async ({ canvasElement }) => {
     const c = within(canvasElement)
-    await expect(c.getByRole('heading', { level: 1, name: /booking page, branded in minutes/i })).toBeInTheDocument()
+    await expect(c.getByRole('heading', { level: 1, name: /booking page, branded in seconds/i })).toBeInTheDocument()
     await expect(c.getAllByRole('button', { name: /create your booking page/i }).length).toBeGreaterThan(0)
   },
 }

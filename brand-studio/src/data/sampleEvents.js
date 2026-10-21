@@ -4,6 +4,7 @@
 import { createProject } from '../models/project.js'
 import { getImage } from '../assets/imagery/index.js'
 import { SAMPLE_SPONSORS } from './sponsors.js'
+import { VERTICAL_SAMPLES } from './verticals/index.js'
 // Logos generated with Higgsfield (Ideogram 4.0) — scripts/hf-generate-logos.mjs,
 // cut out by scripts/recut-logos.mjs. Self-contained emblems that read on light
 // and dark; Fintech's wordmark has a white-lettering variant for dark heroes.
@@ -17,7 +18,7 @@ const photo = (id) => {
   const img = getImage(id)
   return img ? { id: img.id, src: img.src, alt: img.alt, kind: img.kind || 'photo', credit: img.credit } : null
 }
-// Generated banner backgrounds first (Presto banner system), then stock.
+// All sample imagery is generated with Higgsfield (Presto banner system).
 const imagery = (...ids) => ids.map(photo).filter(Boolean)
 const logo = (id, src, alt) => ({ id, src, alt, kind: 'logo' })
 
@@ -42,7 +43,7 @@ export const SAMPLE_EVENTS = [
       logo: logo('logo-heartland', heartland, 'Heartland Invitational Soccer Cup'),
       colors: { primary: '#0E1B2C', secondary: '#19C6B8', accent: '#F5B700', ink: '#0B1220', surface: '#FFFFFF' },
       typography: { heading: 'barlow-condensed', body: 'inter' },
-      imagery: imagery('heartland-photo', 'heartland-abstract', 'soccer-night-match', 'soccer-stadium-lights', 'soccer-team-huddle'),
+      imagery: imagery('heartland-photo', 'heartland-photo2', 'heartland-photo3', 'heartland-abstract'),
       heroImageId: 'heartland-photo',
       bannerImageId: 'heartland-photo',
       direction: 'energy',
@@ -71,7 +72,7 @@ export const SAMPLE_EVENTS = [
       logoOnDark: logo('logo-fintech-light', fintechLight, 'Fintech Forward Summit'),
       colors: { primary: '#1B1F5E', secondary: '#FF6B4A', accent: '#FFC857', ink: '#12143A', surface: '#FFFFFF' },
       typography: { heading: 'montserrat', body: 'inter' },
-      imagery: imagery('fintech-abstract', 'fintech-photo', 'conference-speaker', 'conference-screen', 'conference-crowd'),
+      imagery: imagery('fintech-abstract', 'fintech-photo', 'fintech-photo2', 'fintech-photo3'),
       heroImageId: 'fintech-abstract',
       bannerImageId: 'fintech-abstract',
       direction: 'signature',
@@ -99,7 +100,7 @@ export const SAMPLE_EVENTS = [
       logo: logo('logo-alvarez', alvarez, 'Alvarez & Chen monogram'),
       colors: { primary: '#3E5245', secondary: '#C9A96E', accent: '#E8D9C5', ink: '#1F2A22', surface: '#FFFFFF' },
       typography: { heading: 'playfair', body: 'lora' },
-      imagery: imagery('wedding-photo', 'wedding-abstract', 'wedding-arch', 'wedding-table', 'wedding-winery-dinner'),
+      imagery: imagery('wedding-photo', 'wedding-photo2', 'wedding-photo3', 'wedding-abstract'),
       heroImageId: 'wedding-photo',
       bannerImageId: 'wedding-photo',
       direction: 'premium',
@@ -127,7 +128,7 @@ export const SAMPLE_EVENTS = [
       logo: logo('logo-lakeshore', lakeshore, 'Lakeshore Half Marathon'),
       colors: { primary: '#0057B8', secondary: '#FF3D2E', accent: '#FFD23F', ink: '#0A1F3D', surface: '#FFFFFF' },
       typography: { heading: 'oswald', body: 'work-sans' },
-      imagery: imagery('lakeshore-photo', 'lakeshore-abstract', 'marathon-street', 'marathon-city'),
+      imagery: imagery('lakeshore-photo', 'lakeshore-photo2', 'lakeshore-photo3', 'lakeshore-abstract'),
       heroImageId: 'lakeshore-photo',
       bannerImageId: 'lakeshore-photo',
       direction: 'energy',
@@ -137,7 +138,23 @@ export const SAMPLE_EVENTS = [
   },
 ]
 
-export const getSampleEvent = (key) => SAMPLE_EVENTS.find((s) => s.key === key) || SAMPLE_EVENTS[0]
+/** The four curated samples + one example per industry vertical (data/verticals). */
+export const ALL_EXAMPLES = [...SAMPLE_EVENTS, ...VERTICAL_SAMPLES]
+
+export const getSampleEvent = (key) => ALL_EXAMPLES.find((s) => s.key === key) || SAMPLE_EVENTS[0]
 
 /** A fully-populated project for a sample event (used by stories + "Try a sample"). */
-export const sampleProject = (key = 'heartland') => createProject(getSampleEvent(key))
+export function sampleProject(key = 'heartland') {
+  const sample = getSampleEvent(key)
+  const project = createProject(sample)
+  // Vertical examples carry their own hero copy (tone matters: a funeral home
+  // isn't a tournament).
+  const c = sample.copy
+  if (c) {
+    const l = project.pages.landing
+    if (c.tagline) l.hero.tagline = c.tagline
+    if (c.benefits) l.sections.benefits.items = [...c.benefits]
+    if (c.attending) Object.assign(l.sections.attending, { title: c.attendingTitle || l.sections.attending.title, items: c.attending.map((a) => ({ ...a })) })
+  }
+  return project
+}
