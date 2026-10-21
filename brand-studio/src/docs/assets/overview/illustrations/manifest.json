@@ -1,0 +1,56 @@
+[
+  {
+    "id": "step-2-intake",
+    "file": "step-2-intake.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A smartphone showing a simple form of three rounded field bars with a calendar icon, a map pin icon and a check badge, a tap ripple on one field. Minimal flat vector spot illustration, soft rounded geometric shapes, gentle long shadows, a smartphone as the hero object held at a slight angle, centered on a plain very pale lavender background with generous empty margin. Palette strictly deep navy, violet, soft lavender, white and a touch of warm coral. Friendly, modern product-marketing style, consistent line weight. Absolutely no text, no letters, no numbers, no words, no logos, no UI copy — use simple shapes and icons only.",
+    "requestId": "788e95fd-ac4d-4456-9994-350242c7b292",
+    "createdAt": "2026-10-21T23:38:22.845Z"
+  },
+  {
+    "id": "step-1-home",
+    "file": "step-1-home.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A smartphone showing a large rounded input pill with a link chain icon and a glowing magic sparkle wand tapping it, small floating globe icon. Minimal flat vector spot illustration, soft rounded geometric shapes, gentle long shadows, a smartphone as the hero object held at a slight angle, centered on a plain very pale lavender background with generous empty margin. Palette strictly deep navy, violet, soft lavender, white and a touch of warm coral. Friendly, modern product-marketing style, consistent line weight. Absolutely no text, no letters, no numbers, no words, no logos, no UI copy — use simple shapes and icons only.",
+    "requestId": "2c9ddaa2-75c6-4c1b-876d-175e7df260db",
+    "createdAt": "2026-10-21T23:38:23.069Z"
+  },
+  {
+    "id": "step-3-brand",
+    "file": "step-3-brand.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A smartphone surrounded by a floating color palette of round swatches, a paint brush and a shield-shaped badge emblem, suggesting a brand kit being scanned. Minimal flat vector spot illustration, soft rounded geometric shapes, gentle long shadows, a smartphone as the hero object held at a slight angle, centered on a plain very pale lavender background with generous empty margin. Palette strictly deep navy, violet, soft lavender, white and a touch of warm coral. Friendly, modern product-marketing style, consistent line weight. Absolutely no text, no letters, no numbers, no words, no logos, no UI copy — use simple shapes and icons only.",
+    "requestId": "c07d7615-a0cf-4d7d-bf58-84526e89e196",
+    "createdAt": "2026-10-21T23:38:23.117Z"
+  },
+  {
+    "id": "step-4-concepts",
+    "file": "step-4-concepts.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A smartphone with a fanned stack of three wide banner cards rising out of it, one card highlighted with a star, sparkles around. Minimal flat vector spot illustration, soft rounded geometric shapes, gentle long shadows, a smartphone as the hero object held at a slight angle, centered on a plain very pale lavender background with generous empty margin. Palette strictly deep navy, violet, soft lavender, white and a touch of warm coral. Friendly, modern product-marketing style, consistent line weight. Absolutely no text, no letters, no numbers, no words, no logos, no UI copy — use simple shapes and icons only.",
+    "requestId": "f818e767-ee88-4c03-8a55-e84ba5cf5f89",
+    "createdAt": "2026-10-21T23:38:23.194Z"
+  },
+  {
+    "id": "step-5-studio",
+    "file": "step-5-studio.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A smartphone showing an editor: slider controls and toggles in a bottom sheet, a small mountain-photo placeholder and a color dot, a hand cursor adjusting a slider. Minimal flat vector spot illustration, soft rounded geometric shapes, gentle long shadows, a smartphone as the hero object held at a slight angle, centered on a plain very pale lavender background with generous empty margin. Palette strictly deep navy, violet, soft lavender, white and a touch of warm coral. Friendly, modern product-marketing style, consistent line weight. Absolutely no text, no letters, no numbers, no words, no logos, no UI copy — use simple shapes and icons only.",
+    "requestId": "cfd4a6b6-dd1e-4844-8d3a-2983484982c0",
+    "createdAt": "2026-10-21T23:38:33.370Z"
+  },
+  {
+    "id": "step-6-publish",
+    "file": "step-6-publish.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A smartphone with a big check mark badge and a share arrow, small confetti and a paper plane flying away, celebratory. Minimal flat vector spot illustration, soft rounded geometric shapes, gentle long shadows, a smartphone as the hero object held at a slight angle, centered on a plain very pale lavender background with generous empty margin. Palette strictly deep navy, violet, soft lavender, white and a touch of warm coral. Friendly, modern product-marketing style, consistent line weight. Absolutely no text, no letters, no numbers, no words, no logos, no UI copy — use simple shapes and icons only.",
+    "requestId": "53765bbc-e0e7-4a08-aeb3-954378a5df68",
+    "createdAt": "2026-10-21T23:38:33.587Z"
+  }
+]
