@@ -3,7 +3,7 @@
 // Details building blocks: a photo gallery (DsImageList), a sticky DetailTabs
 // nav that scrolls to each section, the HotelSummaryHeader, the RoomsCarousel
 // ("Select Your Room"), and the About / Amenities / Policies sections.
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, useSlots } from 'vue'
 import { useQuasar } from 'quasar'
 import { loadImagery } from '../../lib/imagery'
 import GalleryHero from './GalleryHero.vue'
@@ -56,7 +56,16 @@ const props = defineProps({
   about: { type: [String, Array], default: '' },
   amenityGroups: { type: Array, default: () => [] },
   policies: { type: Array, default: () => [] },
+
+  // Width (px) of the optional right rail (the `rail` slot), shown sticky beside
+  // the Amenities / Policies sections on wide screens.
+  railWidth: { type: Number, default: 160 },
 })
+// Slots (all optional): `after-rooms` renders below Select Your Room, `bottom`
+// at the very end of the page, `rail` beside Amenities + Policies (e.g. ads).
+const slots = useSlots()
+const hasRail = computed(() => !!slots.rail)
+const railStyle = computed(() => (hasRail.value ? { gridTemplateColumns: `minmax(0, 1fr) ${props.railWidth}px` } : {}))
 const emit = defineEmits(['back'])
 const widgetMode = computed(() => (props.roomsFlow === 'group' ? 'group' : 'reservations'))
 
@@ -166,15 +175,26 @@ onMounted(async () => {
       <rooms-carousel :rooms="rooms" :flow="roomsFlow" :title="roomsTitle" :subtitle="roomsSubtitle" :secondary-fees="secondaryFees" />
     </section>
 
-    <!-- Amenities -->
-    <section id="hdp-amenities" class="hdp__section hdp__section--ruled">
-      <amenities-section :groups="amenityGroups" />
-    </section>
+    <div v-if="$slots['after-rooms']" class="hdp__band"><slot name="after-rooms" /></div>
 
-    <!-- Policies -->
-    <section id="hdp-policies" class="hdp__section hdp__section--ruled">
-      <policies-section :policies="policies" />
-    </section>
+    <!-- Amenities + Policies. With a `rail` slot they share a 2-column grid with a
+         sticky rail; without one the wrapper is display:contents (no layout). -->
+    <div :class="hasRail ? 'hdp__withrail' : 'hdp__norail'" :style="railStyle">
+      <div :class="hasRail ? 'hdp__main' : 'hdp__norail'">
+        <!-- Amenities -->
+        <section id="hdp-amenities" class="hdp__section hdp__section--ruled">
+          <amenities-section :groups="amenityGroups" />
+        </section>
+
+        <!-- Policies -->
+        <section id="hdp-policies" class="hdp__section hdp__section--ruled">
+          <policies-section :policies="policies" />
+        </section>
+      </div>
+      <aside v-if="hasRail" class="hdp__rail"><slot name="rail" /></aside>
+    </div>
+
+    <div v-if="$slots.bottom" class="hdp__band hdp__band--bottom"><slot name="bottom" /></div>
   </div>
 </template>
 
@@ -211,5 +231,16 @@ onMounted(async () => {
   .hdp__tabs { top: var(--hdp-tabs-top, 0); margin-inline: -16px; padding-inline: 16px; }
 }
 .hdp__section { padding-top: 28px; }
+/* Optional slot regions (Brand Studio ads). */
+.hdp__norail { display: contents; }
+.hdp__withrail { display: grid; gap: 32px; align-items: start; }
+.hdp__main { min-width: 0; }
+.hdp__rail { position: sticky; top: 24px; margin-top: 52px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.hdp__band { display: flex; justify-content: center; margin-top: 40px; }
+.hdp__band--bottom { margin-top: 48px; }
+@media (max-width: 1080px) {
+  .hdp__withrail { display: block; }
+  .hdp__rail { display: none; }
+}
 .hdp__section--ruled { margin-top: 20px; border-top: 1px solid var(--ds-color-border); padding-top: 32px; }
 </style>

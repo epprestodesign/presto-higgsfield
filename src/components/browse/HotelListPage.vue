@@ -5,7 +5,7 @@
 //   group   → Group Block      (HotelCardGroup,   availability: matches / partial / unavailable)
 // Layout: Hero banner → Booking Widget search bar (tucked onto the hero) →
 // results toolbar (count + Sort) → 3-column body (filters · results · ads).
-import { ref, computed } from 'vue'
+import { ref, computed, useSlots } from 'vue'
 import { useQuasar } from 'quasar'
 import defaultBg from '../../../background-img/defaultBackgroundImage.png'
 import epLogoWhite from '../../assets/eventpipe logos/eventpipe-logo-fff.svg'
@@ -32,7 +32,22 @@ const props = defineProps({
   //   'error'   — results failed to load
   //   'loading' — skeleton placeholders
   state: { type: String, default: 'full' },
+
+  // ── Optional overrides (Brand Studio). Empty defaults keep today's output. ──
+  eventName: { type: String, default: '' },
+  eventDates: { type: String, default: '' },
+  searchLocation: { type: String, default: '' },
+  searchDates: { type: String, default: '' },
+  // Results-card CTA label (default: 'Choose Your Room' / 'Select Rooms').
+  cardCtaLabel: { type: String, default: '' },
+  // Width of the right rail when the `rail` slot is used (px). Falls back to
+  // adSize[0], then 160.
+  railWidth: { type: Number, default: null },
 })
+// Slots (all optional): `hero` replaces the hero band; `results-top` /
+// `results-bottom` render full-width above / below the results grid (e.g. ad
+// billboards); `rail` replaces the right-rail Display Ad.
+const slots = useSlots()
 
 const isGroup = computed(() => props.flow === 'group')
 const isLoading = computed(() => props.state === 'loading')
@@ -64,15 +79,16 @@ const filtersApplied = computed(() => {
 })
 
 // When an ad size is provided, add a third right-rail column sized to the ad.
+const hasRail = computed(() => !!(props.adSize || slots.rail))
 const gridStyle = computed(() =>
-  props.adSize
-    ? { gridTemplateColumns: `260px minmax(0, 1fr) ${props.adSize[0]}px` }
+  hasRail.value
+    ? { gridTemplateColumns: `260px minmax(0, 1fr) ${props.railWidth || props.adSize?.[0] || 160}px` }
     : {}
 )
 
 // Hero content.
-const EVENT_NAME = 'Summer Soccer Classic 2027'
-const EVENT_DATES = 'Wed, 6/16/2027 - Sat, 6/19/2027'
+const EVENT_NAME = computed(() => props.eventName || 'Summer Soccer Classic 2027')
+const EVENT_DATES = computed(() => props.eventDates || 'Wed, 6/16/2027 - Sat, 6/19/2027')
 const scrim = 'linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.5))'
 const heroStyle = {
   backgroundImage: `${scrim}, url(${defaultBg})`,
@@ -158,7 +174,7 @@ const sortHotels = (list) => {
 // Map a raw hotel to the card props both flows consume (the Group card renders
 // for both; reserve availability keys pass straight through).
 const toCard = (h) => ({
-  name: h.name, flow: props.flow, ctaLabel: isGroup.value ? 'Select Rooms' : 'Choose Your Room',
+  name: h.name, flow: props.flow, ctaLabel: props.cardCtaLabel || (isGroup.value ? 'Select Rooms' : 'Choose Your Room'),
   city: h.city, stars: h.stars, distance: `${h.distanceMi} mi from Main Arena`, preferred: h.preferred, seed: h.seed,
   startingPrice: isGroup.value ? h.nightly + 40 : h.nightly,
   fromNightly: h.nightly, total: h.nightly * 4,
@@ -220,8 +236,8 @@ const editingSearch = ref(false)
 const mapOpen = ref(false)
 
 // Summary values mirror the hero's event + the widget's defaults.
-const SEARCH_LOCATION = 'Kansas City'
-const SEARCH_DATES = 'Jun 16 - Jun 19'
+const SEARCH_LOCATION = computed(() => props.searchLocation || 'Kansas City')
+const SEARCH_DATES = computed(() => props.searchDates || 'Jun 16 - Jun 19')
 const searchGuests = computed(() =>
   isGroup.value
     ? `${roomsRequested} ${roomsRequested === 1 ? 'Room' : 'Rooms'}`
@@ -232,13 +248,15 @@ const searchGuests = computed(() =>
 <template>
   <div class="hlp">
     <!-- HERO -->
-    <section class="hlp__hero" :style="heroStyle">
-      <div class="hlp__hero-inner">
-        <img :src="epLogoWhite" alt="EventPipe" class="hlp__hero-logo" />
-        <div class="text-h5 hlp__event">{{ EVENT_NAME }}</div>
-        <div class="text-body1 hlp__dates">{{ EVENT_DATES }}</div>
-      </div>
-    </section>
+    <slot name="hero">
+      <section class="hlp__hero" :style="heroStyle">
+        <div class="hlp__hero-inner">
+          <img :src="epLogoWhite" alt="EventPipe" class="hlp__hero-logo" />
+          <div class="text-h5 hlp__event">{{ EVENT_NAME }}</div>
+          <div class="text-body1 hlp__dates">{{ EVENT_DATES }}</div>
+        </div>
+      </section>
+    </slot>
 
     <!-- SEARCH BAR — tucked up onto the hero. On phones this collapses to the
          SearchSummaryBar; the pencil reveals the real widget below it. -->
@@ -258,6 +276,7 @@ const searchGuests = computed(() =>
 
     <!-- BODY: filters · results · (optional) ad rail -->
     <div class="hlp__container">
+      <div v-if="$slots['results-top']" class="hlp__band hlp__band--top"><slot name="results-top" /></div>
       <div class="hlp__grid" :style="gridStyle">
         <!-- LEFT: filter rail module. On phones it becomes a compact bar —
              [Filters] + [Sort By] on one line — with the count centered below
@@ -357,13 +376,16 @@ const searchGuests = computed(() =>
         </div>
 
         <!-- RIGHT: optional sticky skyscraper Display Ad -->
-        <aside v-if="adSize" class="hlp__rail hlp__rail--right">
+        <aside v-if="hasRail" class="hlp__rail hlp__rail--right">
           <div class="hlp__ads">
-            <display-ad :width="adSize[0]" :height="adSize[1]" />
+            <slot name="rail">
+              <display-ad :width="adSize[0]" :height="adSize[1]" />
+            </slot>
           </div>
         </aside>
 
       </div>
+      <div v-if="$slots['results-bottom']" class="hlp__band hlp__band--bottom"><slot name="results-bottom" /></div>
     </div>
   </div>
 </template>
@@ -453,6 +475,11 @@ const searchGuests = computed(() =>
 .hlp__state-text { margin: 0; max-width: 420px; color: var(--ds-color-text-subtle); font-size: 0.9375rem; line-height: 1.5; }
 .hlp__state-btn { margin-top: 14px; display: inline-flex; align-items: center; gap: 6px; height: 46px; padding: 0 22px; border: 0; border-radius: var(--ds-radius-button); background: var(--ds-color-background-brand-bold); color: #fff; font-family: inherit; font-size: 0.9375rem; font-weight: 700; cursor: pointer; }
 .hlp__state-btn:hover { background: var(--ds-palette-navy-800); }
+
+/* full-width bands above / below the results grid (results-top / results-bottom slots) */
+.hlp__band { display: flex; justify-content: center; }
+.hlp__band--top { padding-top: 28px; }
+.hlp__band--bottom { padding-bottom: 40px; }
 
 /* right rail — sticky ads */
 .hlp__rail--right { position: sticky; top: 24px; }

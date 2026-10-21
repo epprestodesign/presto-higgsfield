@@ -48,6 +48,9 @@ importers:
       axe-playwright:
         specifier: ^2
         version: 2.2.2(playwright@1.64.1)
+      playwright:
+        specifier: ^1.64.1
+        version: 1.64.1
       sass-embedded:
         specifier: ^1.83.0
         version: 1.106.0

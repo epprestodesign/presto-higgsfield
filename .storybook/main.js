@@ -5,10 +5,14 @@ import { quasar } from '@quasar/vite-plugin'
 const quasarVariables = fileURLToPath(
   new URL('../src/css/quasar.variables.scss', import.meta.url)
 )
+const lib = fileURLToPath(new URL('../src', import.meta.url))
+const brandStudio = fileURLToPath(new URL('../brand-studio/src', import.meta.url))
 
 /** @type { import('@storybook/vue3-vite').StorybookConfig } */
 const config = {
   stories: [
+    '../brand-studio/src/**/*.mdx',
+    '../brand-studio/src/**/*.stories.@(js|jsx|ts|tsx)',
     '../src/**/*.mdx',
     '../src/**/*.stories.@(js|jsx|ts|tsx)',
   ],
@@ -25,6 +29,8 @@ const config = {
     // existing Vue plugin and slots in after it.
     return mergeConfig(baseConfig, {
       plugins: [quasar({ sassVariables: quasarVariables })],
+      // @lib → the Presto design system (src/), @bs → Brand Studio.
+      resolve: { alias: { '@lib': lib, '@bs': brandStudio } },
     })
   },
 }

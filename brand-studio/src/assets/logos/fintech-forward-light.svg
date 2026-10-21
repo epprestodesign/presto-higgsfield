@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" role="img" aria-label="Fintech Forward Summit">
+  <path d="M8 12h22l26 28-26 28H8l26-28Z" fill="#FFFFFF"/>
+  <path d="M40 12h22l26 28-26 28H40l26-28Z" fill="#FF6B4A"/>
+  <text x="104" y="40" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="800" font-size="30" letter-spacing="-0.5" fill="#FFFFFF">fintech forward</text>
+  <text x="105" y="64" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="700" font-size="13" letter-spacing="5" fill="#FF6B4A">SUMMIT 2027 · KANSAS CITY</text>
+</svg>
