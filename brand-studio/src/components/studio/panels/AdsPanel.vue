@@ -1,9 +1,10 @@
 <script setup>
 // AdsPanel — sponsored advertising: master switch, per-page layout preset
-// (schematic thumbnails), and the sponsor roster. Visual simulation only.
+// (schematic thumbnails), right-rail behavior while scrolling, and the sponsor
+// roster. Visual simulation only.
 import { computed } from 'vue'
 import { useProjectStore } from '../../../stores/project.js'
-import { AD_LAYOUT_PRESETS } from '../../../models/ads.js'
+import { AD_LAYOUT_PRESETS, RAIL_MODES } from '../../../models/ads.js'
 import PanelGroup from './PanelGroup.vue'
 import AdPresetThumb from './AdPresetThumb.vue'
 
@@ -16,6 +17,10 @@ const PAGES = [
   { id: 'browse', label: 'Browse hotels' },
   { id: 'details', label: 'Hotel details' },
 ]
+
+const railMode = computed(() => ads.value.railMode || 'auto')
+const railHint = computed(() => RAIL_MODES.find((m) => m.id === railMode.value)?.hint || '')
+const hasRail = (page) => (ads.value.placements?.[page] || []).some((p) => p.slot === `${page}.rail`)
 
 const host = (url) => {
   try { return new URL(url).hostname.replace(/^www\./, '') } catch { return 'No link yet' }
@@ -67,6 +72,18 @@ function onPresetKey(e, page, i) {
             <span class="ap__preset-label">{{ preset.label }}</span>
           </button>
         </div>
+        <!-- Right-rail behavior while scrolling (shared by Browse + Details) -->
+        <div v-if="pg.id !== 'landing' && hasRail(pg.id)" class="ap__rail">
+          <p class="ap__rail-title">Rail ads while scrolling</p>
+          <div class="ap__seg" role="radiogroup" :aria-label="`${pg.label}: rail ads while scrolling`">
+            <button
+              v-for="m in RAIL_MODES" :key="m.id" type="button" role="radio" class="ap__seg-btn bs-focusable"
+              :class="{ 'is-on': railMode === m.id }" :aria-checked="railMode === m.id" :disabled="!ads.enabled"
+              :data-rail-mode="m.id" @click="store.setRailMode(m.id)"
+            >{{ m.label }}</button>
+          </div>
+          <p class="ap__sub">{{ railHint }}</p>
+        </div>
       </PanelGroup>
     </div>
 
@@ -111,6 +128,11 @@ function onPresetKey(e, page, i) {
 .ap__preset.is-selected { border-color: var(--bs-brand); box-shadow: 0 0 0 1px var(--bs-brand); }
 .ap__preset:disabled { cursor: not-allowed; }
 .ap__preset-label { font: 700 0.75rem/1.3 var(--bs-font); color: var(--bs-ink); }
+.ap__rail { margin-top: 10px; display: grid; gap: 6px; }
+.ap__rail-title { margin: 0; font: 700 0.75rem/1.3 var(--bs-font); color: var(--bs-ink); }
+.ap__seg { display: flex; padding: 2px; border-radius: var(--bs-radius-md); background: var(--bs-canvas); border: 1px solid var(--bs-line); }
+.ap__seg-btn { flex: 1; min-height: 30px; border: 0; border-radius: calc(var(--bs-radius-md) - 2px); background: transparent; font: 700 0.6875rem/1.2 var(--bs-font); color: var(--bs-ink-soft); cursor: pointer; padding: 4px 6px; }
+.ap__seg-btn.is-on { background: var(--bs-surface); color: var(--bs-ink); box-shadow: var(--bs-shadow-1); }
 .ap__sponsors { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .ap__sponsor { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px; border: 1px solid var(--bs-line); border-radius: var(--bs-radius-md); }
 .ap__logo { width: 36px; height: 36px; border-radius: var(--bs-radius-sm); display: grid; place-items: center; overflow: hidden; color: #fff; font-weight: 700; }

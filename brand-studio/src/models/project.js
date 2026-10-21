@@ -45,6 +45,7 @@ export function createProject({ event = {}, organizer = {}, brandKit = {}, spons
       enabled: sponsors.length > 0,
       sponsors,
       presets: { landing: 'rectangles', browse: 'rail-160', details: 'bottom-billboard' },
+      railMode: 'auto', // models/ads.js RAIL_MODES
       placements: {
         landing: placementsFromPreset('landing', 'rectangles', sponsorIds),
         browse: placementsFromPreset('browse', 'rail-160', sponsorIds),

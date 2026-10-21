@@ -10,8 +10,22 @@ const props = defineProps({
 
 const has = (slot) => props.placements.find((p) => p.slot === `${props.page}.${slot}`)
 const rail = computed(() => has('rail'))
-const railCount = computed(() => Math.min(rail.value?.count || 0, 3))
-const railNarrow = computed(() => rail.value?.size === '120x600')
+const railNarrow = computed(() => props.placements.filter((p) => p.slot === `${props.page}.rail`).every((p) => p.size.startsWith('120')))
+// Every rail unit, scaled from its real size (600px ≈ 14 viewBox units), stacked.
+const railUnits = computed(() => {
+  const out = []
+  let y = props.page === 'details' ? 34 : top.value ? 21 : 14
+  for (const p of props.placements.filter((x) => x.slot === `${props.page}.rail`)) {
+    const [w, h] = p.size.split('x').map(Number)
+    for (let i = 0; i < (p.count || 1) && y < 49; i++) {
+      const uh = Math.max(3, Math.min(49 - y, (h / 600) * 14))
+      const uw = w >= 300 ? 13 : w >= 160 ? 9 : 6
+      out.push({ x: 67 - uw, y, w: uw, h: uh })
+      y += uh + 1.5
+    }
+  }
+  return out
+})
 const top = computed(() => has('top'))
 const bottom = computed(() => has('bottom') || has('afterContent'))
 const mid = computed(() => has('afterRooms'))
@@ -50,16 +64,7 @@ const rects = computed(() => {
     <!-- ads -->
     <rect v-if="top" x="10" y="12" width="52" :height="short(top) ? 4 : 7" rx="1" class="apt__ad" />
     <template v-if="rail">
-      <rect
-        v-for="n in railCount"
-        :key="n"
-        :x="railNarrow ? 61 : 58"
-        :y="page === 'details' ? 34 + (n - 1) * 8 : (top ? 21 : 14) + (n - 1) * 9"
-        :width="railNarrow ? 6 : 9"
-        height="7"
-        rx="1"
-        class="apt__ad"
-      />
+      <rect v-for="(u, n) in railUnits" :key="n" :x="u.x" :y="u.y" :width="u.w" :height="u.h" rx="1" class="apt__ad" />
     </template>
     <rect v-if="mid" x="10" y="35" width="52" height="6" rx="1" class="apt__ad" />
     <template v-if="rects">

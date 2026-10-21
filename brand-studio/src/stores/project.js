@@ -157,6 +157,7 @@ export const useProjectStore = defineStore('bs-project', {
 
     // ── Ads ─────────────────────────────────────────────────────────────────
     setAdsEnabled(on) { this.project.ads.enabled = on; this.touch() },
+    setRailMode(mode) { this.project.ads.railMode = mode; this.touch() },
     applyAdPreset(page, presetId) {
       const ads = this.project.ads
       ads.presets[page] = presetId

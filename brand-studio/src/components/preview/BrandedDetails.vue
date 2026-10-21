@@ -38,7 +38,9 @@ const hero = computed(() => heroProps(props.project, { size: 'compact' }))
   <brand-theme-provider :brand-kit="project.brandKit" :start-date="project.event.startDate" :end-date="project.event.endDate" class="bp">
     <page-frame :brand="navBrand(project)" :logo="navLogo(project)" cart-mode="reserve">
       <brand-hero v-bind="hero" />
+      <!-- Keyed on the rail: the page reads its rail slot once at mount. -->
       <hotel-detail-page
+        :key="has('details.rail') ? 'rail' : 'norail'"
         v-bind="detail"
         :rail-width="has('details.rail') ? slotWidth(ads.placements, 'details.rail') : 160"
         @back="emit('navigate', 'browse')"
@@ -47,7 +49,7 @@ const hero = computed(() => heroProps(props.project, { size: 'compact' }))
           <ad-slot slot-id="details.afterRooms" :placements="ads.placements" :sponsors="ads.sponsors" :interactive="interactiveAds" />
         </template>
         <template v-if="has('details.rail')" #rail>
-          <ad-slot slot-id="details.rail" :placements="ads.placements" :sponsors="ads.sponsors" :interactive="interactiveAds" />
+          <ad-slot slot-id="details.rail" :placements="ads.placements" :sponsors="ads.sponsors" :interactive="interactiveAds" :rail-mode="project.ads?.railMode || 'auto'" />
         </template>
         <template v-if="has('details.bottom')" #bottom>
           <ad-slot slot-id="details.bottom" :placements="ads.placements" :sponsors="ads.sponsors" :interactive="interactiveAds" />
@@ -56,3 +58,9 @@ const hero = computed(() => heroProps(props.project, { size: 'compact' }))
     </page-frame>
   </brand-theme-provider>
 </template>
+
+<style scoped>
+/* The page's own rail is sticky as a whole; AdSlot decides what pins (railMode),
+   so the rail column just stretches the full height of the results. */
+.bp :deep(.hdp__rail) { position: static; align-self: stretch; }
+</style>

@@ -119,5 +119,71 @@
     "prompt": "A hotel breakfast terrace with coffee cups, pastries and orange juice on a sunlit table, a group gathering softly blurred in the background. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
     "requestId": "d3fdab95-7425-4017-94f1-fa9e9aaf469a",
     "createdAt": "2026-10-21T22:09:58.153Z"
+  },
+  {
+    "id": "footer-skyline",
+    "file": "footer-skyline.jpg",
+    "kind": "photo",
+    "role": "footer",
+    "aspect": "21:9",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Ultra-wide panorama of a fictional, generic mid-size American downtown at blue hour: simple modern glass hotel towers and brick buildings with warm lit windows, a quiet river reflecting the lights, calm and cinematic, dark sky at the top for overlaid type. Not any real city; no recognizable landmarks, no famous towers, no signage. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
+    "requestId": "564ff170-f0bf-48ae-ab18-dade83080d2d",
+    "createdAt": "2026-10-21T22:28:33.321Z"
+  },
+  {
+    "id": "step-1",
+    "file": "step-1.jpg",
+    "kind": "abstract",
+    "role": "step",
+    "aspect": "1:1",
+    "model": "marketing-studio/image/flare",
+    "prompt": "A modern hotel atrium with a sweeping curved glass roof and steel ribs, soft daylight, viewed from below, cool neutral tones. Softly out of focus, shallow depth of field, calm and uncluttered so a crisp interface can sit on top. No people in focus, no text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "3e5dbb51-553a-4031-9d83-ec22172fba25",
+    "createdAt": "2026-10-21T22:19:43.877Z"
+  },
+  {
+    "id": "step-3",
+    "file": "step-3.jpg",
+    "kind": "abstract",
+    "role": "step",
+    "aspect": "1:1",
+    "model": "marketing-studio/image/flare",
+    "prompt": "A warm hotel front desk and lobby with rolling luggage and a bell cart, pendant lights glowing, evening ambience. Softly out of focus, shallow depth of field, calm and uncluttered so a crisp interface can sit on top. No people in focus, no text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "866d33fd-84a7-4a94-a844-9e43ecbb4b6a",
+    "createdAt": "2026-10-21T22:19:44.090Z"
+  },
+  {
+    "id": "step-2",
+    "file": "step-2.jpg",
+    "kind": "abstract",
+    "role": "step",
+    "aspect": "1:1",
+    "model": "marketing-studio/image/flare",
+    "prompt": "A stadium concourse at dusk with warm floodlights and an open view toward a glowing pitch, long exposure light trails, deep blue sky. Softly out of focus, shallow depth of field, calm and uncluttered so a crisp interface can sit on top. No people in focus, no text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "0785c53d-19c4-4a35-9f65-98c62aa9d15f",
+    "createdAt": "2026-10-21T22:19:44.247Z"
+  },
+  {
+    "id": "footer-texture-warm",
+    "file": "footer-texture-warm.jpg",
+    "kind": "abstract",
+    "role": "footer",
+    "aspect": "2:1",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Soft flowing gradient ribbons and silk folds in coral, magenta, violet and warm amber, luminous, smooth, premium. Abstract, no text, no letters, no logos, no shapes that read as symbols.",
+    "requestId": "02fdab6d-72a5-4751-b562-cea11d2753fc",
+    "createdAt": "2026-10-21T22:19:54.178Z"
+  },
+  {
+    "id": "footer-texture-cool",
+    "file": "footer-texture-cool.jpg",
+    "kind": "abstract",
+    "role": "footer",
+    "aspect": "2:1",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Soft flowing gradient ribbons and silk folds in teal, electric blue, emerald and navy, luminous, smooth, premium. Abstract, no text, no letters, no logos, no shapes that read as symbols.",
+    "requestId": "c74b6512-b453-40b2-bbd0-abc1cf6b03e9",
+    "createdAt": "2026-10-21T22:19:54.490Z"
   }
 ]

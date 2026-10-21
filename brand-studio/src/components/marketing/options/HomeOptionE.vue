@@ -6,18 +6,23 @@
 // placeholder stat grid, industry cards, a closing band and FAQ. Static.
 // Mosaic generated with Higgsfield (assets/marketing/option-e). All organizers,
 // figures and quotes are fictional placeholders.
+// Steps are an accordion with a per-step mock (OptionESteps); the footer is
+// switchable between concepts (OptionEFooter `footer` prop).
 // Emits: start({ websiteUrl? }), sample(key), signin.
 import { ref } from 'vue'
 import BrandHero from '../../brand/BrandHero.vue'
-import ChromeWindow from '../../devices/ChromeWindow.vue'
-import IPhone from '../../devices/IPhone.vue'
-import OptionEPhoneScreen from './OptionEPhoneScreen.vue'
+import OptionESteps from './OptionESteps.vue'
+import OptionEFooter from './OptionEFooter.vue'
 import { OPTION_E_ART as ART } from '../../../assets/marketing/option-e/index.js'
 import { sampleProject } from '../../../data/sampleEvents.js'
 import { VERTICAL_EXAMPLES } from '../../../data/verticals/index.js'
 import { heroProps } from '../../preview/previewModel.js'
 import epLogo from '@lib/assets/eventpipe logos/eventpipe-logo.svg'
 
+defineProps({
+  // Footer concept: classic | brands | cascade | skyline | spectrum (OptionEFooter)
+  footer: { type: String, default: 'classic' },
+})
 const emit = defineEmits(['start', 'sample', 'signin'])
 
 const NAV = [
@@ -50,8 +55,6 @@ const submitSite = () => emit('start', { websiteUrl: website.value.trim() })
 // Example result under the hero field.
 const demo = sampleProject('heartland')
 const demoHero = heroProps(demo, { size: 'card' })
-const demoPhone = heroProps(demo, { size: 'compact' })
-const demoPrimary = demo.brandKit.colors?.primary || '#01113E'
 
 // Fictional organizers (vertical catalog examples) for the trust strip + cards.
 const orgs = VERTICAL_EXAMPLES.map((v) => {
@@ -65,12 +68,6 @@ const VOICES = [
   { org: 'youth-sports', quote: 'Families found the team hotels in one tap, and it looked like our tournament, not a hotel portal.', who: 'Tournament director' },
   { org: 'weddings', quote: 'Our guests got one beautiful link with our colors. Nobody texted me asking where to stay.', who: 'Couple, wedding weekend' },
   { org: 'construction', quote: 'Crews book near the job site from their phones. I can see who is still unbooked before Monday.', who: 'Field operations lead' },
-]
-
-const STEPS = [
-  { n: '01', title: 'Paste your website', body: 'Drop in your event or organization site. We pull your logo, colors and fonts automatically — or upload them yourself.' },
-  { n: '02', title: 'We brand every page', body: 'Your homepage hero, hotel directory and hotel details pages are themed in seconds, with banners generated to match.' },
-  { n: '03', title: 'Share one link, track the block', body: 'Send a single booking link. Guests book your negotiated rates; you watch pickup by hotel in real time.' },
 ]
 
 // Placeholder figures (marked in the docs and in the footnote).
@@ -178,34 +175,8 @@ const FAQ = [
         </ul>
       </section>
 
-      <!-- 4 · Steps -->
-      <section id="oe-how" class="oe__how" aria-labelledby="oe-how-title">
-        <div class="oe__how-copy">
-          <h2 id="oe-how-title" class="oe__h2">Group hotel booking,<br />branded in three steps</h2>
-          <ol class="oe__steps">
-            <li v-for="(s, i) in STEPS" :key="s.n" :class="{ 'is-first': i === 0 }">
-              <span class="oe__step-n">{{ s.n }}</span>
-              <div>
-                <h3>{{ s.title }}</h3>
-                <p>{{ s.body }}</p>
-              </div>
-            </li>
-          </ol>
-          <q-btn unelevated no-caps rounded class="oe__btn oe__btn--dark" icon-right="arrow_forward" label="Brand my page" @click="emit('start', {})" />
-        </div>
-        <div class="oe__how-media" :style="{ backgroundImage: `url(${ART['tile-arrival']})` }">
-          <div class="oe__how-browser">
-            <chrome-window url="book.eventpipe.com/heartland" :title="demo.event.name" :favicon="demo.brandKit.logo?.src || ''" :favicon-color="demoPrimary" :design-width="1000" label="Branded homepage preview">
-              <brand-hero v-bind="heroProps(demo)" :heading-level="3" class="oe__how-hero" />
-            </chrome-window>
-          </div>
-          <div class="oe__how-phone">
-            <i-phone :page-height="640" url="book.eventpipe.com/heartland" label="Room block tracking on a phone">
-              <option-e-phone-screen :hero="demoPhone" :primary="demoPrimary" />
-            </i-phone>
-          </div>
-        </div>
-      </section>
+      <!-- 4 · Steps (accordion + per-step mock) -->
+      <option-e-steps @start="emit('start', $event)" />
 
       <!-- 5 · Stats -->
       <section class="oe__stats" aria-labelledby="oe-stats-title">
@@ -253,20 +224,7 @@ const FAQ = [
       </section>
     </main>
 
-    <footer class="oe__footer">
-      <div class="oe__footer-top">
-        <div>
-          <img :src="epLogo" alt="EventPipe" class="oe__ep oe__ep--light" />
-          <p>Branded hotel booking pages for every group that travels.</p>
-        </div>
-        <nav aria-label="Footer">
-          <div><strong>Product</strong><a href="#oe-how">How it works</a><a href="#oe-industries">Industries</a><a href="#oe-faq">FAQ</a></div>
-          <div><strong>Organizers</strong><a href="#oe-industries">Tournaments</a><a href="#oe-industries">Conferences</a><a href="#oe-industries">Weddings</a></div>
-          <div><strong>Company</strong><a href="#top">About</a><a href="#top">Contact</a><a href="#top">Privacy</a></div>
-        </nav>
-      </div>
-      <p class="oe__wordmark" aria-hidden="true">presto</p>
-    </footer>
+    <option-e-footer :variant="footer" @start="emit('start', $event)" />
   </div>
 </template>
 
@@ -346,20 +304,8 @@ const FAQ = [
 .oe__voice-q { margin: 0; font-size: 0.9375rem; font-weight: 600; line-height: 1.35; }
 .oe__voice-who { margin: 6px 0 0; font-size: 0.75rem; color: var(--oe-soft); }
 
-/* Steps */
-.oe__how { max-width: 1180px; margin: 0 auto; padding: 32px 24px 96px; display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 56px; align-items: center; }
+/* Section headings */
 .oe__h2 { margin: 0; font: 800 clamp(1.75rem, 3vw, 2.5rem)/1.1 var(--oe-head); letter-spacing: -0.025em; text-wrap: balance; }
-.oe__steps { list-style: none; margin: 28px 0 28px; padding: 0; }
-.oe__steps li { display: flex; gap: 16px; padding: 18px 0; border-top: 1px solid var(--oe-line); }
-.oe__steps li:last-child { border-bottom: 1px solid var(--oe-line); }
-.oe__step-n { font: 800 0.875rem var(--oe-display); color: var(--oe-accent); padding-top: 3px; }
-.oe__steps h3 { margin: 0; font: 700 1.125rem var(--oe-head); }
-.oe__steps p { margin: 6px 0 0; color: var(--oe-soft); line-height: 1.5; font-size: 0.9375rem; }
-.oe__how-media { position: relative; min-height: 520px; border-radius: 24px; background-size: cover; background-position: center; overflow: hidden; box-shadow: 0 24px 60px rgb(15 23 42 / 0.16); }
-.oe__how-media::before { content: ''; position: absolute; inset: 0; background: linear-gradient(160deg, rgb(255 255 255 / 0.15), rgb(11 18 32 / 0.35)); }
-.oe__how-browser { position: absolute; left: 6%; top: 9%; width: 74%; filter: drop-shadow(0 18px 30px rgb(0 0 0 / 0.25)); }
-.oe__how-hero { pointer-events: none; }
-.oe__how-phone { position: absolute; right: 5%; bottom: -16%; width: 30%; filter: drop-shadow(0 18px 30px rgb(0 0 0 / 0.3)); }
 
 /* Stats */
 .oe__stats { max-width: 1080px; margin: 0 auto; padding: 24px 24px 96px; }
@@ -407,17 +353,6 @@ const FAQ = [
 .oe__qa[open] .oe__qa-chev { transform: rotate(180deg); }
 .oe__qa p { margin: 0 0 18px 34px; color: rgb(255 255 255 / 0.72); line-height: 1.55; max-width: 72ch; }
 
-/* Footer */
-.oe__footer { background: #0E1220; color: #fff; padding: 24px max(24px, calc((100% - 1080px) / 2)) 0; overflow: hidden; }
-.oe__footer-top { display: flex; justify-content: space-between; gap: 40px; padding: 40px 0; border-top: 1px solid rgb(255 255 255 / 0.12); flex-wrap: wrap; }
-.oe__footer-top p { margin: 12px 0 0; color: rgb(255 255 255 / 0.62); font-size: 0.875rem; max-width: 30ch; }
-.oe__ep--light { filter: brightness(0) invert(1); height: 24px; }
-.oe__footer nav { display: flex; gap: 56px; flex-wrap: wrap; }
-.oe__footer nav div { display: grid; gap: 8px; align-content: start; font-size: 0.875rem; }
-.oe__footer nav strong { margin-bottom: 4px; }
-.oe__footer nav a { color: rgb(255 255 255 / 0.62); text-decoration: none; }
-.oe__wordmark { margin: 0; font: 800 clamp(5rem, 22vw, 18rem)/0.8 var(--oe-head); letter-spacing: -0.06em; text-align: center; transform: translateY(12%); }
-
 @media (prefers-reduced-motion: reduce) {
   .oe__ind-photo, .oe__ind-desc, .oe__qa-chev { transition: none; }
 }
@@ -426,7 +361,6 @@ const FAQ = [
 @media (max-width: 1080px) {
   .oe__links { display: none; }
   .oe__tile { opacity: 0.85; }
-  .oe__how { grid-template-columns: 1fr; gap: 36px; }
   .oe__ind { grid-template-columns: repeat(2, 1fr); }
   .oe__ind-intro { grid-column: 1 / -1; }
 }
@@ -452,16 +386,10 @@ const FAQ = [
   .oe__logos img { height: 36px; }
   .oe__voice-list { grid-template-columns: 1fr; }
   .oe__voices, .oe__stats { padding-bottom: 56px; }
-  .oe__how { padding: 16px 16px 64px; }
-  .oe__how-media { min-height: 380px; border-radius: 18px; }
-  .oe__how-browser { left: 5%; top: 6%; width: 86%; }
-  .oe__how-phone { width: 44%; right: 4%; bottom: -26%; }
   .oe__stat-grid { grid-template-columns: 1fr; }
   .oe__stat { padding: 18px; }
   .oe__ind { grid-template-columns: 1fr; padding: 0 16px 56px; }
   .oe__band { margin: 0 16px 64px; padding: 28px 22px; flex-direction: column; align-items: flex-start; }
   .oe__faq { padding: 64px 16px 48px; }
-  .oe__footer { padding-inline: 16px; }
-  .oe__footer nav { gap: 28px; }
 }
 </style>
