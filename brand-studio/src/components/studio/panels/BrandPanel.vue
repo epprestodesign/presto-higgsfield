@@ -100,7 +100,7 @@ function onHeroKey(e, i) {
       <p v-else class="bp__sub">SVG or transparent PNG works best · up to 2 MB</p>
     </PanelGroup>
 
-    <PanelGroup title="Hero image" hint="Used by photographic concepts on the landing banner.">
+    <PanelGroup title="Hero image" hint="Shown behind your logo and copy on every banner — homepage, hotel directory and hotel details.">
       <div class="bp__heroes" role="radiogroup" aria-label="Hero image">
         <button
           v-for="(img, i) in heroChoices"
