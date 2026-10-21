@@ -76,16 +76,17 @@ export function artworkPrompt({ direction, layout, event, brandKit, image }) {
   ].filter(Boolean).join(' ')
 }
 
-export function buildConcept({ direction, templateIndex = 0, brandKit, event, variant = 0, parent = null, provider = 'mock', model = 'mock-v1' }) {
+export function buildConcept({ direction, templateIndex = 0, brandKit, event, variant = 0, parent = null, retake = false, provider = 'mock', model = 'mock-v1' }) {
   const tpl = TEMPLATES[direction][templateIndex % TEMPLATES[direction].length]
   const palette = resolvePalette(brandKit.colors)
-  const image = pickImage(brandKit, event, templateIndex + variant + (direction === 'premium' ? 1 : 0))
+  // Variations step through the photo pool so each one is visibly different.
+  const image = pickImage(brandKit, event, templateIndex + variant * 2 + (direction === 'premium' ? 1 : 0))
   const seed = Math.floor(Math.random() * 1e6)
   const headingFont = tpl.serif && !/serif|playfair|lora|dm-serif/.test(brandKit.typography?.heading || '') ? SERIF_FALLBACK : brandKit.typography?.heading
   return {
     id: uid('cpt'),
     direction,
-    title: parent ? `${tpl.title} · v${(parent.version || 1) + variant}` : tpl.title,
+    title: parent ? `${tpl.title} · v${(parent.version || 1) + variant}` : retake ? `${tpl.title} · New take` : tpl.title,
     rationale: tpl.rationale,
     layout: tpl.layout,
     treatment: treatmentFor(tpl, palette, image, variant),

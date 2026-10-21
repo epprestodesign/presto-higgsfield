@@ -69,6 +69,14 @@ export function brandThemeVars(brandKit = {}) {
     '--q-secondary': p.secondary,
     '--q-accent': p.accent,
     '--q-dark': p.ink,
+    // A few Presto components reach for Navy palette steps directly (button
+    // hovers, muted brand fills); remap them so nothing flashes Presto navy.
+    '--ds-palette-navy-50': p.subtlest,
+    '--ds-palette-navy-100': p.selected,
+    '--ds-palette-navy-400': tint(p.primary, 0.45),
+    '--ds-palette-navy-700': shade(p.primary, 0.08),
+    '--ds-palette-navy-800': p.hover,
+    '--ds-palette-navy-900': p.primary,
     // Brand Studio additions, read by BrandHero / ad creatives
     '--brand-primary': p.primary,
     '--brand-secondary': p.secondary,

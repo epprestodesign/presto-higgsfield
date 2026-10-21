@@ -8,6 +8,9 @@ import CartFlyout from './CartFlyout.vue'
 
 const props = defineProps({
   brand: { type: String, default: 'Soccer League' },
+  // Optional brand logo (image URL). When set it replaces the brand text; the
+  // brand string becomes the image's alt text. Default '' keeps the text brand.
+  logo: { type: String, default: '' },
   contactLabel: { type: String, default: 'Contact Us' },
   // Contact details shown in the Contact Us dropdown.
   contactInfo: { type: Object, default: () => ({
@@ -60,7 +63,10 @@ const count = ref(0)
 <template>
   <div class="gnav-wrap">
     <header class="gnav" :class="{ 'gnav--minimal': minimal }">
-      <a class="gnav__brand" href="#" @click.prevent>{{ brand }}</a>
+      <a class="gnav__brand" :class="{ 'gnav__brand--logo': logo }" href="#" @click.prevent>
+        <img v-if="logo" :src="logo" :alt="brand" class="gnav__logo" />
+        <template v-else>{{ brand }}</template>
+      </a>
 
       <div v-if="!minimal" class="gnav__actions">
         <a class="gnav__contact" href="#" @click.prevent="emit('contact')">
@@ -125,6 +131,8 @@ const count = ref(0)
 <style scoped>
 .gnav { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 72px; padding: 0 28px; background: var(--ds-color-surface); color: var(--ds-color-text-brand); border-bottom: 1px solid var(--ds-color-border); }
 .gnav__brand { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.01em; color: var(--ds-color-text-brand); text-decoration: none; }
+.gnav__brand--logo { display: flex; align-items: center; height: 100%; }
+.gnav__logo { display: block; height: 48px; width: auto; max-width: 220px; object-fit: contain; }
 /* Minimal (checkout): center the brand, no actions. */
 .gnav--minimal { justify-content: center; }
 
@@ -151,6 +159,7 @@ const count = ref(0)
 @media (max-width: 600px) {
   .gnav { height: 60px; padding: 0 16px; gap: 10px; }
   .gnav__brand { font-size: 1.25rem; }
+  .gnav__logo { height: 40px; max-width: 160px; }
   .gnav__actions { gap: 10px; }
   .gnav__contact, .gnav__manage { display: none; }
   .gnav__hamburger { display: inline-flex; }

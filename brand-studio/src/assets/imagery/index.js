@@ -9,7 +9,7 @@ const url = (name) => files[`./${name}.jpg`]
 const RAW = [
   { id: 'soccer-night-match', tags: ['sports', 'soccer'], alt: 'Players on a floodlit soccer field at night', by: 'Abigail Keenan', unsplashId: '8-s5QuUBtyM' },
   { id: 'soccer-stadium-lights', tags: ['sports', 'soccer'], alt: 'Green soccer field under bright stadium lights', by: 'Jonathan Petersson', unsplashId: 'ARU18GpF6QQ' },
-  { id: 'soccer-junior-match', tags: ['sports', 'soccer'], alt: 'Soccer ball on a green field before a junior match', by: 'Daniel Norin', unsplashId: 'lBhhnhndpE0' },
+  { id: 'soccer-team-huddle', tags: ['sports', 'soccer'], alt: 'Youth soccer team in a huddle on the field', by: 'Jeffrey F Lin', unsplashId: 'GLKM5guF69Y' },
   { id: 'soccer-field-green', tags: ['sports', 'soccer'], alt: 'Soccer ball on a lush green field', by: 'Giero Saaski', unsplashId: 'HPus1oCcOdk' },
   { id: 'conference-speaker', tags: ['conference'], alt: 'Speaker on stage addressing a large audience', by: 'Alexandre Pellaes', unsplashId: '6vAjp0pscX0' },
   { id: 'conference-screen', tags: ['conference'], alt: 'Audience watching a speaker on a bright screen', by: 'Kevin Gonzalez', unsplashId: '-NXNaE9lu6w' },

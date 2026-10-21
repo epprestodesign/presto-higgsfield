@@ -31,6 +31,19 @@ export const useSessionStore = defineStore('bs-session', {
       this.claimDraft()
       return true
     },
+    async signIn({ email, password }, { delayMs = 700 } = {}) {
+      this.error = ''
+      if (!email || !password) {
+        this.error = 'Enter your email and password.'
+        return false
+      }
+      this.pending = true
+      await new Promise((r) => setTimeout(r, delayMs))
+      this.user = { id: `usr_${Date.now().toString(36)}`, email, name: email.split('@')[0], provider: 'password' }
+      this.pending = false
+      this.claimDraft()
+      return true
+    },
     async signInWithGoogle({ delayMs = 700 } = {}) {
       this.pending = true
       await new Promise((r) => setTimeout(r, delayMs))

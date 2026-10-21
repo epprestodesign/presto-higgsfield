@@ -17,10 +17,18 @@ export const PREVIEW_HOST_STORY_ID = 'brand-studio-branded-preview-preview-host-
 
 export const PREVIEW_PAGES = ['landing', 'browse', 'details', 'checkout', 'confirmation']
 
-/** URL of the preview host. `base` lets the future app point at /preview instead. */
+// Outside Storybook (the standalone prototype app) the host is the app itself
+// in preview mode; the app registers its URL here at startup.
+let hostOverride = ''
+export function configurePreviewHost(url) { hostOverride = url }
+
+/** URL of the preview host. `base` lets a caller point somewhere else explicitly. */
 export function previewHostUrl({ base } = {}) {
   if (base) return base
-  return `iframe.html?id=${PREVIEW_HOST_STORY_ID}&viewMode=story`
+  if (hostOverride) return hostOverride
+  // bsEmbed=1 tells the host a Studio is driving it. (Inside Storybook every
+  // story iframe has a parent window, so window.parent alone can't say.)
+  return `iframe.html?id=${PREVIEW_HOST_STORY_ID}&viewMode=story&bsEmbed=1`
 }
 
 const sameOrigin = (e) => e.origin === window.location.origin
@@ -57,7 +65,10 @@ export function connectPreviewFrame(iframe, getPayload, { onNavigate } = {}) {
  * update. Returns { navigate(page), embedded, destroy }.
  */
 export function listenAsPreviewHost(onRender) {
-  const embedded = typeof window !== 'undefined' && window.parent !== window
+  const embedded =
+    typeof window !== 'undefined' &&
+    window.parent !== window &&
+    new URLSearchParams(window.location.search).get('bsEmbed') === '1'
   const onMessage = (e) => {
     if (!sameOrigin(e) || e.data?.type !== 'bs-preview:render') return
     onRender({ project: e.data.project, page: e.data.page })

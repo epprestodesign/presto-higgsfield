@@ -39,7 +39,7 @@ export const SAMPLE_EVENTS = [
       logo: logo('logo-heartland', heartland, 'Heartland Invitational Soccer Cup'),
       colors: { primary: '#0E1B2C', secondary: '#19C6B8', accent: '#F5B700', ink: '#0B1220', surface: '#FFFFFF' },
       typography: { heading: 'barlow-condensed', body: 'inter' },
-      imagery: [photo('soccer-night-match'), photo('soccer-stadium-lights'), photo('soccer-junior-match')],
+      imagery: [photo('soccer-night-match'), photo('soccer-stadium-lights'), photo('soccer-team-huddle')],
       heroImageId: 'soccer-night-match',
       direction: 'energy',
       keywords: ['competitive', 'youth', 'family-friendly', 'electric'],

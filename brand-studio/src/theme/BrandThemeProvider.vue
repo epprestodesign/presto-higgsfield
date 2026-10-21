@@ -3,13 +3,19 @@
 // setting the Presto semantic tokens as inline CSS custom properties. Wrap any
 // Presto page (LandingPage, HotelListPage, HotelDetailPage …) in it to preview
 // that page in the customer's branding without modifying the component.
-import { computed } from 'vue'
+import { computed, provide } from 'vue'
 import { brandThemeVars } from './brandTheme.js'
 
 const props = defineProps({
   brandKit: { type: Object, default: () => ({}) },
   tag: { type: String, default: 'div' },
+  // Event dates (ISO yyyy-mm-dd). Presto's BookingWidget opens on these.
+  startDate: { type: String, default: '' },
+  endDate: { type: String, default: '' },
 })
+
+const slash = (iso) => (iso ? iso.replace(/-/g, '/') : '')
+if (props.startDate) provide('presto:defaultDateRange', { from: slash(props.startDate), to: slash(props.endDate || props.startDate) })
 
 const vars = computed(() => brandThemeVars(props.brandKit))
 </script>

@@ -30,7 +30,7 @@ export function createMockProvider({ latencyMs = 2400, failNext = false } = {}) 
     if (req.kind === 'regenerate') {
       const c = req.concept
       const next = ((c.templateIndex ?? 0) + 1) % templatesFor(c.direction).length
-      return [buildConcept({ direction: c.direction, templateIndex: next, brandKit, event, variant: (c.version || 1) % 3 })]
+      return [buildConcept({ direction: c.direction, templateIndex: next, brandKit, event, variant: (c.version || 1) % 3, retake: true })]
     }
     return []
   }

@@ -4,7 +4,7 @@ import { formatDateRange, locationLabel } from './event.js'
 
 const BY_CATEGORY = {
   sports: {
-    tagline: 'Official team hotels. Book early, stay close to the fields.',
+    tagline: 'Official event hotels. Book early, stay close to the action.',
     benefits: [
       'Official event hotels near the venue',
       'Exclusive team and family rates when available',
@@ -14,8 +14,8 @@ const BY_CATEGORY = {
     ],
     attendingTitle: "Who's attending?",
     attending: [
-      { title: 'Players', text: 'Rest up between matches with hotels minutes from the fields.' },
-      { title: 'Coaches & clubs', text: 'Keep the roster together with block rates and simple group booking.' },
+      { title: 'Athletes', text: 'Rest up between competitions with hotels minutes from the venue.' },
+      { title: 'Teams & clubs', text: 'Keep everyone together with block rates and simple group booking.' },
       { title: 'Families & fans', text: 'Find family-friendly rooms near restaurants and local attractions.' },
     ],
   },

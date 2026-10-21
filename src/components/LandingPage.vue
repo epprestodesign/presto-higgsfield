@@ -6,6 +6,7 @@
 // `mode` switches the widget + cart between Book Reservations ('reservations')
 // and Group Block ('group'). All copy is prop-driven; defaults describe a
 // sample youth soccer tournament (age divisions U9–U19).
+import { computed } from 'vue'
 import defaultBg from '../../background-img/defaultBackgroundImage.png'
 import GlobalNav from './GlobalNav.vue'
 import BookingWidget from './BookingWidget.vue'
@@ -72,6 +73,34 @@ const props = defineProps({
   // Booking Widget state: true = Teams Booking Widget (Registered Team(s) field),
   // false = Core Booking Widget (generic search, no team field).
   showTeams: { type: Boolean, default: true },
+
+  // ── Optional overrides (Brand Studio). Defaults reproduce today's page. ──
+  // Brand logo URL for the Global Nav (replaces the brand text).
+  logo: { type: String, default: '' },
+  // Section order + visibility. Ids: 'widget', 'intro', 'benefits',
+  // 'attending', 'eventInfo', 'closing', 'ads'. Ids missing from sectionOrder
+  // are not rendered; consecutive copy sections share one centered block.
+  sectionOrder: { type: Array, default: null },
+  hiddenSections: { type: Array, default: () => [] },
+})
+// Slots (optional): `hero` replaces the hero band, `ads` replaces the Display
+// Ad row (rendered at the 'ads' position).
+
+const DEFAULT_ORDER = ['widget', 'intro', 'benefits', 'attending', 'eventInfo', 'closing', 'ads']
+const COPY = ['intro', 'benefits', 'attending', 'eventInfo', 'closing']
+// Group the visible sections into render blocks: the widget band, runs of copy
+// sections (one .lp__content block each), and the ads row.
+const blocks = computed(() => {
+  const order = (props.sectionOrder || DEFAULT_ORDER).filter((id) => !props.hiddenSections.includes(id))
+  const out = []
+  for (const id of order) {
+    if (COPY.includes(id)) {
+      const last = out[out.length - 1]
+      if (last && last.type === 'copy') last.ids.push(id)
+      else out.push({ type: 'copy', key: 'copy-' + id, ids: [id] })
+    } else if (id === 'widget' || id === 'ads') out.push({ type: id, key: id })
+  }
+  return out
 })
 
 // Same hero treatment as Foundations / Hero Banner → Landing Page (scrim + image).
@@ -83,53 +112,69 @@ const heroStyle = { backgroundImage: `${scrim}, url(${defaultBg})` }
   <div class="lp">
     <!-- Global nav -->
     <!-- No cart on the landing page (nothing has been added yet). -->
-    <global-nav :brand="brand" :cart-mode="mode === 'group' ? 'hold' : 'reserve'" :show-cart="false" />
+    <global-nav :brand="brand" :logo="logo" :cart-mode="mode === 'group' ? 'hold' : 'reserve'" :show-cart="false" />
 
     <!-- Hero (Foundations / Hero Banner — Landing Page imagery) -->
-    <section class="lp__hero" :style="heroStyle">
-      <div class="lp__hero-inner">
-        <img :src="epLogoWhite" alt="EventPipe" class="lp__hero-logo" />
-        <h1 class="lp__event text-h5">{{ eventName }}</h1>
-        <p class="lp__dates text-body1">{{ eventDates }}</p>
-      </div>
-    </section>
+    <slot name="hero">
+      <section class="lp__hero" :style="heroStyle">
+        <div class="lp__hero-inner">
+          <img :src="epLogoWhite" alt="EventPipe" class="lp__hero-logo" />
+          <h1 class="lp__event text-h5">{{ eventName }}</h1>
+          <p class="lp__dates text-body1">{{ eventDates }}</p>
+        </div>
+      </section>
+    </slot>
 
-    <!-- Booking Widget -->
-    <section class="lp__widget">
-      <div class="lp__widget-card">
-        <!-- DES-91: the landing booking type starts blank (no default selection),
-             independent of the page's cart context. -->
-        <booking-widget mode="" :tabs="false" :show-teams="showTeams" />
-      </div>
-    </section>
+    <template v-for="block in blocks" :key="block.key">
+      <!-- Booking Widget -->
+      <section v-if="block.type === 'widget'" class="lp__widget">
+        <div class="lp__widget-card">
+          <!-- DES-91: the landing booking type starts blank (no default selection),
+               independent of the page's cart context. -->
+          <booking-widget mode="" :tabs="false" :show-teams="showTeams" />
+        </div>
+      </section>
 
-    <!-- Event description -->
-    <section class="lp__content">
-      <p v-for="(p, i) in intro" :key="'i' + i" class="lp__para">{{ p }}</p>
+      <!-- Event description -->
+      <section v-else-if="block.type === 'copy'" class="lp__content">
+        <template v-for="id in block.ids" :key="id">
+          <template v-if="id === 'intro'">
+            <p v-for="(p, i) in intro" :key="'i' + i" class="lp__para">{{ p }}</p>
+          </template>
 
-      <ul class="lp__benefits">
-        <li v-for="(b, i) in benefits" :key="'b' + i">
-          <span class="lp__check" aria-hidden="true">✔</span> {{ b }}
-        </li>
-      </ul>
+          <ul v-else-if="id === 'benefits'" class="lp__benefits">
+            <li v-for="(b, i) in benefits" :key="'b' + i">
+              <span class="lp__check" aria-hidden="true">✔</span> {{ b }}
+            </li>
+          </ul>
 
-      <h2 class="lp__section-title">{{ attendingTitle }}</h2>
-      <div v-for="(a, i) in attending" :key="'a' + i" class="lp__attend">
-        <h3 class="lp__attend-title">{{ a.title }}</h3>
-        <p class="lp__para">{{ a.text }}</p>
-      </div>
+          <template v-else-if="id === 'attending'">
+            <h2 class="lp__section-title">{{ attendingTitle }}</h2>
+            <div v-for="(a, i) in attending" :key="'a' + i" class="lp__attend">
+              <h3 class="lp__attend-title">{{ a.title }}</h3>
+              <p class="lp__para">{{ a.text }}</p>
+            </div>
+          </template>
 
-      <h2 class="lp__section-title">{{ eventInfoTitle }}</h2>
-      <p class="lp__para lp__info"><strong>Dates:</strong> {{ eventInfo.dates }}</p>
-      <p v-for="(l, i) in eventInfo.lines" :key="'l' + i" class="lp__para lp__info">{{ l }}</p>
+          <template v-else-if="id === 'eventInfo'">
+            <h2 class="lp__section-title">{{ eventInfoTitle }}</h2>
+            <p class="lp__para lp__info"><strong>Dates:</strong> {{ eventInfo.dates }}</p>
+            <p v-for="(l, i) in eventInfo.lines" :key="'l' + i" class="lp__para lp__info">{{ l }}</p>
+          </template>
 
-      <p v-for="(c, i) in closing" :key="'c' + i" class="lp__para lp__closing">{{ c }}</p>
-    </section>
+          <template v-else-if="id === 'closing'">
+            <p v-for="(c, i) in closing" :key="'c' + i" class="lp__para lp__closing">{{ c }}</p>
+          </template>
+        </template>
+      </section>
 
-    <!-- Display ads -->
-    <section class="lp__section lp__ads">
-      <display-ad v-for="n in ads" :key="n" />
-    </section>
+      <!-- Display ads -->
+      <section v-else-if="block.type === 'ads'" class="lp__section lp__ads">
+        <slot name="ads">
+          <display-ad v-for="n in ads" :key="n" />
+        </slot>
+      </section>
+    </template>
 
     <!-- Footer -->
     <footer class="lp__footer">

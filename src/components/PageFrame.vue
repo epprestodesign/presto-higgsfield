@@ -10,6 +10,8 @@ import epLogo from '../assets/eventpipe logos/eventpipe-logo.svg'
 
 const props = defineProps({
   brand: { type: String, default: 'Presto' },
+  // Optional brand logo URL for the Global Nav (replaces the brand text).
+  logo: { type: String, default: '' },
   cartMode: { type: String, default: 'reserve' }, // 'reserve' | 'hold' | 'reservations'
   cart: { type: Object, default: () => ({}) },
   // 'auto' → cart shows only for the Group Block (hold) flow; true/false forces it.
@@ -21,7 +23,7 @@ const props = defineProps({
 
 <template>
   <div class="pf">
-    <global-nav :brand="brand" :cart-mode="cartMode" :cart="cart" :show-cart="showCart" :minimal="minimalNav" />
+    <global-nav :brand="brand" :logo="logo" :cart-mode="cartMode" :cart="cart" :show-cart="showCart" :minimal="minimalNav" />
     <div class="pf__body"><slot /></div>
     <footer class="pf__footer">
       <div class="pf__footer-inner">

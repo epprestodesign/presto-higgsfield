@@ -4,7 +4,7 @@
 // Features: working tabs (toggle via `tabs`), team search popover with live filter,
 // add-a-team MODAL with duplicate-name error, custom dual-month date range
 // (DateRangeCalendar) + flexible pills, travelers steppers. Flat; DS tokens.
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, inject } from 'vue'
 import DateRangeCalendar from './DateRangeCalendar.vue'
 
 const props = defineProps({
@@ -94,7 +94,10 @@ const dstr = (offset) => {
   d.setDate(d.getDate() + offset)
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`
 }
-const range = ref({ from: dstr(7), to: dstr(10) })
+// Optional: an ancestor can provide 'presto:defaultDateRange' ({ from, to } in
+// YYYY/MM/DD) so an event page opens on the event's own dates (Brand Studio).
+const providedRange = inject('presto:defaultDateRange', null)
+const range = ref(providedRange?.from ? { ...providedRange } : { from: dstr(7), to: dstr(10) })
 const flex = ref('Exact dates')
 const flexOptions = ['Exact dates', '± 1 day', '± 2 days', '± 3 days', '± 7 days']
 // Clear the selected date range (mobile dialog footer "Clear").
