@@ -21,7 +21,8 @@ import epLogo from '@lib/assets/eventpipe logos/eventpipe-logo.svg'
 
 defineProps({
   // Footer concept: classic | brands | cascade | skyline | spectrum (OptionEFooter)
-  footer: { type: String, default: 'classic' },
+  // Footer concept (OptionEFooter variants); B · cascade was chosen.
+  footer: { type: String, default: 'cascade' },
 })
 const emit = defineEmits(['start', 'sample', 'signin'])
 
