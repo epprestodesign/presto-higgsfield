@@ -7,10 +7,13 @@
   "scripts": {
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build -o storybook-static",
+    "prototype": "vite --config brand-studio/app/vite.config.js",
+    "build-prototype": "vite build --config brand-studio/app/vite.config.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test-storybook": "test-storybook --url http://127.0.0.1:6006",
-    "a11y:report": "node scripts/a11y-report.mjs"
+    "test-storybook": "test-storybook --url http://localhost:6006",
+    "a11y:report": "node scripts/a11y-report.mjs",
+    "test-stories": "node scripts/run-stories.mjs brand-studio http://localhost:6006"
   },
   "dependencies": {
     "@googlemaps/markerclusterer": "^2.6.2",
@@ -31,6 +34,7 @@
     "sass-embedded": "^1.83.0",
     "storybook": "10.6.3",
     "vite": "^6.4.0",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "playwright": "^1.64.1"
   }
 }

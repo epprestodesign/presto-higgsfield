@@ -1,0 +1,67 @@
+name: Deploy Storybook + prototype to GitHub Pages
+
+# Storybook at /presto-higgsfield/ and the mobile Brand Studio prototype nested
+# under it at /presto-higgsfield/prototype/.
+on:
+  push:
+    branches: [main, feat/brand-studio-gui]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build Storybook
+        run: pnpm build-storybook
+        env:
+          STORYBOOK_DISABLE_TELEMETRY: "1"
+          # Public URL of the hosted Presto hotel imagery (no secret).
+          VITE_IMAGERY_URL: "https://epprestodesign.github.io/presto-ds-imagery"
+
+      # The prototype uses a relative base, so it runs from any sub-path.
+      - name: Build Brand Studio prototype
+        run: pnpm build-prototype
+        env:
+          VITE_IMAGERY_URL: "https://epprestodesign.github.io/presto-ds-imagery"
+
+      - name: Nest prototype under Storybook
+        run: cp -r brand-studio/app/dist storybook-static/prototype
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: storybook-static
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

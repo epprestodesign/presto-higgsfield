@@ -93,7 +93,7 @@ const preview = {
           // the Presto design system it reuses follows unchanged.
           'Brand Studio', [
             'Overview', 'Architecture & Audit',
-            'Foundations', ['Studio Tokens', 'Brand Theme Engine', 'Imagery & Logos'],
+            'Foundations', ['Studio Tokens', 'Brand Theme Engine', 'Typeface Tester', 'Typeface Tester · Mobile', 'Imagery & Logos'],
             'Marketing Site', ['Landing Page', 'Sections'],
             'Onboarding', ['Event Intake', 'Brand Discovery'],
             'Creative Concepts', ['Brand Hero', 'Directions', 'Concept Gallery', 'Compare'],
