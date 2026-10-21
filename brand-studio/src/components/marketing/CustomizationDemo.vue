@@ -5,7 +5,8 @@
 import { ref, reactive, computed } from 'vue'
 import ProductPreview from './ProductPreview.vue'
 import { sampleProject } from '../../data/sampleEvents.js'
-import { buildConcept } from '../../providers/ai/conceptFactory.js'
+import { buildConcept, prestoBannerConcept } from '../../providers/ai/conceptFactory.js'
+import { getImage } from '../../assets/imagery/index.js'
 import { CREATIVE_DIRECTIONS } from '../../models/brandKit.js'
 import { getFont } from '../../theme/fonts.js'
 import { onColor } from '../../theme/color.js'
@@ -37,7 +38,14 @@ const kit = computed(() => ({
   typography: { ...base.brandKit.typography, heading: state.font },
   direction: state.direction,
 }))
-const concept = computed(() => buildConcept({ direction: state.direction, templateIndex: DIRECTION_TEMPLATE[state.direction], brandKit: kit.value, event: base.event }))
+// Every palette × direction has a Higgsfield-generated background (scripts/
+// hf-generate-banners.mjs --set demo) shown in the Presto banner standard.
+const concept = computed(() => {
+  const bg = getImage(`demo-${state.palette}-${state.direction}`)
+  return bg
+    ? prestoBannerConcept(kit.value, bg)
+    : buildConcept({ direction: state.direction, templateIndex: DIRECTION_TEMPLATE[state.direction], brandKit: kit.value, event: base.event })
+})
 
 const announce = ref('')
 const set = (key, value, label) => {

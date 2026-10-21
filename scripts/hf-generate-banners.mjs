@@ -6,6 +6,7 @@
 //   node scripts/hf-generate-banners.mjs --estimate   # free: prints the plan + cost
 //   node scripts/hf-generate-banners.mjs              # generates + downloads
 //   node scripts/hf-generate-banners.mjs --only heartland-photo,fintech-abstract
+//   node scripts/hf-generate-banners.mjs --set demo [--estimate]   # homepage Customization demo (6 palettes × 3 directions)
 //
 // Reads HIGGSFIELD_API_KEY_ID / HIGGSFIELD_API_KEY_SECRET from .env (never printed).
 // Output: brand-studio/src/assets/imagery/generated/<id>.<ext> + manifest.json
@@ -92,6 +93,29 @@ const TASKS = [
     prompt: 'Minimal abstract background: solid dark navy-blue field, muted and deep, with a few very thin flowing wave lines in a slightly lighter blue along the bottom right edge and one hairline red accent line; the rest is plain dark navy. Low contrast, calm, flat, vector-clean.' },
 ]
 
+// ── Customization demo scenarios (CustomizationDemo.vue PALETTES × directions) ──
+const DEMO_PALETTES = [
+  { id: 'midnight', name: 'midnight navy and teal', primary: '#0E1B2C', secondary: '#19C6B8', accent: '#F5B700' },
+  { id: 'crimson', name: 'deep crimson and coral', primary: '#8A1538', secondary: '#E04F5F', accent: '#FFD166' },
+  { id: 'forest', name: 'deep forest green and bright green', primary: '#14532D', secondary: '#4ADE80', accent: '#FDE047' },
+  { id: 'royal', name: 'royal blue and sky blue', primary: '#1E3A8A', secondary: '#38BDF8', accent: '#FB923C' },
+  { id: 'plum', name: 'deep plum purple and pink', primary: '#4C1D95', secondary: '#F472B6', accent: '#FCD34D' },
+  { id: 'clay', name: 'dark clay brown and warm peach', primary: '#7C2D12', secondary: '#FDBA74', accent: '#FEF3C7' },
+]
+const shadeHex = (hex, amt) => '#' + [0, 2, 4].map((i) => Math.round(parseInt(hex.slice(1 + i, 3 + i), 16) * (1 - amt)).toString(16).padStart(2, '0')).join('')
+const DEMO_TASKS = DEMO_PALETTES.flatMap((p) => [
+  // Recraft snaps royal blue to neon even when asked for muted, so that one tile uses Flare.
+  { id: `demo-${p.id}-signature`, event: 'heartland', model: p.id === 'royal' ? 'marketing-studio/image/flare' : 'recraft/v4.1/text-to-image', palette: [shadeHex(p.primary, 0.25), p.primary, p.secondary], noRef: true,
+    alt: `Minimal ${p.name} abstract background`,
+    prompt: `Minimal abstract background for a youth soccer tournament: solid deep ${p.name.split(' and ')[0]} field (${p.primary}) with fine halftone dots and thin diagonal lines in a slightly lighter tone along the right edge and one hairline ${p.secondary} line, fading to plain color toward the left and center. Muted, low-saturation, deep and calm — never neon. Flat, subtle, vector-clean.` },
+  { id: `demo-${p.id}-energy`, event: 'heartland', model: 'marketing-studio/image/flare', noRef: true,
+    alt: `Floodlit night soccer match in ${p.name} duotone`,
+    prompt: `A youth soccer match at night under floodlights, shot wide and low: motion-blurred players only at the far left and far right edges, empty pitch in the middle; bold duotone color grade in ${p.name} (${p.primary} shadows, ${p.secondary} highlights) with a fine halftone and speed-line texture toward the outer edges.` },
+  { id: `demo-${p.id}-premium`, event: 'heartland', model: 'marketing-studio/image/flare', noRef: true,
+    alt: `Calm editorial stadium at golden hour graded in ${p.name}`,
+    prompt: `Cinematic editorial photograph of an empty soccer stadium at golden hour, soft focus and shallow depth of field, elegant and calm, graded in rich ${p.name} tones (${p.primary}) with warm ${p.accent} light along one edge.` },
+])
+
 const rgb = (hex) => [0, 2, 4].map((i) => parseInt(hex.slice(1 + i, 3 + i), 16))
 
 function inputFor(task, refs) {
@@ -139,7 +163,8 @@ async function waitFor(id) {
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────
-const tasks = TASKS.filter((t) => !ONLY.length || ONLY.includes(t.id))
+const SET = args.includes('--set') ? args[args.indexOf('--set') + 1] : 'samples'
+const tasks = (SET === 'demo' ? DEMO_TASKS : TASKS).filter((t) => !ONLY.length || ONLY.includes(t.id))
 console.log(`${ESTIMATE_ONLY ? 'Estimating' : 'Generating'} ${tasks.length} banner backgrounds…`)
 
 if (ESTIMATE_ONLY) {
@@ -154,7 +179,7 @@ fs.mkdirSync(OUT, { recursive: true })
 const manifestPath = path.join(OUT, 'manifest.json')
 const manifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath, 'utf8')) : []
 
-const logoNames = [...new Set(tasks.filter((t) => t.model.includes('flare')).map((t) => EVENTS[t.event].logo))]
+const logoNames = [...new Set(tasks.filter((t) => t.model.includes('flare') && !t.noRef).map((t) => EVENTS[t.event].logo))]
 const logoPngs = await rasterizeLogos(logoNames)
 const logoUrls = {}
 for (const n of logoNames) logoUrls[n] = await upload(logoPngs[n])
@@ -165,7 +190,7 @@ await Promise.all(Array.from({ length: 4 }, async () => {
   while (queue.length) {
     const t = queue.shift()
     try {
-      const refs = t.model.includes('flare') ? [logoUrls[EVENTS[t.event].logo]] : []
+      const refs = t.model.includes('flare') && !t.noRef ? [logoUrls[EVENTS[t.event].logo]] : []
       const sub = await api('POST', `/${t.model}`, inputFor(t, refs), { 'Idempotency-Key': crypto.randomUUID() })
       console.log(`  → ${t.id}: queued ${sub.request_id}`)
       const done = await waitFor(sub.request_id)
@@ -174,7 +199,7 @@ await Promise.all(Array.from({ length: 4 }, async () => {
       const ext = (img.headers.get('content-type') || '').includes('png') ? 'png' : 'jpg'
       const file = `${t.id}.${ext}`
       fs.writeFileSync(path.join(OUT, file), Buffer.from(await img.arrayBuffer()))
-      const entry = { id: t.id, file, event: t.event, kind: t.id.split('-').pop(), model: t.model, alt: t.alt, prompt: inputFor(t, []).prompt, requestId: sub.request_id, createdAt: new Date().toISOString() }
+      const entry = { id: t.id, file, event: SET === 'demo' ? 'demo' : t.event, kind: t.model.startsWith('recraft') ? 'abstract' : 'photo', direction: SET === 'demo' ? t.id.split('-').pop() : undefined, model: t.model, alt: t.alt, prompt: inputFor(t, []).prompt, requestId: sub.request_id, createdAt: new Date().toISOString() }
       const i = manifest.findIndex((m) => m.id === t.id)
       i === -1 ? manifest.push(entry) : manifest.splice(i, 1, entry)
       fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n')

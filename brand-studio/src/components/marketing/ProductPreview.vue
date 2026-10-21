@@ -80,7 +80,11 @@ const slug = computed(() => `demo.eventpipe.com/${project.value.publishing.slug}
 </script>
 
 <template>
-  <browser-frame v-if="variant === 'desktop'" :url="slug" :label="`Desktop preview of the ${event.name} booking page`">
+  <browser-frame
+    v-if="variant === 'desktop'" :url="slug" :title="`${event.name} · Official Hotels`"
+    :favicon="kit.logo?.src || ''" :favicon-color="kit.colors?.primary" :design-width="1200"
+    :label="`Desktop preview of the ${event.name} booking page`"
+  >
     <scaled-frame :design-width="1200" :design-height="designHeight">
       <brand-theme-provider :brand-kit="kit" class="pp" inert>
         <global-nav :brand="navBrand" :show-cart="false" />
@@ -98,7 +102,7 @@ const slug = computed(() => `demo.eventpipe.com/${project.value.publishing.slug}
     </scaled-frame>
   </browser-frame>
 
-  <phone-frame v-else :label="`Mobile preview of the ${event.name} booking page`" :screen-height="designHeight">
+  <phone-frame v-else :url="slug" :label="`Mobile preview of the ${event.name} booking page`" :screen-height="designHeight">
     <brand-theme-provider :brand-kit="kit" class="pp pp--mobile" inert>
       <brand-hero v-bind="hero" :heading-level="2" />
       <section class="pp__hotels">
