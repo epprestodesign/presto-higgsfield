@@ -119,6 +119,9 @@ export function enableDemoAutofill({ root = document, persona = DEMO_PERSONA, on
   const handler = (e) => {
     const el = e.target
     if (!(el instanceof Element) || !el.matches?.(FILLABLE)) return
+    // Opt-out for fields the visitor should type into (e.g. the homepage's
+    // "paste your website" — a sample value would mix with what they type).
+    if (el.closest('[data-no-autofill]')) return
     if (el.value) return
     const value = valueFor(el, typeof persona === 'function' ? persona() : persona)
     if (value == null) return

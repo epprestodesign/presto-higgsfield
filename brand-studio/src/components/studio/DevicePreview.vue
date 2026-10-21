@@ -156,7 +156,7 @@ const frameTitle = computed(() => `Branded booking page preview — ${PAGE_META[
     <div v-if="homeTiles.length" class="dvp__tiles" aria-hidden="true">
       <span
         v-for="t in homeTiles" :key="t.art" class="dvp__tile"
-        :style="{ left: `${t.x}%`, top: `${t.y}%`, width: `${t.w}%`, aspectRatio: t.ratio, transform: `rotate(${t.r}deg)`, filter: t.blur ? `blur(${t.blur}px)` : undefined }"
+        :style="{ left: `${t.x}%`, top: `${t.y}%`, width: `${t.w}%`, aspectRatio: t.ratio, transform: `rotate(${t.r}deg)`, filter: `blur(${(t.blur || 0) + 3}px) grayscale(0.55) saturate(0.7)` }"
       ><img :src="OPTION_E_ART[t.art]" alt="" loading="lazy" /></span>
     </div>
     <span v-if="spec.chrome" class="dvp__zoom" aria-hidden="true">{{ zoom }}</span>
@@ -211,8 +211,11 @@ const frameTitle = computed(() => `Branded booking page preview — ${PAGE_META[
 /* 'home' — the homepage (Option E) look: airy white canvas, soft accent glows,
    tilted lifestyle tiles framing the window. */
 .dvp--home { background: radial-gradient(60% 50% at 12% 20%, rgb(124 58 237 / 0.07), transparent 70%), radial-gradient(55% 45% at 88% 85%, rgb(37 99 235 / 0.07), transparent 70%), #F7F8FB; }
+/* Kept quiet so the tiles never compete with the example page in the window:
+   blurred, desaturated, low opacity, washed toward the canvas. */
 .dvp__tiles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.dvp__tile { position: absolute; display: block; border-radius: 18px; overflow: hidden; box-shadow: 0 18px 40px rgb(15 23 42 / 0.14); opacity: 0.95; }
+.dvp__tiles::after { content: ''; position: absolute; inset: 0; background: rgb(247 248 251 / 0.35); }
+.dvp__tile { position: absolute; display: block; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 24px rgb(15 23 42 / 0.06); opacity: 0.32; }
 .dvp__tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .dvp__device { position: relative; z-index: 1; }
 .dvp__device--desktop, .dvp__device--tablet { flex: none; display: block; }

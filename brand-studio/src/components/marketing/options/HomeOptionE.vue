@@ -19,10 +19,11 @@ import { VERTICAL_EXAMPLES } from '../../../data/verticals/index.js'
 import { heroProps } from '../../preview/previewModel.js'
 import epLogo from '@lib/assets/eventpipe logos/eventpipe-logo.svg'
 
-defineProps({
-  // Footer concept: classic | brands | cascade | skyline | spectrum (OptionEFooter)
-  // Footer concept (OptionEFooter variants); B · cascade was chosen.
+const props = defineProps({
+  // Footer concept (OptionEFooter: classic | brands | cascade | skyline | spectrum); B · cascade was chosen.
   footer: { type: String, default: 'cascade' },
+  // Demo prefill for the website field on tap (host only, e.g. heartlandcup.example.com).
+  exampleSite: { type: String, default: 'heartlandcup.example.com' },
 })
 const emit = defineEmits(['start', 'sample', 'signin'])
 
@@ -52,6 +53,13 @@ const BULLETS = ['Free to start', 'Your logo & colors on every page', 'Live in s
 
 const website = ref('')
 const submitSite = () => emit('start', { websiteUrl: website.value.trim() })
+// Demo: tapping the empty field fills the example's website (selected, so
+// typing replaces it); "Brand my page" then carries that brand through.
+function prefillSite(e) {
+  if (website.value || !props.exampleSite) return
+  website.value = props.exampleSite
+  requestAnimationFrame(() => e.target.select?.())
+}
 
 // Example result under the hero field.
 const demo = sampleProject('heartland')
@@ -153,10 +161,10 @@ function onAnchor(e) {
             <li v-for="b in BULLETS" :key="b"><q-icon name="check" size="16px" /> {{ b }}</li>
           </ul>
 
-          <form class="oe__field" role="search" aria-label="Brand my booking page" @submit.prevent="submitSite">
+          <form class="oe__field" data-no-autofill role="search" aria-label="Brand my booking page" @submit.prevent="submitSite">
             <label class="oe__field-label" for="oe-site">
               <span>Your event website</span>
-              <input id="oe-site" v-model="website" type="text" inputmode="url" spellcheck="false" autocapitalize="off" placeholder="yourevent.com" autocomplete="url" aria-label="Your event website" />
+              <input id="oe-site" v-model="website" type="text" @focus="prefillSite" inputmode="url" spellcheck="false" autocapitalize="off" placeholder="yourevent.com" autocomplete="url" aria-label="Your event website" />
             </label>
             <q-btn type="submit" unelevated no-caps rounded class="oe__btn oe__btn--dark oe__btn--go" icon-right="arrow_forward" label="Brand my page" />
           </form>

@@ -90,7 +90,7 @@ export const SAMPLE_EVENTS = [
       region: 'IL',
       startDate: '2027-09-24',
       endDate: '2027-09-26',
-      websiteUrl: '',
+      websiteUrl: 'https://alvarezchen.example.com',
       attendance: '180 guests',
       description: 'We can’t wait to celebrate with you in Chicago! We’ve held rooms at a few of our favorite hotels near the ceremony.',
     },

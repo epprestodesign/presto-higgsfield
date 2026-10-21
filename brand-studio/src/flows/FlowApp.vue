@@ -17,7 +17,8 @@ import { useGenerationStore } from '../stores/generation.js'
 import { useSessionStore } from '../stores/session.js'
 import { enableDemoAutofill, personaFromSample } from './demoAutofill.js'
 import { getVertical } from '../data/verticals/index.js'
-import { getSampleEvent } from '../data/sampleEvents.js'
+import { getSampleEvent, ALL_EXAMPLES } from '../data/sampleEvents.js'
+import { VERTICALS } from '../data/verticals/index.js'
 import { conceptsFor } from '../stories/_helpers.js'
 import { parseHash, buildHash, shareUrl } from './deepLink.js'
 // Homepage = Option E (Group Booking); Option A (MarketingLanding) stays in Storybook.
@@ -160,14 +161,30 @@ function skipStep() {
 }
 
 // ── Screen events ─────────────────────────────────────────────────────────
+// The example's website for the homepage prefill: the ?example= one, else Heartland.
+const hostOf = (url) => { try { return new URL(url).hostname } catch { return '' } }
+const exampleSite = computed(() => hostOf(getSampleEvent(params.value.example || 'heartland')?.event?.websiteUrl || '') || 'heartlandcup.example.com')
+/** The example whose site this is (for a brand that stays consistent end to end). */
+function exampleForSite(url) {
+  const host = hostOf(url)
+  const s = host && ALL_EXAMPLES.find((x) => hostOf(x.event.websiteUrl || '') === host)
+  if (!s) return null
+  const vertical = s.vertical || VERTICALS.find((v) => v.sample === s.key)?.id || ''
+  return { sample: s, vertical }
+}
+
 function startNew(opts = {}) {
   project.reset()
   project.persistence.clear?.()
   loadedExample.value = ''
-  // "Paste your website" on the homepage → carried into the brand step.
+  // "Paste your website" on the homepage → carried into the brand step. A known
+  // example site also sets its industry, so tap-to-fill, the intake example
+  // logo, the brand scan and the concept imagery all use that one brand.
   const websiteUrl = typeof opts?.websiteUrl === 'string' ? opts.websiteUrl.trim() : ''
   if (websiteUrl) {
-    project.updateEvent({ websiteUrl: /^https?:\/\//i.test(websiteUrl) ? websiteUrl : `https://${websiteUrl}` })
+    const full = /^https?:\/\//i.test(websiteUrl) ? websiteUrl : `https://${websiteUrl}`
+    const match = exampleForSite(full)
+    project.updateEvent({ websiteUrl: full, ...(match ? { vertical: match.vertical, category: match.sample.event.category } : {}) })
     $q.notify({ message: `We'll pull your brand from ${websiteUrl.replace(/^https?:\/\//i, '')}`, icon: 'auto_awesome', color: 'dark', timeout: 2200, position: 'top' })
   }
   go('intake', { params: {} })
@@ -232,7 +249,7 @@ onBeforeUnmount(() => { disposeAutofill?.(); window.removeEventListener('popstat
     </header>
 
     <main class="fa__screen">
-      <home-option-e v-if="step === 'home'" @start="startNew" @sample="(key) => useSample({ key: key || 'heartland', to: 'studio', withConcepts: true })" @signin="go('dashboard')" />
+      <home-option-e v-if="step === 'home'" :example-site="exampleSite" @start="startNew" @sample="(key) => useSample({ key: key || 'heartland', to: 'studio', withConcepts: true })" @signin="go('dashboard')" />
 
       <intake-wizard
         v-else-if="step === 'intake'" :initial-step="Math.max(0, Number(params.step || 1) - 1)"

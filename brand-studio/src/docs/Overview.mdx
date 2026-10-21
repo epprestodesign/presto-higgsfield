@@ -1,67 +1,140 @@
 import { Meta } from '@storybook/addon-docs/blocks'
+import bannerBg from './assets/overview/generated/banner-atrium.jpg'
+import bannerDevices from './assets/overview/banner-devices.png'
+import m1 from './assets/overview/mobile-1-home.jpg'
+import m2 from './assets/overview/mobile-2-intake.jpg'
+import m3 from './assets/overview/mobile-3-brand.jpg'
+import m4 from './assets/overview/mobile-4-concepts.jpg'
+import m5 from './assets/overview/mobile-5-studio.jpg'
+import m6 from './assets/overview/mobile-6-demo.jpg'
 
 <Meta title="Brand Studio/Overview" />
 
-<div className="bs-ov">
+<style>{`
+  .ov { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0B1220; }
+  .ov a { color: inherit; }
+  .ov-hero { position: relative; overflow: hidden; border-radius: 24px; margin: 0 0 28px; padding: 44px 40px 0; background-size: cover; background-position: center; box-shadow: 0 0 0 1px #E8EAF0, 0 24px 60px rgb(15 23 42 / .10); }
+  .ov-hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgb(255 255 255 / .94) 0%, rgb(255 255 255 / .82) 38%, rgb(255 255 255 / .2) 70%, rgb(255 255 255 / 0) 100%); }
+  .ov-hero > * { position: relative; }
+  .ov-hero__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 24px; align-items: end; }
+  .ov-hero__copy { padding-bottom: 44px; }
+  .ov-eyebrow { margin: 0 0 12px; font: 700 12px/1 'Inter', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #7C3AED; }
+  .ov-hero h1 { margin: 0 !important; padding: 0 !important; border: 0 !important; font: 800 40px/1.06 'Inter', sans-serif !important; letter-spacing: -0.03em; color: #0B1220 !important; text-wrap: balance; }
+  .ov-hero h1 span { display: block; font: inherit !important; letter-spacing: inherit; color: #7C3AED !important; }
+  .ov-hero p.ov-lead { margin: 14px 0 0; font: 400 16px/1.55 'Inter', sans-serif; color: #3B4556; max-width: 46ch; }
+  .ov-ctas { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .ov-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 20px; border-radius: 999px; font: 700 15px 'Inter', sans-serif; text-decoration: none !important; }
+  .ov-btn--dark { background: #01113E; color: #fff !important; }
+  .ov-btn--light { background: #fff; color: #0B1220 !important; box-shadow: inset 0 0 0 1px #D6DAE3; }
+  .ov-meta { margin-top: 14px; font-size: 13px; color: #5B6475; }
+  .ov-hero__media img { display: block; width: 100%; height: auto; margin-bottom: -2px; filter: drop-shadow(0 20px 40px rgb(3 10 38 / .18)); }
+  .ov-note { background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 14px; padding: 14px 18px; margin: 0 0 32px; color: #7C2D12; font-size: 14px; line-height: 1.5; }
+  .ov-flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin: 16px 0 36px; counter-reset: step; list-style: none; padding: 0; }
+  .ov-flow li { margin: 0 !important; padding: 14px 14px 16px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px #E8EAF0; font-size: 13px; line-height: 1.45; color: #3B4556; }
+  .ov-flow li::before { counter-increment: step; content: counter(step, decimal-leading-zero); display: block; font: 800 12px 'Inter', sans-serif; color: #7C3AED; margin-bottom: 6px; }
+  .ov-flow strong { display: block; color: #0B1220; font-size: 14px; margin-bottom: 4px; }
+  .ov-phones { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(140px, 1fr); gap: 18px; overflow-x: auto; padding: 8px 4px 18px; margin: 12px 0 8px; scroll-snap-type: x mandatory; }
+  .ov-phone { margin: 0; scroll-snap-align: start; }
+  .ov-phone__frame { border-radius: 34px; padding: 7px; background: #0B0F19; box-shadow: inset 0 0 0 2px #2A2F3A, 0 18px 36px rgb(3 10 38 / .18); position: relative; }
+  .ov-phone__frame::before { content: ''; position: absolute; top: 14px; left: 50%; width: 56px; height: 16px; margin-left: -28px; border-radius: 10px; background: #0B0F19; z-index: 1; }
+  .ov-phone__frame img { display: block; width: 100%; border-radius: 27px; }
+  .ov-phone figcaption { margin-top: 10px; font-size: 13px; line-height: 1.4; color: #3B4556; }
+  .ov-phone figcaption b { display: block; color: #0B1220; font-size: 14px; }
+  .ov-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin: 16px 0 12px; }
+  .ov-card { display: block; border-radius: 18px; padding: 18px 20px; text-decoration: none !important; box-shadow: 0 0 0 1px #E8EAF0; background: #fff; color: #0B1220 !important; }
+  .ov-card--dark { background: #01113E; color: #fff !important; box-shadow: none; }
+  .ov-card small { display: block; font: 700 11px 'Inter', sans-serif; letter-spacing: .12em; color: #7C3AED; }
+  .ov-card--dark small { color: #C4B5FD; }
+  .ov-card b { display: block; font-size: 17px; margin: 6px 0 4px; }
+  .ov-card span { font-size: 14px; line-height: 1.45; opacity: .8; }
+  @media (max-width: 900px) {
+    .ov-hero { padding: 28px 20px 0; }
+    .ov-hero__grid { grid-template-columns: 1fr; }
+    .ov-hero__copy { padding-bottom: 8px; }
+    .ov-hero h1 { font-size: 34px !important; }
+    .ov-hero::before { background: linear-gradient(180deg, rgb(255 255 255 / .94) 0%, rgb(255 255 255 / .7) 60%, rgb(255 255 255 / .3) 100%); }
+    .ov-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+`}</style>
 
-<p className="bs-eyebrow">EventPipe · Presto</p>
+<div className="ov">
 
-# Presto Brand Studio
+<section className="ov-hero" style={{ backgroundImage: `url(${bannerBg})` }} aria-label="Presto Brand Studio">
+  <div className="ov-hero__grid">
+    <div className="ov-hero__copy">
+      <p className="ov-eyebrow">EventPipe · Presto Brand Studio</p>
+      <h1>Your event’s hotel booking page. <span>In your brand.</span></h1>
+      <p className="ov-lead">Organizers paste their event website and get a branded Presto booking site in seconds: their logo, colors and fonts on the homepage, hotel directory and hotel details pages, with AI banner concepts, sponsor ads and a shareable demo. It works the same on a phone.</p>
+      <div className="ov-ctas">
+        <a className="ov-btn ov-btn--dark" href="https://epprestodesign.github.io/presto-higgsfield/prototype/" target="_blank" rel="noopener">Open the prototype ↗</a>
+        <a className="ov-btn ov-btn--light" href="https://epprestodesign.github.io/presto-higgsfield/prototype/phone.html" target="_blank" rel="noopener">Try it on mobile ↗</a>
+      </div>
+      <p className="ov-meta">Banner imagery generated with Higgsfield. Screens are the real prototype.</p>
+    </div>
+    <div className="ov-hero__media"><img src={bannerDevices} alt="The Brand Studio editor on desktop with the homepage and a published booking page on phones" /></div>
+  </div>
+</section>
 
-Event organizers design and preview a **branded hotel booking experience** for their event in minutes. They enter event details and branding, pick an AI-assisted creative concept, and customize a realistic Presto booking site. When it looks right, they publish a shareable demo. Every step is a lead for EventPipe.
+<div className="ov-note"><strong>Demo tool, not a booking engine.</strong> There is no live inventory, Expedia connection, real rates, payments or reservations. Hotels come from the Presto prototype's mock data. Banner concepts use a free demo generator over Higgsfield-made example imagery, and real Higgsfield, Recraft and Ideogram calls go through a secure backend.</div>
 
-<div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 12, padding: '14px 18px', margin: '18px 0 28px', color: '#7C2D12' }}>
-  <strong>Demo tool, not a booking engine.</strong> There is no live inventory, Expedia connection, real rates, payments or reservations. Hotels come from the Presto prototype's mock data, and AI generation is simulated by a free demo generator.
+## The workflow
+
+One project document moves through six screens. Every step is a lead for EventPipe, and every brand choice re-skins all the pages at once.
+
+<ol className="ov-flow">
+  <li><strong>Homepage</strong>Paste your event website, or open one of 20 industry examples.</li>
+  <li><strong>Event intake</strong>Name, type, where and when, an optional logo, and contact. No account needed.</li>
+  <li><strong>Brand kit</strong>Scan the website for logo, colors and fonts, check contrast, and pick photos.</li>
+  <li><strong>Concepts</strong>Six centered banner concepts across three directions. Pick one, compare, make variations.</li>
+  <li><strong>Studio</strong>Edit content, pages and ads beside a live preview in a real browser. Export the assets as a ZIP.</li>
+  <li><strong>Publish</strong>Name, URL, review and checklist, then a shareable demo with an honest demo banner.</li>
+</ol>
+
+## On mobile
+
+The same flow, built for one thumb at 390px: tap a field to fill it with sample data, and the Studio's panels become a bottom sheet.
+
+<div className="ov-phones" role="list">
+  <figure className="ov-phone" role="listitem"><div className="ov-phone__frame"><img src={m1} alt="Mobile homepage" /></div><figcaption><b>1 · Homepage</b>Tap the website field to prefill an example, then Brand my page.</figcaption></figure>
+  <figure className="ov-phone" role="listitem"><div className="ov-phone__frame"><img src={m2} alt="Mobile event intake" /></div><figcaption><b>2 · Event intake</b>Tap to fill. The event type sets the starter copy.</figcaption></figure>
+  <figure className="ov-phone" role="listitem"><div className="ov-phone__frame"><img src={m3} alt="Mobile brand kit" /></div><figcaption><b>3 · Brand kit</b>Live preview of all three banners as you edit.</figcaption></figure>
+  <figure className="ov-phone" role="listitem"><div className="ov-phone__frame"><img src={m4} alt="Mobile concepts" /></div><figcaption><b>4 · Concepts</b>Swipe through six concepts; the footer stays pinned.</figcaption></figure>
+  <figure className="ov-phone" role="listitem"><div className="ov-phone__frame"><img src={m5} alt="Mobile studio editor" /></div><figcaption><b>5 · Studio</b>Panels as a bottom sheet; preview in a true 390px frame.</figcaption></figure>
+  <figure className="ov-phone" role="listitem"><div className="ov-phone__frame"><img src={m6} alt="Mobile published demo" /></div><figcaption><b>6 · Published demo</b>The branded booking page guests actually see.</figcaption></figure>
 </div>
 
-## Try the prototype
+## Try it
 
-The prototype is the whole Brand Studio journey as one working app, built from the same components as the stories below. An organizer lands on the marketing page and starts a booking page. They enter their event, scan their website for a brand kit, generate AI concepts, customize the Presto booking site in the editor, then publish a shareable demo.
-
-<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14, margin: '18px 0 10px' }}>
-  <a href="https://epprestodesign.github.io/presto-higgsfield/prototype/" target="_blank" rel="noopener" style={{ display: 'block', background: '#030A26', color: '#fff', borderRadius: 14, padding: '18px 20px', textDecoration: 'none' }}>
-    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: '#A78BFA' }}>DESKTOP</div>
-    <div style={{ fontSize: 18, fontWeight: 700, margin: '6px 0 4px', color: '#fff' }}>Open the prototype ↗</div>
-    <div style={{ color: '#CBD5E1', fontSize: 14 }}>Full-width app. Best for the studio editor's desktop, tablet and mobile previews.</div>
-  </a>
-  <a href="https://epprestodesign.github.io/presto-higgsfield/prototype/phone.html" target="_blank" rel="noopener" style={{ display: 'block', background: '#16265C', color: '#fff', borderRadius: 14, padding: '18px 20px', textDecoration: 'none' }}>
-    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: '#A78BFA' }}>MOBILE</div>
-    <div style={{ fontSize: 18, fontWeight: 700, margin: '6px 0 4px', color: '#fff' }}>Open in a phone frame ↗</div>
-    <div style={{ color: '#CBD5E1', fontSize: 14 }}>The same app at 390px inside a device frame. On a real phone it opens full-screen.</div>
-  </a>
-  <a href="http://localhost:6210/" target="_blank" rel="noopener" style={{ display: 'block', background: '#fff', color: '#030A26', border: '1px solid #E2E8F0', borderRadius: 14, padding: '18px 20px', textDecoration: 'none' }}>
-    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: '#7C3AED' }}>LOCAL</div>
-    <div style={{ fontSize: 18, fontWeight: 700, margin: '6px 0 4px' }}>localhost:6210 ↗</div>
-    <div style={{ color: '#475569', fontSize: 14 }}>Run <code>pnpm prototype</code>. It's also reachable from your phone on the same Wi-Fi.</div>
-  </a>
+<div className="ov-cards">
+  <a className="ov-card ov-card--dark" href="https://epprestodesign.github.io/presto-higgsfield/prototype/" target="_blank" rel="noopener"><small>DESKTOP</small><b>Open the prototype ↗</b><span>The full app. Best for the Studio's desktop, tablet and mobile previews.</span></a>
+  <a className="ov-card" href="https://epprestodesign.github.io/presto-higgsfield/prototype/phone.html" target="_blank" rel="noopener"><small>MOBILE</small><b>Open in a phone frame ↗</b><span>The same app at 390px. On a real phone it opens full-screen.</span></a>
+  <a className="ov-card" href="https://github.com/epprestodesign/presto-higgsfield" target="_blank" rel="noopener"><small>SOURCE</small><b>GitHub repo ↗</b><span>epprestodesign/presto-higgsfield — Storybook, prototype and Higgsfield scripts.</span></a>
 </div>
 
-**How to walk it, with no typing.**
+**Walk it with no typing.**
 
-1. **Start.** Tap **Create Your Booking Page**, or **See a sample** to jump straight into the editor with a finished project.
-2. **Event intake.** Tap a field and it fills with sample data (the Heartland Invitational Soccer Cup). Pick a category card, then Continue through the steps: event, where and when, brand, contact.
-3. **Brand discovery.** Tap **Scan my website**. The mock scanner finds the sample logo, colors and fonts. Apply them, or tweak colors, fonts and the hero photo.
-4. **Concepts.** Tap **Generate six concepts** to get six concepts across three directions. Select one; you can also favorite, compare, regenerate or make variations.
-5. **Studio editor.** Switch pages (landing, browse, details), devices, and the Brand, Content, Pages, Ads and Concept panels. The live preview is the real Presto booking site.
-6. **Publish.** Confirm the name and URL, mark the desktop and mobile previews reviewed, accept the demo disclaimer, and sign up (auto-filled). Then open your live demo.
+1. **Start.** Tap the website field (it fills with an example), then **Brand my page**. Or open an industry example to jump straight into the Studio.
+2. **Event intake.** Tap any field to fill it with that example's details, then Continue through event, where and when, brand, and contact.
+3. **Brand kit.** Tap **Scan my website**, then **Apply selected**. The same brand (logo, colors, fonts, photos) carries through every later step.
+4. **Concepts.** Generate six concepts and select one.
+5. **Studio.** Switch pages, devices and panels. **Export** previews and downloads the banners, logo, ads and page mockups as a ZIP. **Copy link** shares the exact view for feedback.
+6. **Publish.** Confirm the name and URL, review, accept the demo disclaimer, and open the live demo.
 
-**Demo assist** is in the top bar on the form steps. **Fill on/off** controls tap-to-fill; **Skip** jumps ahead with sample data.
+**Demo assist.** On the form steps, **Fill on/off** toggles tap-to-fill and **Skip** jumps ahead. Every screen's state is in the URL, so any view can be shared as a link.
 
-**What's simulated.** The AI generator is a free mock, and Higgsfield, Recraft and Ideogram connect later through a secure backend. Sign-in is mocked and drafts save to this browser. The hotels are Presto prototype mock data. Published demos are labelled as demos, with no live rates, bookings or payments.
+<p style={{ fontSize: 14, color: '#5B6475' }}>Storybook: <a href="https://epprestodesign.github.io/presto-higgsfield/" target="_blank" rel="noopener">epprestodesign.github.io/presto-higgsfield</a></p>
 
-<p style={{ fontSize: 14, color: '#475569' }}>Storybook: <a href="https://epprestodesign.github.io/presto-higgsfield/" target="_blank" rel="noopener">epprestodesign.github.io/presto-higgsfield/</a> · Repo: <a href="https://github.com/epprestodesign/presto-higgsfield" target="_blank" rel="noopener">github.com/epprestodesign/presto-higgsfield</a></p>
-
-## The journey
+## The journey, story by story
 
 <ol className="bs-ov__steps">
-  <li><a href="?path=/story/brand-studio-marketing-site-option-a-landing-page--desktop"><strong>Marketing site</strong></a>: the conversion page that sells the product, with a CTA to “Create Your Booking Page” (Options A–D are alternate homepage directions).</li>
+  <li><a href="?path=/story/brand-studio-marketing-site-option-e-group-booking--desktop"><strong>Marketing site</strong></a>: the homepage (Option E). Options A–D are alternate directions under Marketing Site.</li>
   <li><a href="?path=/story/brand-studio-onboarding-event-intake--blank"><strong>Event intake</strong></a>: a guided form for name, category, place, dates, optional brand assets and contact. No account needed.</li>
-  <li><a href="?path=/story/brand-studio-onboarding-brand-discovery--sample-kit"><strong>Brand discovery</strong></a>: an editable brand kit with logo, colors (with live WCAG checks), typography, imagery and direction, plus a mock “scan my website”.</li>
-  <li><a href="?path=/story/brand-studio-creative-concepts-concept-gallery--empty"><strong>Creative concepts</strong></a>: three directions and six concepts. Select, favorite, compare, regenerate, make variations, and preview on desktop and mobile.</li>
-  <li><a href="?path=/story/brand-studio-studio-editor-editor--default"><strong>Studio editor</strong></a>: a Webflow-style editor with panels on the left and a live Presto preview in the center (iframe, true mobile).</li>
-  <li><a href="?path=/story/brand-studio-advertising-browse-layouts--billboards-rail"><strong>Sponsored advertising</strong></a>: demo placements on the Browse and Details pages, matching the reference layouts.</li>
+  <li><a href="?path=/story/brand-studio-onboarding-brand-discovery--sample-kit"><strong>Brand discovery</strong></a>: an editable brand kit with logo, colors (with live WCAG checks), typography, imagery, and a mock website scan.</li>
+  <li><a href="?path=/story/brand-studio-creative-concepts-concept-gallery--empty"><strong>Creative concepts</strong></a>: three directions and six centered concepts. Select, favorite, compare, regenerate, make variations, and preview.</li>
+  <li><a href="?path=/story/brand-studio-studio-editor-editor--default"><strong>Studio editor</strong></a>: panels on the left and a live Presto preview in a realistic Chrome window, plus the asset export.</li>
+  <li><a href="?path=/story/brand-studio-advertising-browse-layouts--billboards-rail"><strong>Sponsored advertising</strong></a>: placements on the Browse and Details pages, AdSense rail sizes and rail pinning.</li>
   <li><a href="?path=/story/brand-studio-accounts-sign-up--save-your-page"><strong>Sign up and dashboard</strong></a>: explore first, then sign up to save or publish. The draft is preserved.</li>
-  <li><a href="?path=/story/brand-studio-publishing-publish-flow--name-and-url"><strong>Publishing</strong></a>: name, URL slug, review, checklist, then a published demo with an honest demo banner.</li>
+  <li><a href="?path=/story/brand-studio-publishing-publish-flow--name-and-url"><strong>Publishing</strong></a>: name, URL slug, review, checklist, then a published demo.</li>
 </ol>
 
 Walk the whole thing end to end in **[Flows](?path=/story/brand-studio-flows--end-to-end)**, or try the **[Typeface Tester](?path=/story/brand-studio-foundations--typeface-tester)** for every font a Brand Kit can use.
@@ -70,7 +143,8 @@ Walk the whole thing end to end in **[Flows](?path=/story/brand-studio-flows--en
 
 - **The Presto design system is reused, not rebuilt.** The real `LandingPage`, `HotelListPage`, `HotelDetailPage`, `BookingWidget` and other components render the previews. A **brand theme engine** maps each Brand Kit onto Presto's semantic tokens, so they re-skin without forks. See **[Brand Theme Engine](?path=/story/brand-studio-foundations--brand-theme-engine)**.
 - **Branding is separate from page content.** One Brand Kit change updates the landing, browse and details pages at once.
-- **The AI makes artwork only.** Logos, headlines and buttons stay as editable, accessible text on top. This is the **[Brand Hero](?path=/story/brand-studio-creative-concepts-brand-hero--all-layouts)**.
+- **One banner layout.** Every hero follows the Presto standard: logo, event name and dates centered over a minimal background. See **[Brand Hero](?path=/story/brand-studio-creative-concepts-brand-hero--all-layouts)**.
+- **The AI makes artwork only.** Logos, headlines and buttons stay as editable, accessible text on top. Example logos, banners and marketing imagery were generated with **Higgsfield** (Ideogram, Recraft, Marketing Studio Flare). See **[Higgsfield](?path=/docs/brand-studio-higgsfield-setup-guide--docs)**.
 - **Providers are swappable.** A single contract covers the mock, Higgsfield, Recraft and Ideogram. Real providers run through a secure EventPipe backend, so no API keys reach the browser.
 - **State is serializable.** One versioned project document, ready for Supabase.
 

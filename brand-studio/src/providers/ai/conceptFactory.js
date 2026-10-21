@@ -5,6 +5,7 @@ import { resolvePalette } from '../../theme/brandTheme.js'
 import { shade, tint, mix } from '../../theme/color.js'
 import { getDirection } from '../../models/brandKit.js'
 import { IMAGERY, imagesTagged } from '../../assets/imagery/index.js'
+import { getVertical } from '../../data/verticals/catalog.js'
 
 // Two templates per direction → the six-concept gallery. Every concept uses
 // the one Presto layout (logo + copy centered over a full-bleed background,
@@ -39,7 +40,10 @@ function pickImage(brandKit, event, offset, prefer = 'photo') {
   const own = usable(brandKit.imagery || [])
   if (own.length) return own[offset % own.length]
   const generated = IMAGERY.filter((a) => a.generated)
-  const set = usable(imagesTagged(event?.vertical || CATEGORY_SET[event?.category] || 'heartland').filter((a) => a.generated))
+  // Sample-backed verticals (youth-sports → heartland, weddings → wedding, …) tag
+  // their generated imagery with the sample key, not the vertical id.
+  const tag = (event?.vertical && (getVertical(event.vertical)?.sample || event.vertical)) || CATEGORY_SET[event?.category] || 'heartland'
+  const set = usable(imagesTagged(tag).filter((a) => a.generated))
   const list = set.length ? set : usable(generated.length ? generated : IMAGERY)
   return list[offset % list.length]
 }
