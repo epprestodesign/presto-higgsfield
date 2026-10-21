@@ -8,12 +8,14 @@
 // Every edit goes through project-store actions; DevicePreview streams the
 // project into the iframe'd Preview Host, so changes show immediately. Under
 // 900px the sidebar becomes a bottom sheet and the toolbar condenses.
-// Emits: 'publish', 'back', 'change-concept', 'edit-sponsors'.
+// Emits: 'publish', 'back', 'change-concept', 'edit-sponsors'. Export opens the
+// asset preview sheet (ExportDialog) → ZIP of banners, ads and brand files.
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useProjectStore } from '../../stores/project.js'
 import { useHistory } from './useHistory.js'
 import StudioToolbar from './StudioToolbar.vue'
 import ExamplesGallery from './ExamplesGallery.vue'
+import ExportDialog from './ExportDialog.vue'
 import StudioSidebar from './StudioSidebar.vue'
 import DevicePreview from './DevicePreview.vue'
 
@@ -59,6 +61,9 @@ function focusPage(p) {
   if (store.pages[p]?.enabled) page.value = p
   if (narrow.value) sheetOpen.value = false
 }
+
+// ── Asset export (preview sheet → ZIP) ───────────────────────────────────
+const exportOpen = ref(false)
 
 // ── Save / autosave ──────────────────────────────────────────────────────
 const dirty = computed(() => !store.lastSavedAt || store.project.updatedAt > store.lastSavedAt)
@@ -130,6 +135,7 @@ const rename = (name) => store.updateEvent({ name })
       @preview="openPreview"
       @publish="emit('publish')"
       @examples="examplesOpen = true"
+      @export="exportOpen = true"
     />
 
     <div class="sed__body">
@@ -148,6 +154,7 @@ const rename = (name) => store.updateEvent({ name })
     </div>
 
     <ExamplesGallery v-model="examplesOpen" :current-key="exampleKey" @select="loadExample" />
+    <ExportDialog v-model="exportOpen" :project="store.project" />
 
     <q-dialog v-model="previewOpen" maximized transition-show="fade" transition-hide="fade">
       <div class="sed__fullpreview">

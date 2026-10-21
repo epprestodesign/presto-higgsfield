@@ -92,7 +92,8 @@ function pick(card) {
 </template>
 
 <style scoped>
-.xg { width: min(1180px, 100vw); max-height: 92vh; overflow: auto; background: var(--bs-canvas); border-radius: var(--bs-radius-lg); padding: 24px; font-family: var(--bs-font); }
+/* Quasar only re-enables pointer events on `.q-dialog__inner > div`; this root is a <section>. */
+.xg { pointer-events: all; width: min(1180px, 100vw); max-height: 92vh; overflow: auto; background: var(--bs-canvas); border-radius: var(--bs-radius-lg); padding: 24px; font-family: var(--bs-font); }
 .xg--inline { width: auto; max-height: none; border-radius: 0; }
 .xg__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 .xg__head .bs-title { margin-top: 6px; }

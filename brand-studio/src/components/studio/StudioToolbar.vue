@@ -3,7 +3,7 @@
 // and passes it in; every action is an emitted event.
 //   left   · back · inline-editable page name · status chip
 //   centre · page switcher · device toggle
-//   right  · undo / redo · save state · Preview · Publish
+//   right  · undo / redo · Examples · save state · Export · Preview · Publish
 import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { PAGE_META } from '../../models/pageConfig.js'
 import { PROJECT_STATUS } from '../../models/project.js'
@@ -22,7 +22,7 @@ const props = defineProps({
   // Narrow screens: page + device move to a second row; labels collapse to icons.
   compact: { type: Boolean, default: false },
 })
-const emit = defineEmits(['back', 'rename', 'update:page', 'update:device', 'undo', 'redo', 'save', 'preview', 'publish', 'examples'])
+const emit = defineEmits(['back', 'rename', 'update:page', 'update:device', 'undo', 'redo', 'save', 'preview', 'publish', 'examples', 'export'])
 
 const DEVICES = [
   { id: 'desktop', icon: 'desktop_windows', label: 'Desktop', width: 1280 },
@@ -144,7 +144,7 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
           <span class="stb__divider" aria-hidden="true" />
         </template>
         <q-btn
-          flat no-caps class="bs-btn stb__btn stb__examples" icon="auto_awesome_mosaic"
+          flat no-caps no-wrap class="bs-btn stb__btn stb__examples" icon="auto_awesome_mosaic"
           :label="compact ? undefined : 'Examples'" :aria-label="compact ? 'Examples by industry' : undefined"
           @click="emit('examples')"
         >
@@ -155,6 +155,16 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
           <span v-if="!compact" class="stb__save-label" aria-live="polite">{{ savedLabel }}</span>
           <q-tooltip>Save draft · {{ mod }}S</q-tooltip>
         </button>
+        <q-btn
+          unelevated no-caps no-wrap
+          class="bs-btn bs-btn--ghost stb__btn stb__export"
+          icon="download"
+          :label="compact ? undefined : 'Export'"
+          :aria-label="compact ? 'Export assets' : undefined"
+          @click="emit('export')"
+        >
+          <q-tooltip>Preview and download your banners and ads as a ZIP</q-tooltip>
+        </q-btn>
         <q-btn
           unelevated no-caps
           class="bs-btn bs-btn--ghost stb__btn"

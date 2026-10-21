@@ -16,9 +16,7 @@
 import { computed } from 'vue'
 import { getFont } from '../../theme/fonts.js'
 import { resolvePalette } from '../../theme/brandTheme.js'
-import { shade } from '../../theme/color.js'
-import { getImage } from '../../assets/imagery/index.js'
-import { prestoBannerConcept } from '../../providers/ai/conceptFactory.js'
+import { resolveHeroConcept } from '../../theme/heroConcept.js'
 
 const props = defineProps({
   concept: { type: Object, default: null },
@@ -34,46 +32,10 @@ const props = defineProps({
   headingLevel: { type: Number, default: 1 },
 })
 
-// No concept selected yet → a clean Brand Signature default from the kit.
-const fallback = computed(() => {
-  const p = resolvePalette(props.brandKit.colors)
-  // A brand banner (e.g. generated with Higgsfield) → the Presto standard layout.
-  const banner = getImage(props.brandKit.bannerImageId) || (props.brandKit.imagery || []).find((a) => a.id === props.brandKit.bannerImageId)
-  if (banner) return prestoBannerConcept(props.brandKit, banner)
-  const hero = getImage(props.brandKit.heroImageId) || (props.brandKit.imagery || []).find((a) => a.id === props.brandKit.heroImageId)
-  return {
-    layout: hero ? 'editorial' : 'centered',
-    headingFont: props.brandKit.typography?.heading,
-    treatment: {
-      background: hero ? shade(p.primary, 0.3) : p.primary,
-      foreground: p.onPrimary,
-      accent: p.secondary,
-      highlight: p.accent,
-      imageSrc: hero?.src || null,
-      imageAlt: '',
-      overlay: hero ? 'scrim' : 'none',
-      pattern: hero ? 'none' : 'dots',
-    },
-  }
-})
-
-const CENTERED = ['presto', 'centered']
-const c = computed(() => props.concept || fallback.value)
-const legacy = computed(() => !CENTERED.includes(c.value.layout || 'centered'))
-const t = computed(() => {
-  const treatment = c.value.treatment || {}
-  if (!legacy.value) return treatment
-  // Legacy side/framed layouts → even dim + white type so centered copy reads.
-  const photo = !!treatment.imageSrc
-  return {
-    ...treatment,
-    background: photo ? treatment.background : resolvePalette(props.brandKit.colors).primary,
-    foreground: photo ? '#FFFFFF' : resolvePalette(props.brandKit.colors).onPrimary,
-    overlay: photo && ['none', 'scrim'].includes(treatment.overlay || 'none') ? 'dim' : treatment.overlay,
-    pattern: photo ? 'none' : treatment.pattern,
-  }
-})
-const layout = computed(() => (legacy.value ? 'presto' : c.value.layout || 'centered'))
+// No concept selected yet → a default from the Brand Kit; legacy layouts → centered.
+const c = computed(() => resolveHeroConcept(props.concept, props.brandKit))
+const t = computed(() => c.value.treatment || {})
+const layout = computed(() => c.value.layout || 'centered')
 const palette = computed(() => resolvePalette(props.brandKit.colors))
 
 const logoSrc = computed(() => {
