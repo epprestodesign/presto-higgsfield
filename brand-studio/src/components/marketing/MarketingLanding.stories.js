@@ -2,7 +2,7 @@ import { expect, within } from 'storybook/test'
 import MarketingLanding from './MarketingLanding.vue'
 
 export default {
-  title: 'Brand Studio/Marketing Site/Landing Page',
+  title: 'Brand Studio/Marketing Site/Option A - Landing Page',
   component: MarketingLanding,
   parameters: {
     layout: 'fullscreen',
