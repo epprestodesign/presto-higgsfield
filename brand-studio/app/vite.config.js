@@ -17,5 +17,11 @@ export default defineConfig({
   ],
   resolve: { alias: { '@lib': r('../../src'), '@bs': r('../src') } },
   server: { port: 6210, host: true },
-  build: { outDir: r('./dist'), emptyOutDir: true, chunkSizeWarningLimit: 4000 },
+  build: {
+    outDir: r('./dist'),
+    emptyOutDir: true,
+    chunkSizeWarningLimit: 4000,
+    // index.html = the app (desktop + phone); phone.html = the app inside a phone frame.
+    rollupOptions: { input: { main: r('./index.html'), phone: r('./phone.html') } },
+  },
 })

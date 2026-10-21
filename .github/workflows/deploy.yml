@@ -4,7 +4,7 @@ name: Deploy Storybook + prototype to GitHub Pages
 # under it at /presto-higgsfield/prototype/.
 on:
   push:
-    branches: [main, feat/brand-studio-gui]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

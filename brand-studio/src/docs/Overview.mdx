@@ -14,15 +14,42 @@ Event organizers design and preview a **branded hotel booking experience** for t
   <strong>Demo tool, not a booking engine.</strong> There is no live inventory, Expedia connection, real rates, payments or reservations. Hotels come from the Presto prototype's mock data, and AI generation is simulated by a free demo generator.
 </div>
 
-<div style={{ background: '#030A26', color: '#fff', borderRadius: 16, padding: '22px 24px', margin: '8px 0 28px', display: 'grid', gap: 14 }}>
-  <div style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff' }}>▶ Try the mobile prototype</div>
-  <div style={{ color: '#CBD5E1', maxWidth: '64ch' }}>The full journey as a phone-first app: create a branded Presto page from intake to published demo. <strong style={{ color: '#fff' }}>Tap-to-fill</strong> fills every field with sample data, so no typing is needed.</div>
-  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-    <a href="https://girardjustin1.github.io/presto-higgsfield/prototype/" target="_blank" rel="noopener" style={{ background: '#fff', color: '#030A26', fontWeight: 700, padding: '11px 18px', borderRadius: 8, textDecoration: 'none' }}>Open prototype ↗</a>
-    <a href="https://girardjustin1.github.io/presto-higgsfield/" target="_blank" rel="noopener" style={{ border: '1px solid #475569', color: '#fff', fontWeight: 700, padding: '11px 18px', borderRadius: 8, textDecoration: 'none' }}>Live Storybook ↗</a>
-    <a href="http://localhost:6210/" target="_blank" rel="noopener" style={{ border: '1px solid #475569', color: '#fff', fontWeight: 700, padding: '11px 18px', borderRadius: 8, textDecoration: 'none' }}>Local prototype (pnpm prototype) ↗</a>
-  </div>
+## Try the prototype
+
+The prototype is the whole Brand Studio journey as one working app, built from the same components as the stories below. An organizer lands on the marketing page and starts a booking page. They enter their event, scan their website for a brand kit, generate AI concepts, customize the Presto booking site in the editor, then publish a shareable demo.
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14, margin: '18px 0 10px' }}>
+  <a href="https://girardjustin1.github.io/presto-higgsfield/prototype/" target="_blank" rel="noopener" style={{ display: 'block', background: '#030A26', color: '#fff', borderRadius: 14, padding: '18px 20px', textDecoration: 'none' }}>
+    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: '#A78BFA' }}>DESKTOP</div>
+    <div style={{ fontSize: 18, fontWeight: 700, margin: '6px 0 4px', color: '#fff' }}>Open the prototype ↗</div>
+    <div style={{ color: '#CBD5E1', fontSize: 14 }}>Full-width app. Best for the studio editor's desktop, tablet and mobile previews.</div>
+  </a>
+  <a href="https://girardjustin1.github.io/presto-higgsfield/prototype/phone.html" target="_blank" rel="noopener" style={{ display: 'block', background: '#16265C', color: '#fff', borderRadius: 14, padding: '18px 20px', textDecoration: 'none' }}>
+    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: '#A78BFA' }}>MOBILE</div>
+    <div style={{ fontSize: 18, fontWeight: 700, margin: '6px 0 4px', color: '#fff' }}>Open in a phone frame ↗</div>
+    <div style={{ color: '#CBD5E1', fontSize: 14 }}>The same app at 390px inside a device frame. On a real phone it opens full-screen.</div>
+  </a>
+  <a href="http://localhost:6210/" target="_blank" rel="noopener" style={{ display: 'block', background: '#fff', color: '#030A26', border: '1px solid #E2E8F0', borderRadius: 14, padding: '18px 20px', textDecoration: 'none' }}>
+    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: '#7C3AED' }}>LOCAL</div>
+    <div style={{ fontSize: 18, fontWeight: 700, margin: '6px 0 4px' }}>localhost:6210 ↗</div>
+    <div style={{ color: '#475569', fontSize: 14 }}>Run <code>pnpm prototype</code>. It's also reachable from your phone on the same Wi-Fi.</div>
+  </a>
 </div>
+
+**How to walk it, with no typing.**
+
+1. **Start.** Tap **Create Your Booking Page**, or **See a sample** to jump straight into the editor with a finished project.
+2. **Event intake.** Tap a field and it fills with sample data (the Heartland Invitational Soccer Cup). Pick a category card, then Continue through the steps: event, where and when, brand, contact.
+3. **Brand discovery.** Tap **Scan my website**. The mock scanner finds the sample logo, colors and fonts. Apply them, or tweak colors, fonts and the hero photo.
+4. **Concepts.** Tap **Generate six concepts** to get six concepts across three directions. Select one; you can also favorite, compare, regenerate or make variations.
+5. **Studio editor.** Switch pages (landing, browse, details), devices, and the Brand, Content, Pages, Ads and Concept panels. The live preview is the real Presto booking site.
+6. **Publish.** Confirm the name and URL, mark the desktop and mobile previews reviewed, accept the demo disclaimer, and sign up (auto-filled). Then open your live demo.
+
+**Demo assist** is in the top bar on the form steps. **Fill on/off** controls tap-to-fill; **Skip** jumps ahead with sample data.
+
+**What's simulated.** The AI generator is a free mock, and Higgsfield, Recraft and Ideogram connect later through a secure backend. Sign-in is mocked and drafts save to this browser. The hotels are Presto prototype mock data. Published demos are labelled as demos, with no live rates, bookings or payments.
+
+<p style={{ fontSize: 14, color: '#475569' }}>Storybook: <a href="https://girardjustin1.github.io/presto-higgsfield/" target="_blank" rel="noopener">girardjustin1.github.io/presto-higgsfield/</a> · Repo: <a href="https://github.com/girardjustin1/presto-higgsfield" target="_blank" rel="noopener">github.com/girardjustin1/presto-higgsfield</a></p>
 
 ## The journey
 
