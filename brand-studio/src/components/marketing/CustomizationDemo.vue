@@ -28,7 +28,6 @@ const state = reactive({
   font: 'barlow-condensed',
   direction: 'energy',
   headline: 'Heartland Invitational Soccer Cup 2027',
-  cta: 'Find your hotel',
 })
 
 const palette = computed(() => PALETTES.find((p) => p.id === state.palette))
@@ -107,15 +106,14 @@ const set = (key, value, label) => {
 
         <div class="cd__group">
           <q-input v-model="state.headline" outlined dense label="Headline" maxlength="80" counter @update:model-value="announce = 'Preview updated: headline'" />
-          <q-input v-model="state.cta" outlined dense label="Button label" maxlength="28" @update:model-value="announce = 'Preview updated: button label'" />
         </div>
         <p class="bs-sr-only" aria-live="polite">{{ announce }}</p>
       </form>
 
       <div class="cd__preview">
-        <product-preview class="cd__desk" sample="heartland" :brand-kit="kit" :concept="concept" :headline="state.headline" :cta-label="state.cta" :design-height="700" />
+        <product-preview class="cd__desk" sample="heartland" :brand-kit="kit" :concept="concept" :headline="state.headline" :design-height="700" />
         <div class="cd__phone">
-          <product-preview sample="heartland" variant="mobile" :brand-kit="kit" :concept="concept" :headline="state.headline" :cta-label="state.cta" :design-height="640" />
+          <product-preview sample="heartland" variant="mobile" :brand-kit="kit" :concept="concept" :headline="state.headline" :design-height="640" />
         </div>
       </div>
     </div>

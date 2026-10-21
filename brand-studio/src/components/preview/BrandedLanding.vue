@@ -53,7 +53,7 @@ const hero = computed(() => heroProps(props.project, { size: 'landing' }))
     >
       <template #hero>
         <div class="bl__hero" :class="{ 'bl__hero--tucked': widgetFirst }">
-          <brand-hero v-bind="hero" @cta="emit('navigate', 'browse')" />
+          <brand-hero v-bind="hero" />
         </div>
       </template>
       <template #ads>

@@ -16,7 +16,7 @@ import { HF_MODELS, BANNER_TARGETS, getHfModel, closestAspect } from '../../prov
 import { BRIEF_QUESTIONS, defaultAnswers, buildBannerPrompt } from '../../providers/higgsfield/bannerBrief.js'
 import { formatDateRange, locationLabel } from '../../models/event.js'
 import { resolvePalette } from '../../theme/brandTheme.js'
-import { shade } from '../../theme/color.js'
+import { prestoBannerConcept } from '../../providers/ai/conceptFactory.js'
 import { imagesTagged, IMAGERY } from '../../assets/imagery/index.js'
 import { uid } from '../../models/ids.js'
 import BrandHero from '../brand/BrandHero.vue'
@@ -66,7 +66,6 @@ const toggleMulti = (q, value) => {
   if (i !== -1) arr.splice(i, 1)
   else if (arr.length < (q.max || 99)) arr.push(value)
 }
-const headline = ref(project.event.name || '')
 
 // ── References (logo first) ───────────────────────────────────────────────
 const uploads = ref([])
@@ -81,13 +80,7 @@ const modelId = ref(props.initialModel)
 const model = computed(() => getHfModel(modelId.value))
 const options = reactive({})
 watch(model, (m) => { Object.entries(m.options).forEach(([k, o]) => { if (!o.values.includes(options[k])) options[k] = o.default }) }, { immediate: true })
-const recommended = computed(() => {
-  if (answers.text === 'headline') return 'ideogram'
-  if (answers.subject === 'graphic') return 'recraft'
-  return 'flare'
-})
-// Baking a headline in only works on the typography model.
-watch(() => answers.text, (t) => { if (t === 'headline') modelId.value = 'ideogram' })
+const recommended = computed(() => (answers.subject === 'graphic' ? 'recraft' : 'flare'))
 
 const aspectRatio = computed(() => closestAspect(model.value, target.value.width, target.value.height))
 const palette = computed(() => {
@@ -99,7 +92,7 @@ const useRefs = computed(() => model.value.references > 0 && answers.logo !== 's
 
 // ── Prompt ────────────────────────────────────────────────────────────────
 const builtPrompt = computed(() =>
-  buildBannerPrompt(answers, { event: project.event, brandKit: project.brandKit, target: target.value, model: model.value, headline: headline.value, sponsor: sponsor.value }),
+  buildBannerPrompt(answers, { event: project.event, brandKit: project.brandKit, target: target.value, model: model.value, sponsor: sponsor.value }),
 )
 const promptOverride = ref(null)
 const prompt = computed({ get: () => promptOverride.value ?? builtPrompt.value, set: (v) => { promptOverride.value = v } })
@@ -158,7 +151,7 @@ function sampleImage() {
 async function generate() {
   const job = reactive({
     id: uid('gen'), model: model.value, target: target.value, sponsorId: sponsor.value?.id || null,
-    prompt: prompt.value, aspectRatio: aspectRatio.value, baked: answers.text === 'headline' && model.value.typography,
+    prompt: prompt.value, aspectRatio: aspectRatio.value,
     status: 'preparing', error: '', images: [], requestId: null, sample: !live.value, savedPath: '', createdAt: new Date(),
   })
   jobs.value.unshift(job)
@@ -188,14 +181,8 @@ async function cancel(job) {
 }
 
 // ── Results → page ────────────────────────────────────────────────────────
-function heroConcept(job, url) {
-  const p = resolvePalette(project.brandKit.colors)
-  return {
-    layout: answers.space === 'right' ? 'framed' : 'editorial',
-    headingFont: project.brandKit.typography?.heading,
-    treatment: { background: shade(p.primary, 0.3), foreground: '#FFFFFF', accent: p.secondary, highlight: p.accent, imageSrc: url, imageAlt: '', overlay: job.baked ? 'none' : 'scrim', pattern: 'none' },
-  }
-}
+// Results preview in the Presto banner standard: background + centered logo and copy.
+const heroConcept = (job, url) => prestoBannerConcept(project.brandKit, { id: job.id, src: url, kind: job.model.id === 'recraft' ? 'pattern' : 'photo' })
 const heroCopy = computed(() => ({
   brandKit: project.brandKit,
   headline: project.pages.landing.hero.headline || project.event.name,
@@ -275,7 +262,6 @@ async function saveToRepo(job, url) {
             >{{ o.label }}</button>
           </div>
         </div>
-        <q-input v-if="answers.text === 'headline'" v-model="headline" outlined dense label="Headline to render" maxlength="80" class="q-mt-sm" />
       </fieldset>
 
       <!-- 3. Logo & references -->
@@ -369,8 +355,9 @@ async function saveToRepo(job, url) {
         <div v-for="img in job.images" :key="img.url" class="bg__result">
           <div class="bg__context">
             <template v-if="job.target.group === 'Event page'">
-              <img v-if="job.baked" :src="img.url" alt="Generated banner with headline" class="bg__raw" />
-              <brand-hero v-else v-bind="heroCopy" :concept="heroConcept(job, img.url)" size="landing" :heading-level="3" :class="{ 'bg__hero-m': job.target.id === 'hero-mobile' }" />
+              <div class="bg__frame" :style="{ aspectRatio: `${job.target.width} / ${job.target.height}` }">
+                <brand-hero v-bind="heroCopy" :concept="heroConcept(job, img.url)" :size="job.target.id === 'listings' ? 'compact' : 'landing'" :heading-level="3" />
+              </div>
             </template>
             <ad-creative v-else :sponsor="adSponsor(job, img.url)" :size="job.target.id" :interactive="false" />
           </div>
@@ -433,7 +420,8 @@ async function saveToRepo(job, url) {
 .bg__raw { width: 100%; display: block; }
 /* BrandHero sizes itself with container queries, so it needs an explicit width. */
 .bg__context :deep(.bh) { width: 100%; }
-.bg__context :deep(.bh.bg__hero-m) { width: 390px; max-width: 100%; }
+.bg__frame { width: 100%; overflow: hidden; display: flex; }
+.bg__frame :deep(.bh) { min-height: 0; height: 100%; }
 .bg__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 @media (max-width: 900px) {

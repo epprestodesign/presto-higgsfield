@@ -1,7 +1,8 @@
 // Banner brief — the questionnaire an organizer answers, and the prompt it
-// becomes. Kept as data so the same questions can drive the Storybook
+// becomes. Follows the Presto banner system (references/102226): artwork is a
+// minimal, system-safe BACKGROUND; the logo and all copy are live hero layers. Kept as data so the same questions can drive the Storybook
 // workbench, the prototype and (later) the server-side generator.
-import { categoryLabel, formatDateRange, locationLabel } from '../../models/event.js'
+import { categoryLabel, locationLabel } from '../../models/event.js'
 import { getDirection } from '../../models/brandKit.js'
 
 export const BRIEF_QUESTIONS = [
@@ -52,23 +53,13 @@ export const BRIEF_QUESTIONS = [
     default: 'left',
   },
   {
-    id: 'text',
-    label: 'Text in the artwork?',
-    type: 'single',
-    options: [
-      { value: 'none', label: 'No: keep text editable (recommended)', prompt: 'No text, no letters, no logos, no watermarks.' },
-      { value: 'headline', label: 'Yes: bake the headline in (Ideogram)', prompt: '' },
-    ],
-    default: 'none',
-  },
-  {
     id: 'logo',
-    label: 'How should we use the logo?',
+    // Presto rule: the logo is a live layer in the hero, never baked into the art.
+    label: 'Send the logo to the model?',
     type: 'single',
     options: [
-      { value: 'style', label: 'As a style & color reference', prompt: 'Use the attached logo only as a reference for color and graphic style; do not reproduce the logo itself.' },
-      { value: 'place', label: 'Place it in the artwork', prompt: 'Place the attached logo cleanly and legibly in the composition, undistorted.' },
-      { value: 'skip', label: 'Don’t use it', prompt: '' },
+      { value: 'style', label: 'As a color & style reference', prompt: 'Use the attached logo only as a reference for color and graphic style; do not reproduce the logo itself.' },
+      { value: 'skip', label: 'Don’t send it', prompt: '' },
     ],
     default: 'style',
   },
@@ -81,13 +72,10 @@ const opt = (qid, value) => BRIEF_QUESTIONS.find((q) => q.id === qid)?.options.f
 
 /**
  * Build the generation prompt from the brief.
- * ctx: { event, brandKit, target, model, headline, sponsor }
+ * ctx: { event, brandKit, target, model, sponsor }
  */
-export function buildBannerPrompt(answers, { event = {}, brandKit = {}, target, model, headline, sponsor } = {}) {
+export function buildBannerPrompt(answers, { event = {}, brandKit = {}, target, model, sponsor } = {}) {
   const direction = getDirection(brandKit.direction)
-  const typography = answers.text === 'headline' && model?.typography
-  const placingLogo = answers.logo === 'place' && model?.references > 0
-  const noText = placingLogo ? 'No text or letters other than the supplied logo, no watermarks.' : 'No text, no letters, no logos, no watermarks.'
   const colors = sponsor ? Object.values(sponsor.colors || {}) : Object.values(brandKit.colors || {}).slice(0, 3)
   const kind = sponsor
     ? `Sponsored display ad (${target?.label || 'banner'}) for ${sponsor.name}, shown on the booking page of ${event.name || 'an event'}.`
@@ -102,9 +90,8 @@ export function buildBannerPrompt(answers, { event = {}, brandKit = {}, target, 
     opt('space', answers.space)?.prompt && `Composition: ${opt('space', answers.space).prompt}.`,
     brandKit.keywords?.length && `Brand keywords: ${brandKit.keywords.join(', ')}.`,
     answers.logo !== 'skip' && model?.references > 0 && opt('logo', answers.logo)?.prompt,
-    typography
-      ? `Render this headline as bold, perfectly spelled typography: "${headline || event.name}". Add the dates "${formatDateRange(event.startDate, event.endDate)}" in smaller type. No other text, no watermarks.`
-      : noText,
+    'Minimal and system-safe: keep the center calm and low-detail so a centered logo and white headline read on top; muted and slightly dark overall; important content inside the middle band so it also crops to a thin 6:1 strip.',
+    'No text, no letters, no numbers, no logos, no signage, no watermarks.',
     'Photorealistic, high detail, professional advertising quality.',
   ]
   if (answers.subject === 'graphic') parts.splice(parts.length - 1, 1, 'Crisp vector-like graphic style, high detail.')

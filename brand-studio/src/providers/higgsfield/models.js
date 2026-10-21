@@ -83,8 +83,9 @@ export const getHfModel = (id) => HF_MODELS.find((m) => m.id === id) || HF_MODEL
 
 // What can be generated, with target pixel size (ad sizes from models/ads.js).
 export const BANNER_TARGETS = [
-  { id: 'hero', label: 'Event hero banner', width: 1600, height: 640, group: 'Event page' },
-  { id: 'hero-mobile', label: 'Event hero · mobile', width: 390, height: 520, group: 'Event page' },
+  // Presto banner system (references/102226): one background, two crops.
+  { id: 'hero', label: 'Landing page banner 1440×400', width: 1440, height: 400, group: 'Event page' },
+  { id: 'listings', label: 'Hotel listings banner 1440×240', width: 1440, height: 240, group: 'Event page' },
   { id: '970x250', label: 'Billboard 970×250', width: 970, height: 250, group: 'Sponsor ads' },
   { id: '970x90', label: 'Leaderboard 970×90', width: 970, height: 90, group: 'Sponsor ads' },
   { id: '728x90', label: 'Leaderboard 728×90', width: 728, height: 90, group: 'Sponsor ads' },

@@ -27,8 +27,9 @@ export const ClickThrough = {
     const c = within(canvasElement)
     const site = () => canvasElement.querySelector('.bsite')
 
-    await step('Hero CTA opens Browse', async () => {
-      await userEvent.click(await c.findByRole('button', { name: /find your hotel/i }))
+    // Heroes carry no CTA (Presto rule) — the booking search is the way in.
+    await step('Hotel search opens Browse', async () => {
+      await userEvent.click(await c.findByRole('button', { name: /^search$/i }))
       await waitFor(() => expect(site().dataset.page).toBe('browse'))
     })
     await step('Hotel card CTA opens Details', async () => {

@@ -1,0 +1,43 @@
+[
+  {
+    "id": "fintech",
+    "file": "fintech.png",
+    "raw": "fintech-raw.png",
+    "alt": "Fintech Forward Summit 2027 logo",
+    "model": "ideogram/v4.0",
+    "prompt": "Technology conference logo: a solid deep indigo (#1B1F5E) rounded-rectangle badge containing two bold forward-pointing chevrons, one white and one coral (#FF6B4A), next to the wordmark \"fintech forward\" in a modern geometric lowercase sans-serif in white, with \"SUMMIT 2027\" in small coral letter-spaced capitals underneath. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "7af6256d-c3cd-4d4f-bc75-430b41580e95",
+    "createdAt": "2026-10-21T19:50:14.042Z",
+    "fileOnDark": "fintech-dark.png"
+  },
+  {
+    "id": "lakeshore",
+    "file": "lakeshore.png",
+    "raw": "lakeshore-raw.png",
+    "alt": "Lakeshore Half Marathon 2027 emblem",
+    "model": "ideogram/v4.0",
+    "prompt": "City half marathon emblem: a bold rounded-square badge filled deep blue (#0057B8) with a white wave pattern across the lower half, a red (#FF3D2E) rising sun, a dynamic white runner silhouette, the word \"LAKESHORE\" in heavy white italic condensed capitals and \"HALF MARATHON\" in small red letter-spaced capitals beneath. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "6c1fe923-761e-4c3a-a292-4e437dc39fa9",
+    "createdAt": "2026-10-21T19:50:14.913Z"
+  },
+  {
+    "id": "wedding",
+    "file": "wedding.png",
+    "raw": "wedding-raw.png",
+    "alt": "Alvarez and Chen wedding monogram",
+    "model": "ideogram/v4.0",
+    "prompt": "Elegant wedding monogram seal: a solid round medallion filled deep sage green (#3E5245) with a fine champagne gold (#C9A96E) double ring border and a delicate laurel wreath, the initials \"A & C\" in a refined high-contrast serif in champagne gold at the center, the date \"09 · 25 · 2027\" in tiny gold capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "4afc9b2b-591a-4fb5-a6ab-554504f2940f",
+    "createdAt": "2026-10-21T19:50:20.376Z"
+  },
+  {
+    "id": "heartland",
+    "file": "heartland.png",
+    "raw": "heartland-raw.png",
+    "alt": "Heartland Invitational Soccer Cup 2027 crest",
+    "model": "ideogram/v4.0",
+    "prompt": "Youth soccer tournament crest: a bold shield badge filled deep navy (#0E1B2C) with a thick teal (#19C6B8) outline, a white soccer ball at the top center, a small gold (#F5B700) star, the word \"HEARTLAND\" in heavy white athletic block letters across the middle and \"CUP 2027\" in teal on a ribbon banner below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "511082a2-5295-48c8-8086-74e91b680eab",
+    "createdAt": "2026-10-21T19:50:20.965Z"
+  }
+]

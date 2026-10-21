@@ -35,7 +35,6 @@ export const SectionsReordered = {
         l.sections.attending.visible = false
         l.sections.closing.visible = false
         l.hero.tagline = 'Three days of fintech, one block of hotels.'
-        l.hero.ctaLabel = 'Reserve your room'
       },
     }),
   },

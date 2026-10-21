@@ -38,23 +38,25 @@ describe('banner brief → prompt', () => {
   const p = sampleProject('heartland')
   const ctx = (overrides = {}) => ({ event: p.event, brandKit: p.brandKit, target: BANNER_TARGETS[0], model: getHfModel('flare'), ...overrides })
 
-  it('keeps artwork text-free by default', () => {
+  it('keeps artwork a text-free, system-safe background (Presto banner rules)', () => {
     const prompt = buildBannerPrompt(defaultAnswers(), ctx())
-    expect(prompt).toMatch(/No text, no letters, no logos, no watermarks\./)
+    expect(prompt).toMatch(/No text, no letters, no numbers, no logos, no signage, no watermarks\./)
+    expect(prompt).toMatch(/keep the center calm/)
     expect(prompt).toMatch(/Heartland Invitational Soccer Cup 2027/)
     expect(prompt).toMatch(/#0E1B2C/)
   })
 
-  it('bakes the headline in only for the typography model', () => {
-    const a = { ...defaultAnswers(), text: 'headline' }
-    expect(buildBannerPrompt(a, ctx({ model: getHfModel('ideogram'), headline: 'Heartland Cup' }))).toMatch(/"Heartland Cup"/)
-    expect(buildBannerPrompt(a, ctx({ model: getHfModel('flare') }))).toMatch(/No text, no letters/)
+  it('never asks a model to render text or place the logo, whatever the model', () => {
+    for (const model of HF_MODELS) {
+      const prompt = buildBannerPrompt(defaultAnswers(), ctx({ model }))
+      expect(prompt).not.toMatch(/Render this headline|Place the attached logo/)
+    }
   })
 
-  it('allows the logo in the artwork when asked to place it', () => {
-    const prompt = buildBannerPrompt({ ...defaultAnswers(), logo: 'place' }, ctx())
-    expect(prompt).toMatch(/Place the attached logo/)
-    expect(prompt).toMatch(/other than the supplied logo/)
+  it('sends the logo only as a color/style reference, and only to models that take references', () => {
+    expect(buildBannerPrompt(defaultAnswers(), ctx())).toMatch(/do not reproduce the logo itself/)
+    expect(buildBannerPrompt(defaultAnswers(), ctx({ model: getHfModel('recraft') }))).not.toMatch(/attached logo/)
+    expect(buildBannerPrompt({ ...defaultAnswers(), logo: 'skip' }, ctx())).not.toMatch(/attached logo/)
   })
 
   it('writes sponsor ads for the sponsor', () => {

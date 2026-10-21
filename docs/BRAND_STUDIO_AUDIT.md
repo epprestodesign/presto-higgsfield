@@ -72,7 +72,7 @@ presto-higgsfield/
 Principles:
 
 - **Branding is separate from page config.** `project.brandKit` defines how the pages look. `project.pages` and `project.ads` define what they say and show. One Brand Kit edit re-themes every page at once.
-- **The AI only makes artwork.** Logos, headlines, dates and CTAs are live DOM layered over generated backgrounds (`BrandHero`, `AdCreative`). Prompts always say "no text, no logos".
+- **The AI only makes artwork.** Logos, headlines and dates are live DOM layered over generated backgrounds (heroes have no CTA button; the booking search below is the action) (`BrandHero`, `AdCreative`). Prompts always say "no text, no logos".
 - **No secrets in the browser.** Remote AI providers call an EventPipe backend (`VITE_AI_API_BASE`), which holds vendor keys, enforces quotas and stores jobs.
 - **Everything is serializable.** A project is one versioned JSON document (`schemaVersion`), ready for a Supabase `jsonb` column.
 

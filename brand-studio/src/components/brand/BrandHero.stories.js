@@ -13,7 +13,6 @@ const propsFor = (key, conceptIndex = null, size = 'landing') => {
     tagline: p.pages.landing.hero.tagline,
     dates: formatDateRange(p.event.startDate, p.event.endDate),
     location: locationLabel(p.event),
-    ctaLabel: 'Find your hotel',
     size,
   }
 }
@@ -26,13 +25,12 @@ export default {
     docs: {
       description: {
         component:
-          'The branded event banner. One component renders all six concept layouts (Signature: centered/split · Energy: band/angled · Premium: editorial/framed) for any Brand Kit, at three sizes: **landing**, **compact** (the Browse/Details band from the reference screens) and **card** (gallery thumbnails). Artwork is a background layer; logo, headline, dates and CTA are live, editable DOM.',
+          'The branded event banner. One component renders all six concept layouts (Signature: centered/split · Energy: band/angled · Premium: editorial/framed) for any Brand Kit, at three sizes: **landing**, **compact** (the Browse/Details band from the reference screens) and **card** (gallery thumbnails). Artwork is a background layer; logo, headline and dates are live, editable DOM. Heroes carry no call-to-action button (the booking search below is the action).',
       },
     },
   },
   argTypes: {
     size: { control: 'inline-radio', options: ['landing', 'compact', 'card'] },
-    onCta: { action: 'cta' },
   },
 }
 

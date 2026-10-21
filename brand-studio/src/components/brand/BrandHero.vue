@@ -3,8 +3,8 @@
 // concept (6 layouts × any Brand Kit) at every size: the full landing hero,
 // the compact band on Browse / Details (references/102126), and gallery cards.
 //
-// Artwork (photo, duotone, patterns) is a background layer; the logo, headline,
-// dates and CTA are live DOM on top — never baked into generated images — so
+// Artwork (photo, duotone, patterns) is a background layer; the logo, headline
+// and dates are live DOM on top — never baked into generated images — so
 // they stay editable, accessible and sharp. Sizing uses container queries, so
 // the same markup adapts inside a 390px phone frame or a 320px gallery card.
 import { computed } from 'vue'
@@ -12,6 +12,7 @@ import { getFont } from '../../theme/fonts.js'
 import { resolvePalette } from '../../theme/brandTheme.js'
 import { shade } from '../../theme/color.js'
 import { getImage } from '../../assets/imagery/index.js'
+import { prestoBannerConcept } from '../../providers/ai/conceptFactory.js'
 
 const props = defineProps({
   concept: { type: Object, default: null },
@@ -20,18 +21,19 @@ const props = defineProps({
   tagline: { type: String, default: '' },
   dates: { type: String, default: '' },
   location: { type: String, default: '' },
-  ctaLabel: { type: String, default: '' },
   showLogo: { type: Boolean, default: true },
   showDates: { type: Boolean, default: true },
   // 'landing' (tall hero) | 'compact' (Browse/Details band) | 'card' (gallery thumbnail)
   size: { type: String, default: 'landing' },
   headingLevel: { type: Number, default: 1 },
 })
-const emit = defineEmits(['cta'])
 
 // No concept selected yet → a clean Brand Signature default from the kit.
 const fallback = computed(() => {
   const p = resolvePalette(props.brandKit.colors)
+  // A brand banner (e.g. generated with Higgsfield) → the Presto standard layout.
+  const banner = getImage(props.brandKit.bannerImageId) || (props.brandKit.imagery || []).find((a) => a.id === props.brandKit.bannerImageId)
+  if (banner) return prestoBannerConcept(props.brandKit, banner)
   const hero = getImage(props.brandKit.heroImageId) || (props.brandKit.imagery || []).find((a) => a.id === props.brandKit.heroImageId)
   return {
     layout: hero ? 'editorial' : 'centered',
@@ -72,8 +74,7 @@ const style = computed(() => ({
   '--bh-fg': t.value.foreground,
   '--bh-accent': t.value.accent,
   '--bh-highlight': t.value.highlight || palette.value.accent,
-  '--bh-on-highlight': resolvePalette({ primary: t.value.highlight || palette.value.accent }).onPrimary,
-  '--bh-font': getFont(c.value.headingFont).family,
+    '--bh-font': getFont(c.value.headingFont).family,
 }))
 
 const headingTag = computed(() => `h${Math.min(6, Math.max(1, props.headingLevel))}`)
@@ -103,9 +104,6 @@ const headingTag = computed(() => `h${Math.min(6, Math.max(1, props.headingLevel
         <component :is="headingTag" class="bh__headline">{{ headline }}</component>
         <p v-if="tagline" class="bh__tagline">{{ tagline }}</p>
         <p v-if="meta && !(size !== 'compact' && layout === 'editorial')" class="bh__meta">{{ meta }}</p>
-        <button v-if="ctaLabel && size === 'landing'" type="button" class="bh__cta" @click="emit('cta')">
-          {{ ctaLabel }}
-        </button>
       </div>
     </div>
   </section>
@@ -132,6 +130,8 @@ const headingTag = computed(() => `h${Math.min(6, Math.max(1, props.headingLevel
 .bh__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bh__photo::after { content: ''; position: absolute; inset: 0; }
 
+/* dim — even darkening so a centered white logo + headline read anywhere */
+.bh__photo--dim::after { background: linear-gradient(rgb(0 0 0 / 0.28), rgb(0 0 0 / 0.42)); }
 /* scrim — readable text over full-bleed photography */
 .bh__photo--scrim::after { background: linear-gradient(90deg, rgb(0 0 0 / 0.72) 0%, rgb(0 0 0 / 0.38) 55%, rgb(0 0 0 / 0.12) 100%); }
 /* tint — brand color wash */
@@ -194,22 +194,13 @@ const headingTag = computed(() => `h${Math.min(6, Math.max(1, props.headingLevel
 .bh__tagline { margin: 0; font-size: clamp(14px, 2cqi, 20px); line-height: 1.35; opacity: 0.92; text-wrap: balance; }
 .bh__meta, .bh__eyebrow { margin: 0; font-size: clamp(12px, 1.5cqi, 15px); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.9; }
 .bh__eyebrow { color: var(--bh-highlight); opacity: 1; }
-.bh__cta {
-  margin-top: clamp(6px, 1.5cqi, 14px);
-  align-self: inherit;
-  padding: 12px 22px;
-  border: 0;
-  border-radius: 6px;
-  background: var(--bh-highlight);
-  color: var(--bh-on-highlight);
-  font: 700 16px/1 var(--brand-font-body, inherit);
-  cursor: pointer;
-  transition: transform var(--ds-duration-fast, 150ms) var(--ds-ease-standard, ease), filter var(--ds-duration-fast, 150ms);
-}
-.bh__cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
-.bh__cta:focus-visible { outline: 3px solid var(--bh-fg); outline-offset: 3px; }
 
 /* ── Layouts ─────────────────────────────────────────────────────────── */
+/* presto — the Presto banner standard (references/102226): a minimal,
+   system-safe full-bleed background with logo + all copy centered on top. */
+.bh--presto .bh__logo { height: clamp(48px, 11cqi, 120px); }
+.bh--presto .bh__headline { text-shadow: 0 2px 18px rgb(0 0 0 / 0.35); }
+
 /* split — brand panel left, tinted photo right */
 .bh--split .bh__photo { left: 55%; }
 .bh--split .bh__art::after { content: ''; position: absolute; top: 0; bottom: 0; left: 55%; width: 6px; background: var(--bh-highlight); }

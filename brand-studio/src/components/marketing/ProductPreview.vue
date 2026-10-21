@@ -14,7 +14,8 @@ import GlobalNav from '@lib/components/GlobalNav.vue'
 import BookingWidget from '@lib/components/BookingWidget.vue'
 import HotelCardGroup from '@lib/components/browse/HotelCardGroup.vue'
 import { sampleProject } from '../../data/sampleEvents.js'
-import { buildConcept } from '../../providers/ai/conceptFactory.js'
+import { buildConcept, prestoBannerConcept } from '../../providers/ai/conceptFactory.js'
+import { getImage } from '../../assets/imagery/index.js'
 import { HOTELS, groupAvailability } from '../../data/upstream/hotels.js'
 import { formatDateRange, locationLabel } from '../../models/event.js'
 
@@ -27,18 +28,21 @@ const props = defineProps({
   designHeight: { type: Number, default: 860 },
   hotels: { type: Number, default: 3 },
   headline: { type: String, default: '' },
-  ctaLabel: { type: String, default: 'Find your hotel' },
 })
 
 const project = computed(() => sampleProject(props.sample))
 const kit = computed(() => props.brandKit || project.value.brandKit)
 const event = computed(() => project.value.event)
 
-// Concept: explicit override, else the kit's preferred direction (template 0).
+// Concept: explicit override, else the Presto banner standard on the kit's
+// generated banner, else the kit's preferred direction (template 0).
 const TEMPLATE = { signature: 0, energy: 0, premium: 0 }
-const concept = computed(
-  () => props.concept || buildConcept({ direction: kit.value.direction, templateIndex: TEMPLATE[kit.value.direction] ?? 0, brandKit: kit.value, event: event.value }),
-)
+const concept = computed(() => {
+  if (props.concept) return props.concept
+  const banner = getImage(kit.value.bannerImageId)
+  if (banner) return prestoBannerConcept(kit.value, banner)
+  return buildConcept({ direction: kit.value.direction, templateIndex: TEMPLATE[kit.value.direction] ?? 0, brandKit: kit.value, event: event.value })
+})
 
 const hero = computed(() => ({
   concept: concept.value,
@@ -47,7 +51,6 @@ const hero = computed(() => ({
   tagline: project.value.pages.landing.hero.tagline,
   dates: formatDateRange(event.value.startDate, event.value.endDate),
   location: locationLabel(event.value),
-  ctaLabel: props.ctaLabel,
 }))
 
 // Featured hotels — real cards fed by the prototype's mock hotel database.

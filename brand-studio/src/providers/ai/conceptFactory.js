@@ -9,7 +9,7 @@ import { IMAGERY, imagesTagged } from '../../assets/imagery/index.js'
 // Two templates per direction → the six-concept gallery.
 const TEMPLATES = {
   signature: [
-    { title: 'Solid Signature', layout: 'centered', overlay: 'none', pattern: 'dots', useImage: false, rationale: 'Your primary color owns the banner, with a quiet dot texture and your logo front and center.' },
+    { title: 'Presto Banner', layout: 'presto', overlay: 'dim', pattern: 'none', useImage: true, rationale: 'The Presto standard: a minimal, system-safe background with your logo and headline centered on top.' },
     { title: 'Brand Split', layout: 'split', overlay: 'tint', pattern: 'lines', useImage: true, rationale: 'A brand-color panel carries the headline while a tinted photo hints at the event.' },
   ],
   energy: [
@@ -45,7 +45,7 @@ function treatmentFor(tpl, palette, image, variant) {
     imageSrc: tpl.useImage && image ? image.src : null,
     imageAlt: tpl.useImage && image ? image.alt : '',
     overlay: tpl.overlay,
-    pattern: tpl.pattern,
+    pattern: tpl.layout === 'presto' && !(tpl.useImage && image) ? 'dots' : tpl.pattern,
   }
   if (tpl.layout === 'band') t.background = shade(palette.primary, 0.35 + shift)
   if (tpl.layout === 'angled') t.background = mix(palette.primary, palette.secondary, 0.15 + shift)
@@ -103,3 +103,36 @@ export function buildConcept({ direction, templateIndex = 0, brandKit, event, va
 }
 
 export const templatesFor = (direction) => TEMPLATES[direction] || []
+
+/**
+ * The Presto banner standard for a given background image: full-bleed,
+ * evenly dimmed photo (or an undimmed abstract), logo + copy centered on top.
+ */
+export function prestoBannerConcept(brandKit = {}, image) {
+  const palette = resolvePalette(brandKit.colors)
+  const abstract = /abstract/.test(image?.id || '') || image?.kind === 'pattern'
+  return {
+    id: `presto-${image?.id || 'solid'}`,
+    direction: 'signature',
+    title: 'Presto Banner',
+    rationale: TEMPLATES.signature[0].rationale,
+    layout: 'presto',
+    headingFont: brandKit.typography?.heading,
+    treatment: {
+      background: shade(palette.primary, 0.35),
+      foreground: '#FFFFFF',
+      accent: palette.secondary,
+      highlight: palette.accent,
+      imageId: image?.id || null,
+      imageSrc: image?.src || null,
+      imageAlt: '',
+      overlay: abstract ? 'none' : 'dim',
+      pattern: image ? 'none' : 'dots',
+    },
+    templateIndex: 0,
+    version: 1,
+    parentId: null,
+    provider: 'presto',
+    model: 'banner-system',
+  }
+}

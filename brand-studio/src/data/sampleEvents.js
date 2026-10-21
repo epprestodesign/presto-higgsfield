@@ -4,18 +4,21 @@
 import { createProject } from '../models/project.js'
 import { getImage } from '../assets/imagery/index.js'
 import { SAMPLE_SPONSORS } from './sponsors.js'
-import heartland from '../assets/logos/heartland-cup.svg'
-import fintech from '../assets/logos/fintech-forward.svg'
-import fintechLight from '../assets/logos/fintech-forward-light.svg'
-import alvarez from '../assets/logos/alvarez-chen.svg'
-import alvarezLight from '../assets/logos/alvarez-chen-light.svg'
-import lakeshore from '../assets/logos/lakeshore-half.svg'
-import lakeshoreLight from '../assets/logos/lakeshore-half-light.svg'
+// Logos generated with Higgsfield (Ideogram 4.0) — scripts/hf-generate-logos.mjs,
+// cut out by scripts/recut-logos.mjs. Self-contained emblems that read on light
+// and dark; Fintech's wordmark has a white-lettering variant for dark heroes.
+import heartland from '../assets/logos/generated/heartland.png'
+import fintech from '../assets/logos/generated/fintech.png'
+import fintechLight from '../assets/logos/generated/fintech-dark.png'
+import alvarez from '../assets/logos/generated/wedding.png'
+import lakeshore from '../assets/logos/generated/lakeshore.png'
 
 const photo = (id) => {
   const img = getImage(id)
-  return { id: img.id, src: img.src, alt: img.alt, kind: 'photo', credit: img.credit }
+  return img ? { id: img.id, src: img.src, alt: img.alt, kind: img.kind || 'photo', credit: img.credit } : null
 }
+// Generated banner backgrounds first (Presto banner system), then stock.
+const imagery = (...ids) => ids.map(photo).filter(Boolean)
 const logo = (id, src, alt) => ({ id, src, alt, kind: 'logo' })
 
 export const SAMPLE_EVENTS = [
@@ -39,8 +42,9 @@ export const SAMPLE_EVENTS = [
       logo: logo('logo-heartland', heartland, 'Heartland Invitational Soccer Cup'),
       colors: { primary: '#0E1B2C', secondary: '#19C6B8', accent: '#F5B700', ink: '#0B1220', surface: '#FFFFFF' },
       typography: { heading: 'barlow-condensed', body: 'inter' },
-      imagery: [photo('soccer-night-match'), photo('soccer-stadium-lights'), photo('soccer-team-huddle')],
-      heroImageId: 'soccer-night-match',
+      imagery: imagery('heartland-photo', 'heartland-abstract', 'soccer-night-match', 'soccer-stadium-lights', 'soccer-team-huddle'),
+      heroImageId: 'heartland-photo',
+      bannerImageId: 'heartland-photo',
       direction: 'energy',
       keywords: ['competitive', 'youth', 'family-friendly', 'electric'],
     },
@@ -67,8 +71,9 @@ export const SAMPLE_EVENTS = [
       logoOnDark: logo('logo-fintech-light', fintechLight, 'Fintech Forward Summit'),
       colors: { primary: '#1B1F5E', secondary: '#FF6B4A', accent: '#FFC857', ink: '#12143A', surface: '#FFFFFF' },
       typography: { heading: 'montserrat', body: 'inter' },
-      imagery: [photo('conference-speaker'), photo('conference-screen'), photo('conference-crowd')],
-      heroImageId: 'conference-speaker',
+      imagery: imagery('fintech-abstract', 'fintech-photo', 'conference-speaker', 'conference-screen', 'conference-crowd'),
+      heroImageId: 'fintech-abstract',
+      bannerImageId: 'fintech-abstract',
       direction: 'signature',
       keywords: ['innovative', 'professional', 'optimistic'],
     },
@@ -92,11 +97,11 @@ export const SAMPLE_EVENTS = [
     brandKit: {
       source: 'manual',
       logo: logo('logo-alvarez', alvarez, 'Alvarez & Chen monogram'),
-      logoOnDark: logo('logo-alvarez-light', alvarezLight, 'Alvarez & Chen monogram'),
       colors: { primary: '#3E5245', secondary: '#C9A96E', accent: '#E8D9C5', ink: '#1F2A22', surface: '#FFFFFF' },
       typography: { heading: 'playfair', body: 'lora' },
-      imagery: [photo('wedding-arch'), photo('wedding-table'), photo('wedding-winery-dinner')],
-      heroImageId: 'wedding-arch',
+      imagery: imagery('wedding-photo', 'wedding-abstract', 'wedding-arch', 'wedding-table', 'wedding-winery-dinner'),
+      heroImageId: 'wedding-photo',
+      bannerImageId: 'wedding-photo',
       direction: 'premium',
       keywords: ['romantic', 'elegant', 'warm'],
     },
@@ -120,11 +125,11 @@ export const SAMPLE_EVENTS = [
     brandKit: {
       source: 'suggested',
       logo: logo('logo-lakeshore', lakeshore, 'Lakeshore Half Marathon'),
-      logoOnDark: logo('logo-lakeshore-light', lakeshoreLight, 'Lakeshore Half Marathon'),
       colors: { primary: '#0057B8', secondary: '#FF3D2E', accent: '#FFD23F', ink: '#0A1F3D', surface: '#FFFFFF' },
       typography: { heading: 'oswald', body: 'work-sans' },
-      imagery: [photo('marathon-street'), photo('marathon-city')],
-      heroImageId: 'marathon-street',
+      imagery: imagery('lakeshore-photo', 'lakeshore-abstract', 'marathon-street', 'marathon-city'),
+      heroImageId: 'lakeshore-photo',
+      bannerImageId: 'lakeshore-photo',
       direction: 'energy',
       keywords: ['energetic', 'community', 'city'],
     },

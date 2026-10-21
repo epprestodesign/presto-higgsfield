@@ -1,0 +1,90 @@
+[
+  {
+    "id": "heartland-photo",
+    "file": "heartland-photo.jpg",
+    "event": "heartland",
+    "kind": "photo",
+    "model": "marketing-studio/image/flare",
+    "alt": "Floodlit youth soccer pitch at dusk in deep navy and teal",
+    "prompt": "An empty youth soccer pitch at dusk under floodlights, seen low and wide across the grass toward softly out-of-focus stands; color graded in deep midnight navy with cool teal highlights and a faint warm gold rim light, like the reference logo palette. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks. Use the reference logo only for its colors and mood; do not reproduce the logo.",
+    "requestId": "941b7e37-4b1d-43ec-b8aa-03e5d990059e",
+    "createdAt": "2026-10-21T19:46:04.746Z"
+  },
+  {
+    "id": "lakeshore-photo",
+    "file": "lakeshore-photo.jpg",
+    "event": "lakeshore",
+    "kind": "photo",
+    "model": "marketing-studio/image/flare",
+    "alt": "Motion-blurred runners on a lakefront road at sunrise in blue duotone",
+    "prompt": "Motion-blurred runners on a city lakefront road at sunrise, shot wide and low; blue duotone treatment with a fine halftone texture toward the edges and a hint of red accent light, like the reference logo palette. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks. Use the reference logo only for its colors and mood; do not reproduce the logo.",
+    "requestId": "34abbc21-a82d-4df8-af6a-4ea3b51b6014",
+    "createdAt": "2026-10-21T19:46:04.750Z"
+  },
+  {
+    "id": "fintech-photo",
+    "file": "fintech-photo.jpg",
+    "event": "fintech",
+    "kind": "photo",
+    "model": "marketing-studio/image/flare",
+    "alt": "Empty keynote hall with soft indigo light",
+    "prompt": "An empty modern conference keynote hall with rows of seats dissolving into soft bokeh, a wide stage glow, color graded deep indigo with a subtle coral light wash along one edge, like the reference logo palette. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks. Use the reference logo only for its colors and mood; do not reproduce the logo.",
+    "requestId": "47b1f3cf-79d9-41ef-a134-2192556dc2aa",
+    "createdAt": "2026-10-21T19:46:04.752Z"
+  },
+  {
+    "id": "wedding-photo",
+    "file": "wedding-photo.jpg",
+    "event": "wedding",
+    "kind": "photo",
+    "model": "marketing-studio/image/flare",
+    "alt": "Softly blurred garden reception with string lights at golden hour",
+    "prompt": "A softly blurred garden wedding reception at golden hour: long table and string lights melting into bokeh, airy and elegant, sage green foliage with warm champagne light, like the reference monogram palette. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks. Use the reference logo only for its colors and mood; do not reproduce the logo.",
+    "requestId": "a4dffa1f-a41e-450d-a754-84d770f6f3a4",
+    "createdAt": "2026-10-21T19:46:04.902Z"
+  },
+  {
+    "id": "fintech-abstract",
+    "file": "fintech-abstract.jpg",
+    "event": "fintech",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "alt": "Indigo abstract with flowing contour lines",
+    "prompt": "Minimal abstract background: solid deep indigo field with thin flowing contour lines in slightly lighter indigo sweeping in from the left edge, one faint coral line, large plain area. Flat, subtle, vector-clean. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "ed040e69-6535-46c5-a411-e74e35e47935",
+    "createdAt": "2026-10-21T19:46:21.034Z"
+  },
+  {
+    "id": "wedding-abstract",
+    "file": "wedding-abstract.jpg",
+    "event": "wedding",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "alt": "Sage green abstract with fine botanical line art",
+    "prompt": "Minimal abstract background: soft deep sage green field with delicate champagne-gold botanical line art and fine leaves along the outer edges, large calm plain center. Flat, elegant, vector-clean. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "e2dff348-edad-429d-a4f1-74f84e8b6056",
+    "createdAt": "2026-10-21T19:46:21.202Z"
+  },
+  {
+    "id": "heartland-abstract",
+    "file": "heartland-abstract.jpg",
+    "event": "heartland",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "alt": "Dark navy abstract with teal halftone speed lines",
+    "prompt": "Minimal abstract background: solid deep navy field with fine halftone dots and diagonal speed lines in slightly lighter navy and a touch of teal along the right edge, fading to plain navy toward the left and center. Flat, subtle, vector-clean. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "6e1f8444-d264-485c-85f2-411adb6b6967",
+    "createdAt": "2026-10-21T19:46:21.259Z"
+  },
+  {
+    "id": "lakeshore-abstract",
+    "file": "lakeshore-abstract.jpg",
+    "event": "lakeshore",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "alt": "Deep navy-blue abstract with fine wave lines",
+    "prompt": "Minimal abstract background: solid dark navy-blue field, muted and deep, with a few very thin flowing wave lines in a slightly lighter blue along the bottom right edge and one hairline red accent line; the rest is plain dark navy. Low contrast, calm, flat, vector-clean. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "aaf89819-4a3b-47a8-9321-cb4eb39650ec",
+    "createdAt": "2026-10-21T19:48:03.160Z"
+  }
+]

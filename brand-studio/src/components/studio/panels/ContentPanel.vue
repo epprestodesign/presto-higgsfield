@@ -52,7 +52,6 @@ const removeAttending = (i) => update('attending', { items: sections.value.atten
         @update:model-value="(v) => store.updateHero({ headline: v })"
       />
       <q-input :model-value="hero.tagline" outlined dense type="textarea" autogrow label="Tagline" @update:model-value="(v) => store.updateHero({ tagline: v })" />
-      <q-input :model-value="hero.ctaLabel" outlined dense label="Button label" maxlength="32" @update:model-value="(v) => store.updateHero({ ctaLabel: v })" />
       <div class="cp__switches">
         <q-toggle :model-value="hero.showLogo" label="Show logo" dense @update:model-value="(v) => store.updateHero({ showLogo: v })" />
         <q-toggle :model-value="hero.showDates" label="Show dates" dense @update:model-value="(v) => store.updateHero({ showDates: v })" />
