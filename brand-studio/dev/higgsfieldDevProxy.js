@@ -52,6 +52,13 @@ function credentials(root) {
     ({ HIGGSFIELD_API_KEY_ID, HIGGSFIELD_API_KEY_SECRET, HIGGSFIELD_CREDENTIALS, HF_API_KEY_ID, HF_API_KEY_SECRET, HF_CREDENTIALS })
   const strip = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v))
   const env = { ...strip(pick(START_ENV)), ...strip(pick(readEnvFile(path.join(root, '.env')))), ...strip(pick(readEnvFile(path.join(root, '.env.local')))) }
+  // A combined "keyId:secret" credential pasted into the SECRET field also works
+  // (that's how some key screens present it); it then wins over the ID field.
+  const pastedSecret = (env.HIGGSFIELD_API_KEY_SECRET || env.HF_API_KEY_SECRET || '').trim()
+  if (pastedSecret.includes(':')) {
+    const [id, ...rest] = pastedSecret.split(':')
+    if (id && rest.join(':')) return { id: id.trim(), secret: rest.join(':').trim() }
+  }
   const combined = env.HIGGSFIELD_CREDENTIALS || env.HF_CREDENTIALS || ''
   const [cid, csecret] = combined.includes(':') ? combined.split(':') : []
   const id = (env.HIGGSFIELD_API_KEY_ID || env.HF_API_KEY_ID || cid || '').trim()

@@ -124,6 +124,8 @@ const costLabel = computed(() => {
   if (!live.value) return 'Sample: no credits'
   if (estimating.value) return 'Estimating…'
   if (estimate.value?.credits) return `~${Number(estimate.value.credits)} credits${estimate.value.usd ? ` ($${Number(estimate.value.usd).toFixed(3)})` : ''}`
+  // Token-priced models (Flare) return a pricing description instead of a fixed price.
+  if (estimate.value?.pricing_description) return 'token-priced, settled on completion'
   return estimate.value?.error ? 'Estimate unavailable' : ''
 })
 
@@ -333,6 +335,7 @@ async function saveToRepo(job, url) {
           unelevated no-caps class="bs-btn bs-btn--ai bs-btn--lg full-width" icon="auto_awesome"
           :label="`Generate · ${costLabel || model.label}`" :disable="active >= 4" @click="generate"
         />
+        <p v-if="live && estimate?.pricing_description" class="bs-caption bg__note">{{ estimate.pricing_description }}</p>
         <p class="bs-caption bg__note">{{ live ? 'Charged only on success. Failed and moderated requests are refunded.' : health.configured ? 'Sample mode: switch it off to generate for real.' : 'Sample mode: add your Higgsfield key (see Setup Guide) to generate for real.' }}</p>
       </div>
     </section>
