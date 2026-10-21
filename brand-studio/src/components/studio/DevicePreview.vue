@@ -2,8 +2,10 @@
 // DevicePreview — the live, branded booking page inside an <iframe> (the
 // Preview Host, see preview/bridge.js), framed as desktop / tablet / phone.
 // Desktop and tablet sit in the realistic ChromeWindow (sized 1:1 with the
-// page, like a real browser screenshot), optionally on a Higgsfield-generated
-// desktop wallpaper (`backdrop`).
+// page, like a real browser screenshot), optionally on a backdrop (`backdrop`):
+// 'home' = the homepage's airy look — light canvas + tilted, softly blurred
+// Higgsfield lifestyle tiles (Option E art); 'lavender' / 'dune' = Higgsfield
+// wallpapers.
 //
 // The iframe gets a REAL viewport width (1280 / 768 / 390) so Presto's media
 // queries and Quasar's $q.screen behave exactly as on a device; it is then
@@ -14,7 +16,8 @@ import { useProjectStore } from '../../stores/project.js'
 import { previewHostUrl, connectPreviewFrame } from '../../preview/bridge.js'
 import { PAGE_META } from '../../models/pageConfig.js'
 import ChromeWindow from '../devices/ChromeWindow.vue'
-import { STUDIO_WALLPAPERS, DEFAULT_WALLPAPER } from '../../assets/studio/index.js'
+import { STUDIO_WALLPAPERS } from '../../assets/studio/index.js'
+import { OPTION_E_ART } from '../../assets/marketing/option-e/index.js'
 
 const props = defineProps({
   page: { type: String, default: 'landing' },
@@ -23,7 +26,7 @@ const props = defineProps({
   src: { type: String, default: '' },
   padding: { type: Number, default: 28 },
   connectTimeoutMs: { type: Number, default: 12000 },
-  // Wallpaper behind the browser window: '' (none) | 'lavender' | 'dune'
+  // Behind the browser window: '' (none) | 'home' | 'lavender' | 'dune'
   backdrop: { type: String, default: '' },
 })
 const emit = defineEmits(['update:page', 'ready'])
@@ -132,12 +135,30 @@ const urlLabel = computed(() => {
 })
 const pageTitle = computed(() => doc.value?.event?.name || 'Booking page')
 const favicon = computed(() => doc.value?.brandKit?.logo?.src || '')
-const wallpaper = computed(() => (props.backdrop ? STUDIO_WALLPAPERS[props.backdrop] || STUDIO_WALLPAPERS[DEFAULT_WALLPAPER] : ''))
+const wallpaper = computed(() => STUDIO_WALLPAPERS[props.backdrop] || '')
+// Homepage mosaic, framing the window: tiles peek out around its edges.
+const HOME_TILES = [
+  { art: 'tile-team', x: -3, y: 6, w: 22, r: -7, ratio: '3 / 4' },
+  { art: 'tile-room', x: 14, y: -4, w: 13, r: 4, blur: 2, ratio: '4 / 3' },
+  { art: 'tile-wedding', x: -4, y: 58, w: 24, r: 5, ratio: '4 / 3' },
+  { art: 'tile-breakfast', x: 12, y: 88, w: 12, r: -8, blur: 2.5, ratio: '4 / 3' },
+  { art: 'tile-conference', x: 80, y: -3, w: 23, r: 6, ratio: '4 / 3' },
+  { art: 'tile-nurses', x: 68, y: 90, w: 10, r: -5, blur: 3, ratio: '3 / 4' },
+  { art: 'tile-crew', x: 84, y: 40, w: 19, r: -5, ratio: '3 / 4' },
+  { art: 'tile-reunion', x: 86, y: 80, w: 15, r: 6, blur: 1.5, ratio: '3 / 4' },
+]
+const homeTiles = computed(() => (props.backdrop === 'home' ? HOME_TILES.filter((t) => OPTION_E_ART[t.art]) : []))
 const frameTitle = computed(() => `Branded booking page preview — ${PAGE_META[props.page]?.label || props.page}, ${spec.value.label.toLowerCase()}`)
 </script>
 
 <template>
-  <div ref="stage" class="dvp" :class="[`dvp--${device}`, { 'dvp--backdrop': wallpaper }]" :style="wallpaper ? { backgroundImage: `url(${wallpaper})` } : undefined">
+  <div ref="stage" class="dvp" :class="[`dvp--${device}`, { 'dvp--backdrop': wallpaper, 'dvp--home': backdrop === 'home' }]" :style="wallpaper ? { backgroundImage: `url(${wallpaper})` } : undefined">
+    <div v-if="homeTiles.length" class="dvp__tiles" aria-hidden="true">
+      <span
+        v-for="t in homeTiles" :key="t.art" class="dvp__tile"
+        :style="{ left: `${t.x}%`, top: `${t.y}%`, width: `${t.w}%`, aspectRatio: t.ratio, transform: `rotate(${t.r}deg)`, filter: t.blur ? `blur(${t.blur}px)` : undefined }"
+      ><img :src="OPTION_E_ART[t.art]" alt="" loading="lazy" /></span>
+    </div>
     <span v-if="spec.chrome" class="dvp__zoom" aria-hidden="true">{{ zoom }}</span>
     <component
       :is="spec.chrome ? ChromeWindow : 'div'"
@@ -187,6 +208,13 @@ const frameTitle = computed(() => `Branded booking page preview — ${PAGE_META[
 .dvp--mobile, .dvp--tablet { align-items: center; padding-top: 0; }
 .dvp__device { display: flex; flex-direction: column; align-items: center; }
 .dvp--backdrop { background-size: cover; background-position: center; }
+/* 'home' — the homepage (Option E) look: airy white canvas, soft accent glows,
+   tilted lifestyle tiles framing the window. */
+.dvp--home { background: radial-gradient(60% 50% at 12% 20%, rgb(124 58 237 / 0.07), transparent 70%), radial-gradient(55% 45% at 88% 85%, rgb(37 99 235 / 0.07), transparent 70%), #F7F8FB; }
+.dvp__tiles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.dvp__tile { position: absolute; display: block; border-radius: 18px; overflow: hidden; box-shadow: 0 18px 40px rgb(15 23 42 / 0.14); opacity: 0.95; }
+.dvp__tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dvp__device { position: relative; z-index: 1; }
 .dvp__device--desktop, .dvp__device--tablet { flex: none; display: block; }
 .dvp__zoom { position: absolute; right: 12px; bottom: 10px; z-index: 1; padding: 3px 8px; border-radius: 999px; background: rgb(255 255 255 / 0.8); backdrop-filter: blur(6px); font: 700 0.6875rem/1 var(--bs-font); color: var(--bs-ink-soft); }
 

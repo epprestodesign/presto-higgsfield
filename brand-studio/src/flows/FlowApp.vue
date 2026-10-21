@@ -20,7 +20,8 @@ import { getVertical } from '../data/verticals/index.js'
 import { getSampleEvent } from '../data/sampleEvents.js'
 import { conceptsFor } from '../stories/_helpers.js'
 import { parseHash, buildHash, shareUrl } from './deepLink.js'
-import MarketingLanding from '../components/marketing/MarketingLanding.vue'
+// Homepage = Option E (Group Booking); Option A (MarketingLanding) stays in Storybook.
+import HomeOptionE from '../components/marketing/options/HomeOptionE.vue'
 import IntakeWizard from '../components/intake/IntakeWizard.vue'
 import BrandDiscovery from '../components/brand-kit/BrandDiscovery.vue'
 import ConceptStudio from '../components/concepts/ConceptStudio.vue'
@@ -159,10 +160,16 @@ function skipStep() {
 }
 
 // ── Screen events ─────────────────────────────────────────────────────────
-function startNew() {
+function startNew(opts = {}) {
   project.reset()
   project.persistence.clear?.()
   loadedExample.value = ''
+  // "Paste your website" on the homepage → carried into the brand step.
+  const websiteUrl = typeof opts?.websiteUrl === 'string' ? opts.websiteUrl.trim() : ''
+  if (websiteUrl) {
+    project.updateEvent({ websiteUrl: /^https?:\/\//i.test(websiteUrl) ? websiteUrl : `https://${websiteUrl}` })
+    $q.notify({ message: `We'll pull your brand from ${websiteUrl.replace(/^https?:\/\//i, '')}`, icon: 'auto_awesome', color: 'dark', timeout: 2200, position: 'top' })
+  }
   go('intake', { params: {} })
 }
 function onFix(target) {
@@ -225,7 +232,7 @@ onBeforeUnmount(() => { disposeAutofill?.(); window.removeEventListener('popstat
     </header>
 
     <main class="fa__screen">
-      <marketing-landing v-if="step === 'home'" @start="startNew" @sample="(key) => useSample({ key: key || 'heartland', to: 'studio', withConcepts: true })" @signin="go('dashboard')" />
+      <home-option-e v-if="step === 'home'" @start="startNew" @sample="(key) => useSample({ key: key || 'heartland', to: 'studio', withConcepts: true })" @signin="go('dashboard')" />
 
       <intake-wizard
         v-else-if="step === 'intake'" :initial-step="Math.max(0, Number(params.step || 1) - 1)"
@@ -251,9 +258,9 @@ onBeforeUnmount(() => { disposeAutofill?.(); window.removeEventListener('popstat
         @back="go('studio')" @fix="onFix" @open-demo="go('demo')" @done="go('dashboard')"
       />
 
-      <published-demo-page v-else-if="step === 'demo'" :project="project.project" @create="startNew" />
+      <published-demo-page v-else-if="step === 'demo'" :project="project.project" @create="startNew()" />
 
-      <project-dashboard v-else-if="step === 'dashboard'" @open="openProject" @new="startNew" @preview="go('demo')" @sign-out="session.signOut(); go('home')" />
+      <project-dashboard v-else-if="step === 'dashboard'" @open="openProject" @new="startNew()" @preview="go('demo')" @sign-out="session.signOut(); go('home')" />
     </main>
 
     <q-dialog v-model="sponsorsOpen" :maximized="$q.screen.lt.sm">

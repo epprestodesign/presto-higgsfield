@@ -140,7 +140,7 @@ const font = getFont(demo.brandKit.typography?.heading)
 .oes__n { font: 800 0.875rem var(--oe-display, 'Montserrat', sans-serif); color: #B7BCC8; }
 .is-open .oes__n { color: var(--oe-accent, #7C3AED); }
 .oes__panel p { margin: 0 0 20px 38px; color: var(--soft); line-height: 1.55; font-size: 1rem; max-width: 52ch; }
-.oes__cta { background: var(--ink); color: #fff; font: 700 0.9375rem var(--oe-head, 'Inter', sans-serif); padding: 0 20px; min-height: 44px; }
+.oes__cta { background: var(--bs-brand, #01113E); color: #fff; font: 700 0.9375rem var(--oe-head, 'Inter', sans-serif); padding: 0 20px; min-height: 44px; }
 
 /* Media card */
 .oes__media { position: relative; aspect-ratio: 1 / 1; max-height: 640px; width: 100%; border-radius: 28px; overflow: hidden; background: #0B1220; box-shadow: 0 24px 60px rgb(15 23 42 / 0.18); container-type: inline-size; }

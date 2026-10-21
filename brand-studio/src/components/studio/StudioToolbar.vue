@@ -140,10 +140,10 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
       <!-- RIGHT -->
       <div class="stb__group stb__group--right">
         <template v-if="!compact">
-          <q-btn flat round dense icon="undo" class="stb__icon" aria-label="Undo" :disable="!canUndo" @click="emit('undo')">
+          <q-btn flat round dense icon="undo" class="stb__icon stb__history" aria-label="Undo" :disable="!canUndo" @click="emit('undo')">
             <q-tooltip>Undo · {{ mod }}Z</q-tooltip>
           </q-btn>
-          <q-btn flat round dense icon="redo" class="stb__icon" aria-label="Redo" :disable="!canRedo" @click="emit('redo')">
+          <q-btn flat round dense icon="redo" class="stb__icon stb__history" aria-label="Redo" :disable="!canRedo" @click="emit('redo')">
             <q-tooltip>Redo · {{ isMac ? '⇧⌘Z' : 'Ctrl+Shift+Z' }}</q-tooltip>
           </q-btn>
           <span class="stb__divider" aria-hidden="true" />
@@ -218,7 +218,8 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
 
 <style scoped>
 .stb { background: var(--bs-surface); border-bottom: 1px solid var(--bs-line); font-family: var(--bs-font); color: var(--bs-ink); }
-.stb__row { height: var(--bs-toolbar-h); display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px; padding: 0 12px; }
+/* Right column never narrower than its buttons; the name column shrinks (ellipsis). */
+.stb__row { height: var(--bs-toolbar-h); display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(max-content, 1fr); align-items: center; gap: 16px; padding: 0 12px; }
 .stb--compact .stb__row { grid-template-columns: minmax(0, 1fr) auto; height: 56px; gap: 8px; }
 .stb__row--sub { display: flex; height: 52px; border-top: 1px solid var(--bs-line); gap: 8px; }
 .stb__group { display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -259,8 +260,9 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
 /* Mid-width desktops: Examples / Export collapse to icons and the save state to
    its icon, so the centred page + device switcher never collides. */
 @media (max-width: 1599px) {
-  .stb__examples :deep(.block), .stb__export :deep(.block) { display: none; }
+  /* Quasar's .block utility is display:block !important. */
+  .stb__examples :deep(.block), .stb__export :deep(.block) { display: none !important; }
   .stb__examples :deep(.q-icon), .stb__export :deep(.q-icon) { margin: 0; }
 }
-@media (max-width: 1439px) { .stb__save-label { display: none; } }
+@media (max-width: 1599px) { .stb__save-label { display: none; } }
 </style>

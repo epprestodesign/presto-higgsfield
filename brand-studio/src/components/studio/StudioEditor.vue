@@ -185,7 +185,7 @@ watch(() => props.view, (v) => {
         @focus-page="focusPage"
       />
       <main class="sed__canvas" aria-label="Live preview">
-        <DevicePreview v-model:page="page" :device="device" :src="previewSrc" :padding="narrow ? 14 : 28" backdrop="lavender" />
+        <DevicePreview v-model:page="page" :device="device" :src="previewSrc" :padding="narrow ? 14 : 28" backdrop="home" />
       </main>
     </div>
 
@@ -210,7 +210,7 @@ watch(() => props.view, (v) => {
           <q-btn flat round icon="close" aria-label="Close preview" class="sed__fp-close" v-close-popup />
         </header>
         <div class="sed__fp-body">
-          <DevicePreview v-model:page="page" :device="previewDevice" :src="previewSrc" :padding="20" backdrop="lavender" />
+          <DevicePreview v-model:page="page" :device="previewDevice" :src="previewSrc" :padding="20" backdrop="home" />
         </div>
       </div>
     </q-dialog>

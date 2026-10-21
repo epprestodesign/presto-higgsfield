@@ -99,10 +99,25 @@ const FAQ = [
   { q: 'Can sponsors advertise on my page?', a: 'Yes. Add sponsor display ads on the homepage, hotel directory and details pages to help offset costs.' },
   { q: 'Which events is this for?', a: 'Any group that travels: tournaments, conferences, weddings, reunions, job-site crews, hospital families, festivals and more.' },
 ]
+
+// In-page anchors (#how, #top, footer links…) scroll instead of rewriting
+// location.hash — the prototype app is hash-routed (#/home, #/studio…).
+function onAnchor(e) {
+  const a = e.target.closest?.('a[href^="#"]')
+  if (!a) return
+  e.preventDefault()
+  const id = a.getAttribute('href').slice(1)
+  const el = id && id !== 'top' ? document.getElementById(id) : null
+  const behavior = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+  if (el) {
+    el.scrollIntoView({ behavior, block: 'start' })
+    if (id === 'oe-main') { el.setAttribute('tabindex', '-1'); el.focus({ preventScroll: true }) }
+  } else window.scrollTo({ top: 0, behavior })
+}
 </script>
 
 <template>
-  <div class="oe">
+  <div class="oe" @click="onAnchor">
     <a href="#oe-main" class="oe__skip">Skip to content</a>
 
     <header class="oe__nav">
@@ -141,7 +156,7 @@ const FAQ = [
           <form class="oe__field" role="search" aria-label="Brand my booking page" @submit.prevent="submitSite">
             <label class="oe__field-label" for="oe-site">
               <span>Your event website</span>
-              <input id="oe-site" v-model="website" type="url" inputmode="url" placeholder="yourevent.com" autocomplete="url" aria-label="Your event website" />
+              <input id="oe-site" v-model="website" type="text" inputmode="url" spellcheck="false" autocapitalize="off" placeholder="yourevent.com" autocomplete="url" aria-label="Your event website" />
             </label>
             <q-btn type="submit" unelevated no-caps rounded class="oe__btn oe__btn--dark oe__btn--go" icon-right="arrow_forward" label="Brand my page" />
           </form>
@@ -236,21 +251,25 @@ const FAQ = [
   --oe-line: #E8EAF0;
   --oe-navy: #01113E;
   --oe-accent: var(--bs-accent, #7C3AED);
-  --oe-head: 'Inter', 'PT Sans', sans-serif;
-  --oe-display: 'Montserrat', 'Inter', sans-serif;
+  /* Same type + buttons as the Brand Studio workflow (styles/studio.scss). */
+  --oe-head: var(--bs-font, 'Inter', sans-serif);
+  --oe-display: var(--bs-font, 'Inter', sans-serif);
   background: #fff;
   color: var(--oe-ink);
   font-family: var(--oe-head);
   overflow-x: clip;
 }
 .oe a { color: inherit; }
+/* In-page anchors land below the sticky nav. */
+.oe [id^='oe-'] { scroll-margin-top: 84px; }
 .oe__skip { position: absolute; left: 12px; top: -60px; z-index: 100; padding: 10px 14px; border-radius: 6px; background: var(--oe-ink); color: #fff; font-weight: 700; text-decoration: none; }
 .oe__skip:focus { top: 12px; }
 .oe__ph { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 99px; background: #FFF4D6; color: #8A5A00; font: 700 10px/1.6 var(--oe-head); letter-spacing: 0.04em; text-transform: uppercase; vertical-align: middle; }
 
 /* Buttons */
 .oe__btn { font: 700 0.9375rem var(--oe-head); padding: 0 20px; min-height: 44px; }
-.oe__btn--dark { background: var(--oe-ink); color: #fff; }
+.oe__btn--dark { background: var(--bs-brand, #01113E); color: #fff; }
+.oe__btn--dark:hover { background: var(--bs-brand-hover, #0B1F5C); }
 .oe__btn--light { background: #fff; color: var(--oe-ink); }
 
 /* Nav */
