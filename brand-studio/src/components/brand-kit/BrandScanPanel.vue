@@ -143,7 +143,7 @@ onBeforeUnmount(() => controller?.abort())
 
     <!-- READY: review + approve -->
     <div v-else-if="state === 'ready' && suggestion" class="scan__result">
-      <p class="scan__found"><q-icon name="check_circle" size="18px" /> Here’s what we found on <strong>{{ suggestion.hostname }}</strong>. Choose what to use.</p>
+      <p class="scan__found"><q-icon name="check_circle" size="18px" /><span>Here’s what we found on <strong>{{ suggestion.hostname }}</strong>. Choose what to use.</span></p>
       <div class="scan__items">
         <div class="scan__item" :class="{ 'is-off': !pick.logo }">
           <span class="scan__item-body">
@@ -216,8 +216,9 @@ onBeforeUnmount(() => controller?.abort())
 .scan__row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
 .scan__result { display: flex; flex-direction: column; gap: 12px; }
-.scan__found { margin: 0; display: flex; gap: 6px; align-items: center; font-size: 0.9375rem; color: var(--bs-ink); }
-.scan__found .q-icon { color: var(--bs-accent); }
+.scan__found { margin: 0; display: flex; gap: 6px; align-items: flex-start; font-size: 0.9375rem; color: var(--bs-ink); }
+.scan__found .q-icon { color: var(--bs-accent); flex: none; margin-top: 2px; }
+.scan__found strong { overflow-wrap: anywhere; }
 .scan__items { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
 .scan__item { display: flex; padding: 12px; background: #fff; border: 1.5px solid var(--bs-accent); border-radius: var(--bs-radius-md); transition: opacity var(--ds-duration-fast), border-color var(--ds-duration-fast); }
 .scan__item.is-off { border-color: var(--bs-accent-line); }

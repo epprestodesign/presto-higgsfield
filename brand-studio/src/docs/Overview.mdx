@@ -1,33 +1,65 @@
 import { Meta } from '@storybook/addon-docs/blocks'
 import bannerBg from './assets/overview/generated/banner-atrium.jpg'
-import bannerDevices from './assets/overview/banner-devices.png'
-import i1 from './assets/overview/illustrations/step-1-home.jpg'
-import i2 from './assets/overview/illustrations/step-2-intake.jpg'
-import i3 from './assets/overview/illustrations/step-3-brand.jpg'
-import i4 from './assets/overview/illustrations/step-4-concepts.jpg'
-import i5 from './assets/overview/illustrations/step-5-studio.jpg'
-import i6 from './assets/overview/illustrations/step-6-publish.jpg'
+import shotHome from './assets/overview/shots/home.jpg'
+import shotBrand from './assets/overview/shots/brand.jpg'
+import shotConcepts from './assets/overview/shots/concepts.jpg'
+import shotStudio from './assets/overview/shots/studio.jpg'
+import shotDemo from './assets/overview/shots/demo.jpg'
+import i1 from './assets/overview/crops/1-home.jpg'
+import i2 from './assets/overview/crops/2-intake.jpg'
+import i3 from './assets/overview/crops/3-brand.jpg'
+import i4 from './assets/overview/crops/4-concepts.jpg'
+import i5 from './assets/overview/crops/5-studio.jpg'
+import i6 from './assets/overview/crops/6-demo.jpg'
 
 <Meta title="Brand Studio/Overview" />
 
 <style>{`
   .ov { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0B1220; }
   .ov a { color: inherit; }
-  .ov-hero { position: relative; overflow: hidden; border-radius: 24px; margin: 0 0 28px; padding: 44px 40px 0; background-size: cover; background-position: center; box-shadow: 0 0 0 1px #E8EAF0, 0 24px 60px rgb(15 23 42 / .10); }
-  .ov-hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgb(255 255 255 / .94) 0%, rgb(255 255 255 / .82) 38%, rgb(255 255 255 / .2) 70%, rgb(255 255 255 / 0) 100%); }
-  .ov-hero > * { position: relative; }
-  .ov-hero__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 24px; align-items: end; }
-  .ov-hero__copy { padding-bottom: 44px; }
+  /* Hero options — stacked: product screens on top, copy + CTAs below. */
+  .ovh-label { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 10px; padding: 4px 12px; border-radius: 999px; background: #F3F0FF; color: #6D28D9; font: 700 12px 'Inter', sans-serif; letter-spacing: .04em; }
+  .ovh { position: relative; overflow: hidden; border-radius: 24px; margin: 0 0 18px; padding: 40px 32px 44px; background-size: cover; background-position: center; box-shadow: 0 0 0 1px #E8EAF0, 0 24px 60px rgb(15 23 42 / .08); text-align: center; }
+  .ovh::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(255 255 255 / .55) 0%, rgb(255 255 255 / .82) 55%, rgb(255 255 255 / .96) 100%); }
+  .ovh > * { position: relative; }
+  .ovh__copy { max-width: 720px; margin: 28px auto 0; }
   .ov-eyebrow { margin: 0 0 12px; font: 700 12px/1 'Inter', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #7C3AED; }
-  .ov-hero h1 { margin: 0 !important; padding: 0 !important; border: 0 !important; font: 800 40px/1.06 'Inter', sans-serif !important; letter-spacing: -0.03em; color: #0B1220 !important; text-wrap: balance; }
-  .ov-hero h1 span { display: block; font: inherit !important; letter-spacing: inherit; color: #7C3AED !important; }
-  .ov-hero p.ov-lead { margin: 14px 0 0; font: 400 16px/1.55 'Inter', sans-serif; color: #3B4556; max-width: 46ch; }
-  .ov-ctas { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
-  .ov-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 20px; border-radius: 999px; font: 700 15px 'Inter', sans-serif; text-decoration: none !important; }
+  .ovh__title { margin: 0 !important; padding: 0 !important; border: 0 !important; font: 800 44px/1.05 'Inter', sans-serif !important; letter-spacing: -0.03em; color: #0B1220 !important; text-wrap: balance; }
+  .ovh__title span { display: block; font: inherit !important; letter-spacing: inherit; color: #7C3AED !important; }
+  .ovh__lead { margin: 14px auto 0; font: 400 17px/1.55 'Inter', sans-serif; color: #3B4556; max-width: 60ch; text-wrap: pretty; }
+  .ov-ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 22px; }
+  .ov-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 22px; border-radius: 999px; font: 700 15px 'Inter', sans-serif; text-decoration: none !important; }
   .ov-btn--dark { background: #01113E; color: #fff !important; }
   .ov-btn--light { background: #fff; color: #0B1220 !important; box-shadow: inset 0 0 0 1px #D6DAE3; }
-  .ov-meta { margin-top: 14px; font-size: 13px; color: #5B6475; }
-  .ov-hero__media img { display: block; width: 100%; height: auto; margin-bottom: -2px; filter: drop-shadow(0 20px 40px rgb(3 10 38 / .18)); }
+  .ov-meta { margin: 14px 0 0; font-size: 13px; color: #5B6475; }
+  /* Chrome-style frame around a real screenshot */
+  .ovf { border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / .08), 0 24px 50px rgb(3 10 38 / .18); }
+  .ovf__bar { height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 12px; background: #E9ECF0; }
+  .ovf__bar i { width: 10px; height: 10px; border-radius: 50%; background: #FF5F57; }
+  .ovf__bar i:nth-child(2) { background: #FEBC2E; } .ovf__bar i:nth-child(3) { background: #28C840; }
+  .ovf__bar span { flex: 1; margin: 0 40px 0 14px; height: 18px; border-radius: 99px; background: #fff; font: 400 10.5px/18px 'Inter', sans-serif; color: #6B6B6B; text-align: left; padding-left: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ovf img { display: block; width: 100%; height: auto; }
+  .ovf--crop { aspect-ratio: 16 / 9.2; display: flex; flex-direction: column; }
+  .ovf--crop img { flex: 1; min-height: 0; object-fit: cover; object-position: top; }
+  /* A · Spotlight: one big homepage screenshot */
+  .ovh--a .ovh__media { max-width: 940px; margin: 0 auto; }
+  /* B · Fan: three screens fanned, homepage in front */
+  .ovh--b .ovh__media { position: relative; height: 430px; max-width: 1000px; margin: 0 auto; }
+  .ovh--b .ovf { position: absolute; top: 30px; width: 54%; }
+  .ovh--b .ovf--l { left: 0; transform: rotate(-5deg); opacity: .96; }
+  .ovh--b .ovf--r { right: 0; transform: rotate(5deg); opacity: .96; }
+  .ovh--b .ovf--c { left: 50%; top: 0; width: 62%; transform: translateX(-50%); z-index: 2; }
+  /* C · Filmstrip: the five steps in a row, staggered */
+  .ovh--c { padding-inline: 0; }
+  .ovh--c .ovh__media { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; padding: 0 24px; align-items: start; }
+  .ovh--c .ovh__media figure { margin: 0; }
+  .ovh--c .ovh__media figure:nth-child(even) { margin-top: 34px; }
+  .ovh--c figcaption { margin-top: 10px; font: 700 12px 'Inter', sans-serif; color: #0B1220; }
+  .ovh--c figcaption b { color: #7C3AED; margin-right: 4px; }
+  .ovh--c .ovh__copy { padding: 0 32px; }
+  .ovh--c .ovf__bar { height: 18px; gap: 4px; padding: 0 8px; }
+  .ovh--c .ovf__bar i { width: 6px; height: 6px; }
+  .ovh--c .ovf__bar span { display: none; }
   .ov-note { background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 14px; padding: 14px 18px; margin: 0 0 32px; color: #7C2D12; font-size: 14px; line-height: 1.5; }
   .ov-flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin: 16px 0 36px; counter-reset: step; list-style: none; padding: 0; }
   .ov-flow li { margin: 0 !important; padding: 14px 14px 16px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px #E8EAF0; font-size: 13px; line-height: 1.45; color: #3B4556; }
@@ -35,8 +67,8 @@ import i6 from './assets/overview/illustrations/step-6-publish.jpg'
   .ov-flow strong { display: block; color: #0B1220; font-size: 14px; margin-bottom: 4px; }
   .ov-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 18px 0 10px; list-style: none; padding: 0; }
   .ov-step { margin: 0 !important; border-radius: 22px; overflow: hidden; background: #fff; box-shadow: 0 0 0 1px #E8EAF0, 0 10px 30px rgb(15 23 42 / .06); }
-  .ov-step__art { aspect-ratio: 4 / 3; background: #F3F0FF; display: grid; place-items: center; overflow: hidden; }
-  .ov-step__art img { width: 92%; height: 100%; object-fit: contain; mix-blend-mode: multiply; display: block; }
+  .ov-step__art { aspect-ratio: 4 / 3; background: #F3F0FF; overflow: hidden; border-bottom: 1px solid #E8EAF0; }
+  .ov-step__art img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
   .ov-step__body { padding: 16px 20px 20px; }
   .ov-step__body small { display: block; font: 800 12px 'Inter', sans-serif; letter-spacing: .08em; color: #7C3AED; margin-bottom: 6px; }
   .ov-step__body b { display: block; font: 700 18px/1.25 'Inter', sans-serif; color: #0B1220; margin-bottom: 6px; }
@@ -49,11 +81,11 @@ import i6 from './assets/overview/illustrations/step-6-publish.jpg'
   .ov-card b { display: block; font-size: 17px; margin: 6px 0 4px; }
   .ov-card span { font-size: 14px; line-height: 1.45; opacity: .8; }
   @media (max-width: 900px) {
-    .ov-hero { padding: 28px 20px 0; }
-    .ov-hero__grid { grid-template-columns: 1fr; }
-    .ov-hero__copy { padding-bottom: 8px; }
-    .ov-hero h1 { font-size: 34px !important; }
-    .ov-hero::before { background: linear-gradient(180deg, rgb(255 255 255 / .94) 0%, rgb(255 255 255 / .7) 60%, rgb(255 255 255 / .3) 100%); }
+    .ovh { padding: 24px 16px 32px; }
+    .ovh__title { font-size: 32px !important; }
+    .ovh--b .ovh__media { height: 240px; }
+    .ovh--c .ovh__media { grid-template-columns: repeat(5, 62%); overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; }
+    .ovh--c .ovh__media figure { scroll-snap-align: start; }
     .ov-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .ov-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
@@ -62,19 +94,58 @@ import i6 from './assets/overview/illustrations/step-6-publish.jpg'
 
 <div className="ov">
 
-<section className="ov-hero" style={{ backgroundImage: `url(${bannerBg})` }} aria-label="Presto Brand Studio">
-  <div className="ov-hero__grid">
-    <div className="ov-hero__copy">
-      <p className="ov-eyebrow">EventPipe · Presto Brand Studio</p>
-      <h1>Your event’s hotel booking page. <span>In your brand.</span></h1>
-      <p className="ov-lead">Organizers paste their event website and get a branded Presto booking site in seconds: their logo, colors and fonts on the homepage, hotel directory and hotel details pages, with AI banner concepts, sponsor ads and a shareable demo. It works the same on a phone.</p>
-      <div className="ov-ctas">
-        <a className="ov-btn ov-btn--dark" href="https://epprestodesign.github.io/presto-higgsfield/prototype/" target="_blank" rel="noopener">Open the prototype ↗</a>
-        <a className="ov-btn ov-btn--light" href="https://epprestodesign.github.io/presto-higgsfield/prototype/phone.html" target="_blank" rel="noopener">Try it on mobile ↗</a>
-      </div>
-      <p className="ov-meta">Banner imagery generated with Higgsfield. Screens are the real prototype.</p>
+<p className="ovh-label">Hero option A · Spotlight</p>
+<section className="ovh ovh--a" style={{ backgroundImage: `url(${bannerBg})` }} aria-label="Hero option A">
+  <div className="ovh__media"><div className="ovf ovf--crop"><div className="ovf__bar"><i /><i /><i /><span>epprestodesign.github.io/presto-higgsfield/prototype/#/home</span></div><img src={shotHome} alt="The Brand Studio homepage" /></div></div>
+  <div className="ovh__copy">
+    <p className="ov-eyebrow">EventPipe · Presto Brand Studio</p>
+    <h1 className="ovh__title">Your event’s hotel booking page. <span>In your brand.</span></h1>
+    <p className="ovh__lead">Organizers paste their event website and get a branded Presto booking site in seconds: their logo, colors and fonts on the homepage, hotel directory and hotel details pages, with AI banner concepts, sponsor ads and a shareable demo.</p>
+    <div className="ov-ctas">
+      <a className="ov-btn ov-btn--dark" href="https://epprestodesign.github.io/presto-higgsfield/prototype/" target="_blank" rel="noopener">Open the prototype ↗</a>
+      <a className="ov-btn ov-btn--light" href="https://epprestodesign.github.io/presto-higgsfield/prototype/phone.html" target="_blank" rel="noopener">Try it on mobile ↗</a>
     </div>
-    <div className="ov-hero__media"><img src={bannerDevices} alt="The Brand Studio editor on desktop with the homepage and a published booking page on phones" /></div>
+    <p className="ov-meta">Real prototype screens. Background imagery generated with Higgsfield.</p>
+  </div>
+</section>
+
+<p className="ovh-label">Hero option B · Fan of screens</p>
+<section className="ovh ovh--b" style={{ backgroundImage: `url(${bannerBg})` }} aria-label="Hero option B">
+  <div className="ovh__media">
+    <div className="ovf ovf--crop ovf--l"><div className="ovf__bar"><i /><i /><i /><span>…/prototype/#/studio</span></div><img src={shotStudio} alt="The Studio editor" /></div>
+    <div className="ovf ovf--crop ovf--r"><div className="ovf__bar"><i /><i /><i /><span>book.eventpipe.com/heartland</span></div><img src={shotDemo} alt="A published booking page" /></div>
+    <div className="ovf ovf--crop ovf--c"><div className="ovf__bar"><i /><i /><i /><span>…/prototype/#/home</span></div><img src={shotHome} alt="The Brand Studio homepage" /></div>
+  </div>
+  <div className="ovh__copy">
+    <p className="ov-eyebrow">EventPipe · Presto Brand Studio</p>
+    <p className="ovh__title">Your event’s hotel booking page. <span>In your brand.</span></p>
+    <p className="ovh__lead">Organizers paste their event website and get a branded Presto booking site in seconds: their logo, colors and fonts on the homepage, hotel directory and hotel details pages, with AI banner concepts, sponsor ads and a shareable demo.</p>
+    <div className="ov-ctas">
+      <a className="ov-btn ov-btn--dark" href="https://epprestodesign.github.io/presto-higgsfield/prototype/" target="_blank" rel="noopener">Open the prototype ↗</a>
+      <a className="ov-btn ov-btn--light" href="https://epprestodesign.github.io/presto-higgsfield/prototype/phone.html" target="_blank" rel="noopener">Try it on mobile ↗</a>
+    </div>
+    <p className="ov-meta">Real prototype screens. Background imagery generated with Higgsfield.</p>
+  </div>
+</section>
+
+<p className="ovh-label">Hero option C · Filmstrip of the workflow</p>
+<section className="ovh ovh--c" style={{ backgroundImage: `url(${bannerBg})` }} aria-label="Hero option C">
+  <div className="ovh__media">
+    <figure><div className="ovf ovf--crop"><div className="ovf__bar"><i /><i /><i /><span>#/home</span></div><img src={shotHome} alt="Homepage" /></div><figcaption><b>01</b>Homepage</figcaption></figure>
+    <figure><div className="ovf ovf--crop"><div className="ovf__bar"><i /><i /><i /><span>#/brand</span></div><img src={shotBrand} alt="Brand kit" /></div><figcaption><b>02</b>Brand kit</figcaption></figure>
+    <figure><div className="ovf ovf--crop"><div className="ovf__bar"><i /><i /><i /><span>#/concepts</span></div><img src={shotConcepts} alt="Concepts" /></div><figcaption><b>03</b>Concepts</figcaption></figure>
+    <figure><div className="ovf ovf--crop"><div className="ovf__bar"><i /><i /><i /><span>#/studio</span></div><img src={shotStudio} alt="Studio" /></div><figcaption><b>04</b>Studio</figcaption></figure>
+    <figure><div className="ovf ovf--crop"><div className="ovf__bar"><i /><i /><i /><span>book.eventpipe.com</span></div><img src={shotDemo} alt="Published page" /></div><figcaption><b>05</b>Published</figcaption></figure>
+  </div>
+  <div className="ovh__copy">
+    <p className="ov-eyebrow">EventPipe · Presto Brand Studio</p>
+    <p className="ovh__title">Your event’s hotel booking page. <span>In your brand.</span></p>
+    <p className="ovh__lead">Organizers paste their event website and get a branded Presto booking site in seconds: their logo, colors and fonts on the homepage, hotel directory and hotel details pages, with AI banner concepts, sponsor ads and a shareable demo.</p>
+    <div className="ov-ctas">
+      <a className="ov-btn ov-btn--dark" href="https://epprestodesign.github.io/presto-higgsfield/prototype/" target="_blank" rel="noopener">Open the prototype ↗</a>
+      <a className="ov-btn ov-btn--light" href="https://epprestodesign.github.io/presto-higgsfield/prototype/phone.html" target="_blank" rel="noopener">Try it on mobile ↗</a>
+    </div>
+    <p className="ov-meta">Real prototype screens. Background imagery generated with Higgsfield.</p>
   </div>
 </section>
 
@@ -106,7 +177,7 @@ The same six steps, built for one thumb at 390px: tap a field to fill it with sa
   <li className="ov-step"><div className="ov-step__art"><img src={i6} alt="" /></div><div className="ov-step__body"><small>STEP 06</small><b>Publish and share</b><span>One link for every guest: the branded booking page, labelled as a demo.</span></div></li>
 </ol>
 
-<p style={{ fontSize: 14, color: '#5B6475', margin: '6px 0 0' }}>Illustrations generated with Higgsfield (Recraft V4.1). See it for real in the <a href="https://epprestodesign.github.io/presto-higgsfield/prototype/phone.html" target="_blank" rel="noopener">phone-frame prototype ↗</a>.</p>
+<p style={{ fontSize: 14, color: '#5B6475', margin: '6px 0 0' }}>Real screens from the mobile prototype (390px). Try it yourself in the <a href="https://epprestodesign.github.io/presto-higgsfield/prototype/phone.html" target="_blank" rel="noopener">phone-frame prototype ↗</a>.</p>
 
 ## Try it
 
