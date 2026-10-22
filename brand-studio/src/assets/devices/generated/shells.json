@@ -1,0 +1,67 @@
+{
+  "phone-black": {
+    "file": "phone-black.png",
+    "w": 526,
+    "h": 1053,
+    "screen": {
+      "x": 17,
+      "y": 13,
+      "w": 493,
+      "h": 1026,
+      "r": 72
+    },
+    "screenRatio": 2.081
+  },
+  "phone-graphite": {
+    "file": "phone-graphite.png",
+    "w": 594,
+    "h": 1190,
+    "screen": {
+      "x": 23,
+      "y": 18,
+      "w": 550,
+      "h": 1153,
+      "r": 79
+    },
+    "screenRatio": 2.096
+  },
+  "phone-silver": {
+    "file": "phone-silver.png",
+    "w": 604,
+    "h": 1232,
+    "screen": {
+      "x": 25,
+      "y": 21,
+      "w": 555,
+      "h": 1189,
+      "r": 80
+    },
+    "screenRatio": 2.142
+  },
+  "phone-thin-graphite": {
+    "file": "phone-thin-graphite.png",
+    "w": 523,
+    "h": 1064,
+    "screen": {
+      "x": 20,
+      "y": 17,
+      "w": 483,
+      "h": 1030,
+      "r": 68
+    },
+    "screenRatio": 2.133
+  },
+  "phone-thin-natural": {
+    "file": "phone-thin-natural.png",
+    "w": 549,
+    "h": 1126,
+    "screen": {
+      "x": 23,
+      "y": 20,
+      "w": 505,
+      "h": 1081,
+      "r": 67
+    },
+    "screenRatio": 2.141
+  }
+}

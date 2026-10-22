@@ -3,8 +3,6 @@ import bannerBg from './assets/overview/generated/banner-atrium.jpg'
 import shotHome from './assets/overview/shots/home.jpg'
 import i1 from './assets/overview/wireframes/1-home.jpg'
 import i2 from './assets/overview/wireframes/2-intake.jpg'
-import i3 from './assets/overview/wireframes/3-brand.jpg'
-import i4 from './assets/overview/wireframes/4-concepts.jpg'
 import i5 from './assets/overview/wireframes/5-studio.jpg'
 import i6 from './assets/overview/wireframes/6-demo.jpg'
 
@@ -35,11 +33,11 @@ import i6 from './assets/overview/wireframes/6-demo.jpg'
   /* A · Spotlight: one big homepage screenshot */
   .ovh--a .ovh__media { max-width: 940px; margin: 0 auto; }
   .ov-note { background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 14px; padding: 14px 18px; margin: 0 0 32px; color: #7C2D12; font-size: 14px; line-height: 1.5; }
-  .ov-flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin: 16px 0 36px; counter-reset: step; list-style: none; padding: 0; }
+  .ov-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0 36px; counter-reset: step; list-style: none; padding: 0; }
   .ov-flow li { margin: 0 !important; padding: 14px 14px 16px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px #E8EAF0; font-size: 13px; line-height: 1.45; color: #3B4556; }
   .ov-flow li::before { counter-increment: step; content: counter(step, decimal-leading-zero); display: block; font: 800 12px 'Inter', sans-serif; color: #7C3AED; margin-bottom: 6px; }
   .ov-flow strong { display: block; color: #0B1220; font-size: 14px; margin-bottom: 4px; }
-  .ov-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 18px 0 10px; list-style: none; padding: 0; }
+  .ov-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin: 18px 0 10px; list-style: none; padding: 0; }
   .ov-step { margin: 0 !important; border-radius: 22px; overflow: hidden; background: #fff; box-shadow: 0 0 0 1px #E8EAF0, 0 10px 30px rgb(15 23 42 / .06); }
   .ov-step__art { aspect-ratio: 4 / 3; background: #F7F7FB; overflow: hidden; border-bottom: 1px solid #E8EAF0; }
   .ov-step__art img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -79,28 +77,24 @@ import i6 from './assets/overview/wireframes/6-demo.jpg'
 
 ## The workflow
 
-One project document moves through six screens. Every step is a lead for EventPipe, and every brand choice re-skins all the pages at once.
+One project document moves through four screens. Every step is a lead for EventPipe, and every brand choice re-skins all the pages at once.
 
 <ol className="ov-flow">
   <li><strong>Homepage</strong>Paste your event website, or open one of 20 industry examples.</li>
   <li><strong>Event intake</strong>Name, type, where and when, an optional logo, and contact. No account needed.</li>
-  <li><strong>Brand kit</strong>Scan the website for logo, colors and fonts, check contrast, and pick photos.</li>
-  <li><strong>Concepts</strong>Six centered banner concepts across three directions. Pick one, compare, make variations.</li>
-  <li><strong>Studio</strong>Edit content, pages and ads beside a live preview in a real browser. Export the assets as a ZIP.</li>
+  <li><strong>Studio</strong>Opens on your branded homepage with the Brand panel open. Tune colors, fonts, logo and photos, swap between six banner concepts, and edit content, pages and ads beside a live preview. Export the assets as a ZIP.</li>
   <li><strong>Publish</strong>Name, URL, review and checklist, then a shareable demo with an honest demo banner.</li>
 </ol>
 
 ## On mobile
 
-The same six steps, built for one thumb at 390px: tap a field to fill it with sample data, and the Studio's panels become a bottom sheet.
+The same four steps, built for one thumb at 390px: tap a field to fill it with sample data, and the Studio's panels become a bottom sheet.
 
 <ol className="ov-steps">
   <li className="ov-step"><div className="ov-step__art"><img src={i1} alt="" /></div><div className="ov-step__body"><small>STEP 01</small><b>Paste your website</b><span>Tap the website field to prefill an example, then Brand my page. Or open one of 20 industry examples.</span></div></li>
   <li className="ov-step"><div className="ov-step__art"><img src={i2} alt="" /></div><div className="ov-step__body"><small>STEP 02</small><b>Tell us about the event</b><span>Tap any field to fill it. The event type sets the starter copy; no account needed.</span></div></li>
-  <li className="ov-step"><div className="ov-step__art"><img src={i3} alt="" /></div><div className="ov-step__body"><small>STEP 03</small><b>Scan your brand</b><span>Logo, colors and fonts come from your site, with a live preview of all three banners.</span></div></li>
-  <li className="ov-step"><div className="ov-step__art"><img src={i4} alt="" /></div><div className="ov-step__body"><small>STEP 04</small><b>Pick a concept</b><span>Swipe six banner concepts across three directions. The choose bar stays pinned.</span></div></li>
-  <li className="ov-step"><div className="ov-step__art"><img src={i5} alt="" /></div><div className="ov-step__body"><small>STEP 05</small><b>Customize in the Studio</b><span>Panels open as a bottom sheet over a true 390px preview of the booking page.</span></div></li>
-  <li className="ov-step"><div className="ov-step__art"><img src={i6} alt="" /></div><div className="ov-step__body"><small>STEP 06</small><b>Publish and share</b><span>One link for every guest: the branded booking page, labelled as a demo.</span></div></li>
+  <li className="ov-step"><div className="ov-step__art"><img src={i5} alt="" /></div><div className="ov-step__body"><small>STEP 03</small><b>Customize in the Studio</b><span>Brand, concepts, content and ads open as a bottom sheet over a true 390px preview.</span></div></li>
+  <li className="ov-step"><div className="ov-step__art"><img src={i6} alt="" /></div><div className="ov-step__body"><small>STEP 04</small><b>Publish and share</b><span>One link for every guest: the branded booking page, labelled as a demo.</span></div></li>
 </ol>
 
 <p style={{ fontSize: 14, color: '#5B6475', margin: '6px 0 0' }}>Wireframes generated with Higgsfield (Recraft V4.1). Try the real screens in the <a href="https://epprestodesign.github.io/presto-higgsfield/prototype/phone.html" target="_blank" rel="noopener">phone-frame prototype ↗</a>.</p>
@@ -117,12 +111,10 @@ The same six steps, built for one thumb at 390px: tap a field to fill it with sa
 
 1. **Start.** Tap the website field (it fills with an example), then **Brand my page**. Or open an industry example to jump straight into the Studio.
 2. **Event intake.** Tap any field to fill it with that example's details, then Continue through event, where and when, brand, and contact.
-3. **Brand kit.** Tap **Scan my website**, then **Apply selected**. The same brand (logo, colors, fonts, photos) carries through every later step.
-4. **Concepts.** Generate six concepts and select one.
-5. **Studio.** Switch pages, devices and panels. **Export** previews and downloads the banners, logo, ads and page mockups as a ZIP. **Copy link** shares the exact view for feedback.
-6. **Publish.** Confirm the name and URL, review, accept the demo disclaimer, and open the live demo.
+3. **Studio.** You land on the branded homepage with the **Brand** panel open. The **Concept** panel swaps between the six banner concepts. Switch pages, devices and panels. **Export** previews and downloads the banners, logo, ads and page mockups as a ZIP. **Copy link** shares the exact view for feedback.
+4. **Publish.** Confirm the name and URL, review, accept the demo disclaimer, and open the live demo.
 
-**Demo assist.** On the form steps, **Fill on/off** toggles tap-to-fill and **Skip** jumps ahead. Every screen's state is in the URL, so any view can be shared as a link.
+**Demo assist.** On the intake steps, **Fill on/off** toggles tap-to-fill and **Skip** jumps ahead. Every screen's state is in the URL, so any view can be shared as a link.
 
 <p style={{ fontSize: 14, color: '#5B6475' }}>Storybook: <a href="https://epprestodesign.github.io/presto-higgsfield/" target="_blank" rel="noopener">epprestodesign.github.io/presto-higgsfield</a></p>
 

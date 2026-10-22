@@ -1,7 +1,8 @@
 <script setup>
 // FlowApp — the end-to-end Brand Studio journey, stitched from the real
-// screens: marketing → intake → brand → concepts → studio → publish → demo,
-// plus the dashboard. Used by the standalone prototype app (hash-routed, so the
+// screens: marketing → intake → studio → publish → demo, plus the dashboard.
+// Brand and concepts live inside the studio (Brand + Concept panels); old
+// #/brand and #/concepts links open those panels. Used by the standalone prototype app (hash-routed, so the
 // phone's back button works) and by the Brand Studio / Flows story.
 //
 // Demo assist: auto-fill (tap any empty field to fill it with sample data) and
@@ -24,8 +25,6 @@ import { parseHash, buildHash, shareUrl } from './deepLink.js'
 // Homepage = Option E (Group Booking); Option A (MarketingLanding) stays in Storybook.
 import HomeOptionE from '../components/marketing/options/HomeOptionE.vue'
 import IntakeWizard from '../components/intake/IntakeWizard.vue'
-import BrandDiscovery from '../components/brand-kit/BrandDiscovery.vue'
-import ConceptStudio from '../components/concepts/ConceptStudio.vue'
 import StudioEditor from '../components/studio/StudioEditor.vue'
 import PublishFlow from '../components/publish/PublishFlow.vue'
 import PublishedDemoPage from '../components/publish/PublishedDemoPage.vue'
@@ -47,8 +46,6 @@ const session = useSessionStore()
 // Steps that show the journey progress bar, in order.
 const JOURNEY = [
   { id: 'intake', label: 'Event' },
-  { id: 'brand', label: 'Brand' },
-  { id: 'concepts', label: 'Concepts' },
   { id: 'studio', label: 'Customize' },
   { id: 'publish', label: 'Publish' },
 ]
@@ -57,12 +54,15 @@ const STEPS = ['home', ...JOURNEY.map((s) => s.id), 'demo', 'dashboard']
 const step = ref(STEPS.includes(props.initialStep) ? props.initialStep : 'home')
 const journeyIndex = computed(() => JOURNEY.findIndex((s) => s.id === step.value))
 // Full-bleed screens bring their own chrome.
-const showBar = computed(() => ['intake', 'brand', 'concepts', 'publish'].includes(step.value))
+const showBar = computed(() => ['intake', 'publish'].includes(step.value))
 
 // ── Navigation (+ hash sync / deep links) ─────────────────────────────────
 const params = ref({})
+// Retired steps → the studio panel that replaced them.
+const LEGACY = { brand: 'brand', concepts: 'concept' }
 const readRoute = () => {
   const r = parseHash(window.location.hash)
+  if (LEGACY[r.step]) return { step: 'studio', params: { page: 'landing', device: 'desktop', ...r.params, panel: LEGACY[r.step] } }
   return STEPS.includes(r.step) ? r : null
 }
 function writeHash(replace = false) {
@@ -110,7 +110,7 @@ const onPop = () => {
 
 // Selected concept → concept=N, so concept-specific feedback links reopen it.
 watch(() => project.project.concepts.selectedId, (id) => {
-  if (!['concepts', 'studio', 'publish'].includes(step.value)) return
+  if (!['studio', 'publish'].includes(step.value)) return
   const i = project.project.concepts.items.findIndex((c) => c.id === id)
   setParams({ concept: i >= 0 ? String(i) : '' })
 })
@@ -136,7 +136,7 @@ const toggleAutofill = (on) => {
 watch(autofillOn, toggleAutofill)
 
 /** Jump ahead with a complete sample project (for "just show me" taps). */
-function useSample({ key = 'heartland', to = 'concepts', withConcepts = false } = {}) {
+function useSample({ key = 'heartland', to = 'studio', withConcepts = true } = {}) {
   project.loadSample(key)
   loadedExample.value = key
   if (withConcepts) {
@@ -147,17 +147,27 @@ function useSample({ key = 'heartland', to = 'concepts', withConcepts = false } 
   }
   go(to, { params: { example: key, concept: withConcepts ? '0' : '' } })
 }
+// Intake → studio: build the six concepts from the brand so far, select the
+// second (Brand Signature on a photo) and open the Brand panel on the landing page.
+const STUDIO_ENTRY = { concept: '1', page: 'landing', device: 'desktop', panel: 'brand' }
+function seedConcepts() {
+  const items = conceptsFor(project.project)
+  project.setConcepts(items)
+  project.selectConcept(items[Number(STUDIO_ENTRY.concept)].id)
+}
+function enterStudio() {
+  seedConcepts()
+  go('studio', { params: { example: params.value.example, ...STUDIO_ENTRY } })
+}
+/** Studio with no concepts yet (e.g. a dashboard project) → create them in place. */
+function createConcepts() {
+  seedConcepts()
+  setParams({ panel: 'concept' })
+}
 function skipStep() {
-  if (step.value === 'intake') { if (!project.project.event.name) project.loadSample('heartland'); go('brand') }
-  else if (step.value === 'brand') go('concepts')
-  else if (step.value === 'concepts') {
-    if (!project.selectedConcept) {
-      const items = conceptsFor(project.project)
-      project.setConcepts(items)
-      project.selectConcept(items[0].id)
-    }
-    go('studio')
-  }
+  if (step.value !== 'intake') return
+  if (!project.project.event.name) { project.loadSample('heartland'); loadedExample.value = 'heartland'; params.value = { ...params.value, example: 'heartland' } }
+  enterStudio()
 }
 
 // ── Screen events ─────────────────────────────────────────────────────────
@@ -188,8 +198,8 @@ function startNew(opts = {}) {
   go('intake', { params: {} })
 }
 function onFix(target) {
-  const map = { intake: 'intake', brand: 'brand', concepts: 'concepts', studio: 'studio' }
-  go(map[target] || 'studio')
+  if (target === 'intake') return go('intake')
+  go('studio', { params: { ...carried(params.value), page: 'landing', device: 'desktop', panel: LEGACY[target] || 'brand' } })
 }
 function openProject(id) {
   const p = session.projects.find((x) => x.id === id)
@@ -241,7 +251,7 @@ onBeforeUnmount(() => { disposeAutofill?.(); window.removeEventListener('popstat
       <button v-if="syncHash" type="button" class="fa__link bs-focusable" aria-label="Copy link to this view" title="Copy link to this view (for feedback)" @click="copyLink">
         <q-icon name="link" size="18px" />
       </button>
-      <button v-if="['intake', 'brand', 'concepts'].includes(step)" type="button" class="fa__skip bs-focusable" @click="skipStep">
+      <button v-if="step === 'intake'" type="button" class="fa__skip bs-focusable" @click="skipStep">
         Skip <q-icon name="fast_forward" size="16px" />
       </button>
     </header>
@@ -251,12 +261,8 @@ onBeforeUnmount(() => { disposeAutofill?.(); window.removeEventListener('popstat
 
       <intake-wizard
         v-else-if="step === 'intake'" :initial-step="Math.max(0, Number(params.step || 1) - 1)"
-        @step="(n) => setParams({ step: String(n + 1) })" @complete="go('brand')" @cancel="go('home')"
+        @step="(n) => setParams({ step: String(n + 1) })" @complete="enterStudio" @cancel="go('home')"
       />
-
-      <brand-discovery v-else-if="step === 'brand'" @next="go('concepts')" @back="go('intake')" />
-
-      <concept-studio v-else-if="step === 'concepts'" @next="go('studio')" @back="go('brand')" @signup="go('publish')" />
 
       <studio-editor
         v-else-if="step === 'studio'"
@@ -265,7 +271,7 @@ onBeforeUnmount(() => { disposeAutofill?.(); window.removeEventListener('popstat
         @example="(key) => { loadedExample = key; setParams({ example: key, concept: '' }) }"
         :show-copy-link="syncHash"
         @copy-link="copyLink"
-        @publish="go('publish')" @back="go('concepts')" @change-concept="go('concepts')" @edit-sponsors="sponsorsOpen = true"
+        @publish="go('publish')" @back="go('intake', { params: { ...carried(params), step: '4' } })" @change-concept="createConcepts" @edit-sponsors="sponsorsOpen = true"
       />
 
       <publish-flow

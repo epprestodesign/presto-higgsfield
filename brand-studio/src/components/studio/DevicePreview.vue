@@ -2,7 +2,11 @@
 // DevicePreview — the live, branded booking page inside an <iframe> (the
 // Preview Host, see preview/bridge.js), framed as desktop / tablet / phone.
 // Desktop and tablet sit in the realistic ChromeWindow (sized 1:1 with the
-// page, like a real browser screenshot), optionally on a backdrop (`backdrop`):
+// page, like a real browser screenshot); mobile sits in Chrome for iOS
+// (ChromeMobile) inside a Higgsfield-made phone shell (keyed PNG overlay, no
+// baked shadow), whose bars collapse as the page scrolls, like the real app,
+// and whose back / forward walk the pages visited in the preview. All of them
+// sit optionally on a backdrop (`backdrop`):
 // 'home' = the homepage's airy look — light canvas + tilted, softly blurred
 // Higgsfield lifestyle tiles (Option E art); 'lavender' / 'dune' = Higgsfield
 // wallpapers.
@@ -16,6 +20,9 @@ import { useProjectStore } from '../../stores/project.js'
 import { previewHostUrl, connectPreviewFrame } from '../../preview/bridge.js'
 import { PAGE_META } from '../../models/pageConfig.js'
 import ChromeWindow from '../devices/ChromeWindow.vue'
+import ChromeMobile, { SCREEN_H, PAGE_H } from '../devices/ChromeMobile.vue'
+import SHELLS from '../../assets/devices/generated/shells.json'
+import phoneShell from '../../assets/devices/generated/phone-black.png'
 import { STUDIO_WALLPAPERS } from '../../assets/studio/index.js'
 import { OPTION_E_ART } from '../../assets/marketing/option-e/index.js'
 
@@ -39,9 +46,14 @@ const CHROME_H = 85
 const DEVICES = {
   desktop: { w: 1280, h: null, chrome: CHROME_H, bezel: 0, label: 'Desktop' },
   tablet: { w: 768, h: 1024, chrome: CHROME_H, bezel: 0, label: 'Tablet' },
-  mobile: { w: 390, h: 844, chrome: 0, bezel: 12, label: 'Mobile' },
+  mobile: { w: 390, h: SCREEN_H, chrome: 0, bezel: 0, label: 'Mobile' },
 }
 const spec = computed(() => DEVICES[props.device] || DEVICES.desktop)
+// Phone shell: the screen opening (shells.json, from scripts/key-phone-shell.mjs)
+// maps onto the 390 × 844 screen; fx / fy = whole shell ÷ opening.
+const SHELL = SHELLS['phone-black']
+const FX = SHELL.w / SHELL.screen.w
+const FY = SHELL.h / SHELL.screen.h
 
 // ── Fit-to-canvas scaling ────────────────────────────────────────────────
 const stage = ref(null)
@@ -65,12 +77,66 @@ const layout = computed(() => {
     const scale = Math.min(1, availW / s.w)
     return { scale, w: s.w, h: Math.round((availH - s.chrome * scale) / scale) }
   }
+  if (props.device === 'mobile') {
+    const scale = Math.min(1, availW / (s.w * FX), availH / (s.h * FY))
+    return { scale, w: s.w, h: s.h }
+  }
   const scale = Math.min(1, availW / s.w, availH / (s.h + s.chrome))
   return { scale, w: s.w, h: s.h }
 })
 const zoom = computed(() => `${Math.round(layout.value.scale * 100)}%`)
 const viewportStyle = computed(() => ({ width: `${layout.value.w * layout.value.scale}px`, height: `${layout.value.h * layout.value.scale}px` }))
-const iframeStyle = computed(() => ({ width: `${layout.value.w}px`, height: `${layout.value.h}px`, transform: `scale(${layout.value.scale})` }))
+const shellStyle = computed(() => {
+  const sw = layout.value.w * layout.value.scale
+  const sh = layout.value.h * layout.value.scale
+  return {
+    device: { width: `${sw * FX}px`, height: `${sh * FY}px` },
+    screen: { left: `${(SHELL.screen.x / SHELL.w) * 100}%`, top: `${(SHELL.screen.y / SHELL.h) * 100}%`, borderRadius: `${(SHELL.screen.r / SHELL.screen.w) * sw}px` },
+  }
+})
+const isMobile = computed(() => props.device === 'mobile')
+// Mobile: ChromeMobile scales the whole screen, so the iframe stays 1:1 inside it.
+const iframeStyle = computed(() => (isMobile.value
+  ? { width: `${layout.value.w}px`, height: `${PAGE_H}px` }
+  : { width: `${layout.value.w}px`, height: `${layout.value.h}px`, transform: `scale(${layout.value.scale})` }))
+
+// ── Mobile Chrome: collapse on scroll, back / forward through visited pages ──
+const collapsed = ref(false)
+let lastY = 0
+function onFrameScroll(e) {
+  const t = e.target
+  const y = t.nodeType === 9 ? (t.scrollingElement?.scrollTop || 0) : t.scrollTop
+  if (y < 12) collapsed.value = false
+  else if (y > lastY + 6) collapsed.value = true
+  else if (y < lastY - 6) collapsed.value = false
+  if (Math.abs(y - lastY) > 6 || y < 12) lastY = y
+}
+let scrollDoc = null
+function watchFrameScroll() {
+  scrollDoc?.removeEventListener('scroll', onFrameScroll, true)
+  scrollDoc = null
+  try { scrollDoc = frame.value?.contentDocument || null } catch { scrollDoc = null }
+  scrollDoc?.addEventListener('scroll', onFrameScroll, { capture: true, passive: true })
+  lastY = 0
+  collapsed.value = false
+}
+const visited = ref([props.page])
+const at = ref(0)
+let stepping = false
+watch(() => props.page, (p) => {
+  collapsed.value = false
+  lastY = 0
+  if (stepping) { stepping = false; return }
+  visited.value = [...visited.value.slice(0, at.value + 1), p]
+  at.value = visited.value.length - 1
+})
+function stepHistory(d) {
+  const i = at.value + d
+  if (i < 0 || i >= visited.value.length) return
+  at.value = i
+  stepping = true
+  emit('update:page', visited.value[i])
+}
 
 // ── Bridge ───────────────────────────────────────────────────────────────
 const frame = ref(null)
@@ -115,6 +181,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   window.removeEventListener('message', onReadyMessage)
+  scrollDoc?.removeEventListener('scroll', onFrameScroll, true)
   link?.destroy()
   clearTimeout(timeout)
   cancelAnimationFrame(raf)
@@ -165,20 +232,25 @@ const frameTitle = computed(() => `Branded booking page preview — ${PAGE_META[
       class="dvp__device"
       :class="`dvp__device--${device}`"
       v-bind="spec.chrome ? { url: urlLabel, title: pageTitle, favicon, faviconColor: doc?.brandKit?.colors?.primary, designWidth: spec.w, label: `${spec.label} browser preview` } : {}"
-      :style="spec.chrome ? { width: viewportStyle.width } : undefined"
+      :style="spec.chrome ? { width: viewportStyle.width } : isMobile ? shellStyle.device : undefined"
     >
-      <div v-if="!spec.chrome" class="dvp__notch" aria-hidden="true" />
-
-      <div class="dvp__viewport" :style="viewportStyle">
-        <iframe
-          :key="frameKey"
-          ref="frame"
-          class="dvp__iframe"
-          :src="hostSrc"
-          :title="frameTitle"
-          :style="iframeStyle"
-          @load="status !== 'ready' && link?.send()"
-        />
+      <img v-if="isMobile" :src="phoneShell" alt="" class="dvp__shell" aria-hidden="true" />
+      <div class="dvp__viewport" :style="isMobile ? { ...viewportStyle, ...shellStyle.screen } : viewportStyle">
+        <component
+          :is="isMobile ? ChromeMobile : 'div'"
+          v-bind="isMobile ? { url: urlLabel, collapsed, canBack: at > 0, canForward: at < visited.length - 1, scale: layout.scale } : { class: 'dvp__plain' }"
+          @back="stepHistory(-1)" @forward="stepHistory(1)" @expand="collapsed = false"
+        >
+          <iframe
+            :key="frameKey"
+            ref="frame"
+            class="dvp__iframe"
+            :src="hostSrc"
+            :title="frameTitle"
+            :style="iframeStyle"
+            @load="status !== 'ready' && link?.send(); watchFrameScroll()"
+          />
+        </component>
         <transition name="dvp-fade">
           <div v-if="status !== 'ready'" class="dvp__overlay" :class="`is-${status}`" role="status" aria-live="polite">
             <template v-if="status === 'connecting'">
@@ -221,9 +293,11 @@ const frameTitle = computed(() => `Branded booking page preview — ${PAGE_META[
 .dvp__device--desktop, .dvp__device--tablet { flex: none; display: block; }
 .dvp__zoom { position: absolute; right: 12px; bottom: 10px; z-index: 1; padding: 3px 8px; border-radius: 999px; background: rgb(255 255 255 / 0.8); backdrop-filter: blur(6px); font: 700 0.6875rem/1 var(--bs-font); color: var(--bs-ink-soft); }
 
-.dvp__device--mobile { padding: 12px; border-radius: 52px; background: #0B0F19; box-shadow: var(--bs-shadow-3), inset 0 0 0 2px #2A2F3A; position: relative; }
-.dvp__device--mobile .dvp__viewport { border-radius: 40px; }
-.dvp__notch { position: absolute; top: 20px; left: 50%; width: 96px; height: 26px; margin-left: -48px; border-radius: 20px; background: #0B0F19; z-index: 3; }
+.dvp__device--mobile { position: relative; display: block; flex: none; }
+.dvp__device--mobile .dvp__viewport { position: absolute; }
+/* The shell sits over the screen; its opening is transparent. */
+.dvp__shell { position: absolute; inset: 0; z-index: 4; width: 100%; height: 100%; pointer-events: none; user-select: none; }
+.dvp__plain { display: contents; }
 
 .dvp__viewport { position: relative; overflow: hidden; background: #fff; }
 .dvp__iframe { display: block; border: 0; transform-origin: 0 0; background: #fff; }

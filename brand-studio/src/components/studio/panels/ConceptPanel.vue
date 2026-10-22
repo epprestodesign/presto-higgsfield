@@ -1,6 +1,7 @@
 <script setup>
 // ConceptPanel — the creative concept currently driving the hero treatment,
-// with a route back to the concept gallery (an AI moment → violet).
+// and every other concept to swap to in place (an AI moment → violet). With no
+// concepts yet, 'change-concept' asks the host to create them.
 import { computed } from 'vue'
 import { useProjectStore } from '../../../stores/project.js'
 import { getDirection } from '../../../models/brandKit.js'
@@ -13,7 +14,7 @@ const emit = defineEmits(['change-concept'])
 const store = useProjectStore()
 const concept = computed(() => conceptWithHero(store.selectedConcept, store.brandKit))
 const direction = computed(() => (concept.value ? getDirection(concept.value.direction) : null))
-const alternatives = computed(() => store.project.concepts.items.filter((c) => c.id !== store.project.concepts.selectedId).slice(0, 4))
+const alternatives = computed(() => store.project.concepts.items.filter((c) => c.id !== store.project.concepts.selectedId))
 const dates = computed(() => formatDateRange(store.event.startDate, store.event.endDate))
 </script>
 
@@ -40,19 +41,20 @@ const dates = computed(() => formatDateRange(store.event.startDate, store.event.
       <div v-else class="cnp__empty">
         <q-icon name="auto_awesome" size="26px" />
         <p class="cnp__empty-title">No concept selected</p>
-        <p class="cnp__why">Your pages use a clean default banner from your Brand Kit until you pick a concept.</p>
+        <p class="cnp__why">Your pages use a clean default banner from your Brand Kit until you pick a concept below.</p>
       </div>
       <q-btn
+        v-if="!store.project.concepts.items.length"
         unelevated
         no-caps
         class="bs-btn bs-btn--ai cnp__btn"
         icon="auto_awesome"
-        :label="concept ? 'Change concept' : 'Choose a concept'"
+        :label="'Create concepts'"
         @click="emit('change-concept')"
       />
     </PanelGroup>
 
-    <PanelGroup v-if="alternatives.length" title="Quick swap" hint="Other concepts from your gallery.">
+    <PanelGroup v-if="alternatives.length" title="All concepts" hint="Three directions, two treatments each. Tap one to use it on every page.">
       <div class="cnp__alts">
         <button
           v-for="alt in alternatives"

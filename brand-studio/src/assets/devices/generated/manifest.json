@@ -1,0 +1,29 @@
+[
+  {
+    "id": "phone-black",
+    "file": "phone-black-raw.png",
+    "kind": "device",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Clean product render of a modern premium smartphone with a slim matte black frame and subtle side buttons. Perfectly straight-on orthographic front view, centered, upright, the whole phone visible with generous white margin. The screen is one flat solid pure green (#00FF00) rounded rectangle filling the display edge to edge inside a thin even black bezel: no Dynamic Island, no notch, no camera, no UI, no icons, no reflections or glare on the screen. Perfectly flat plain pure white background. No shadow, no drop shadow, no reflection, no floor, no gradient, no text, no logos, no hands.",
+    "requestId": "b47ad5a3-1c6d-4219-b534-e39cefd2c796",
+    "createdAt": "2026-10-22T12:49:37.309Z"
+  },
+  {
+    "id": "phone-graphite",
+    "file": "phone-graphite-raw.png",
+    "kind": "device",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Clean product render of a modern premium smartphone with a slim brushed graphite titanium frame and subtle side buttons. Perfectly straight-on orthographic front view, centered, upright, the whole phone visible with generous white margin. The screen is one flat solid pure green (#00FF00) rounded rectangle filling the display edge to edge inside a thin even black bezel: no Dynamic Island, no notch, no camera, no UI, no icons, no reflections or glare on the screen. Perfectly flat plain pure white background. No shadow, no drop shadow, no reflection, no floor, no gradient, no text, no logos, no hands.",
+    "requestId": "7ffb9ea0-2660-4241-8db2-1442bd61b9d4",
+    "createdAt": "2026-10-22T12:55:24.890Z"
+  },
+  {
+    "id": "phone-silver",
+    "file": "phone-silver-raw.png",
+    "kind": "device",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Clean product render of a modern premium smartphone with a slim polished silver titanium frame and subtle side buttons. Perfectly straight-on orthographic front view, centered, upright, the whole phone visible with generous white margin. The screen is one flat solid pure green (#00FF00) rounded rectangle filling the display edge to edge inside a thin even black bezel: no Dynamic Island, no notch, no camera, no UI, no icons, no reflections or glare on the screen. Perfectly flat plain pure white background. No shadow, no drop shadow, no reflection, no floor, no gradient, no text, no logos, no hands.",
+    "requestId": "1bda92c1-b3bd-4d37-9de9-2744827efbab",
+    "createdAt": "2026-10-22T13:12:29.174Z"
+  }
+]
