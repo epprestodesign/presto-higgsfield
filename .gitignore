@@ -17,3 +17,4 @@ references/
 
 # Raw Higgsfield logo output (kept locally for scripts/recut-logos.mjs)
 brand-studio/src/assets/logos/generated/*-raw.png
+brand-studio/src/assets/devices/generated/*-raw.png

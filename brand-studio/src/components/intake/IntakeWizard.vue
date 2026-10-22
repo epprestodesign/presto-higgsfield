@@ -2,16 +2,16 @@
 // IntakeWizard — the guided, account-free event intake (spec 4B).
 //   1 Event basics → 2 Where & when → 3 Your brand (optional) → 4 Contact
 // Every keystroke writes through the project store, so the live preview on
-// the right (BrandHero) and the autosaved draft are always current. Fields
+// the right (the real mobile landing page in Chrome for iOS) and the autosaved
+// draft are always current. Fields
 // validate on blur and on Continue; Continue with errors shows an error
 // summary and moves focus to the first invalid field.
 import { ref, reactive, computed, nextTick, useId, watch } from 'vue'
 import { useProjectStore } from '../../stores/project.js'
-import { EVENT_CATEGORIES, validateEvent, validateOrganizer, normalizeWebsiteUrl, formatDateRange, locationLabel } from '../../models/event.js'
+import { EVENT_CATEGORIES, validateEvent, validateOrganizer, normalizeWebsiteUrl, formatDateRange } from '../../models/event.js'
 import { verticalsForCategory, getVertical } from '../../data/verticals/index.js'
 import { getSampleEvent, ALL_EXAMPLES } from '../../data/sampleEvents.js'
-import { starterContent } from '../../models/content.js'
-import BannerPreviews from '../brand/BannerPreviews.vue'
+import DevicePreview from '../studio/DevicePreview.vue'
 import AssetDropzone from './AssetDropzone.vue'
 import ColorRoleField from '../brand-kit/ColorRoleField.vue'
 
@@ -160,15 +160,19 @@ function addPhoto(a) {
   if (!bk.value.heroImageId) project.setHeroImage(a.id)
 }
 
-// Live preview
-const starter = computed(() => starterContent(ev.value))
-const hero = computed(() => ({
-  brandKit: bk.value,
-  headline: ev.value.name?.trim() || 'Your event name',
-  tagline: ev.value.category ? starter.value.tagline : 'Official hotels for your attendees.',
-  dates: formatDateRange(ev.value.startDate, ev.value.endDate),
-  location: locationLabel(ev.value),
-}))
+// The phone renders the real landing page; until the organizer adds a name or
+// photo, it borrows a placeholder name and the vertical example's photo.
+const previewPage = ref('landing')
+const previewProject = computed(() => {
+  const p = project.project
+  const img = example.value?.brandKit?.imagery?.[0]
+  const hasImage = !!(p.brandKit.bannerImageId || p.brandKit.heroImageId)
+  return {
+    ...p,
+    event: { ...p.event, name: p.event.name?.trim() || 'Your event name' },
+    brandKit: hasImage || !img ? p.brandKit : { ...p.brandKit, imagery: [...(p.brandKit.imagery || []), img], heroImageId: img.id },
+  }
+})
 const savedLabel = computed(() => (project.lastSavedAt ? 'Progress saved on this device' : 'No account needed'))
 </script>
 
@@ -481,24 +485,9 @@ const savedLabel = computed(() => (project.lastSavedAt ? 'Progress saved on this
         </button>
         <div class="iw__preview-body">
           <p class="bs-eyebrow iw__preview-eyebrow">Live preview</p>
-          <banner-previews
-            v-bind="hero" :pages="['landing']" :slug="project.project.publishing.slug || 'your-event'"
-            :fallback-image="example?.brandKit?.imagery?.[0] || null"
-          />
-          <ul class="iw__facts">
-            <li><q-icon name="badge" size="18px" /><span><strong>Name</strong>{{ ev.name || '—' }}</span></li>
-            <li><q-icon name="event" size="18px" /><span><strong>Dates</strong>{{ hero.dates || '—' }}</span></li>
-            <li><q-icon name="place" size="18px" /><span><strong>Location</strong>{{ [ev.venue, hero.location].filter(Boolean).join(', ') || '—' }}</span></li>
-            <li>
-              <q-icon name="palette" size="18px" />
-              <span><strong>Brand</strong>
-                <span class="iw__sw">
-                  <i v-for="r in ['primary', 'secondary', 'accent']" :key="r" :style="{ background: bk.colors[r] }" :title="`${r} ${bk.colors[r]}`" />
-                  <em>{{ bk.logo ? 'Logo added' : 'No logo yet' }}</em>
-                </span>
-              </span>
-            </li>
-          </ul>
+          <div class="iw__phone">
+            <device-preview v-model:page="previewPage" device="mobile" :project="previewProject" :padding="0" />
+          </div>
           <p class="iw__saved"><q-icon :name="project.lastSavedAt ? 'cloud_done' : 'person_off'" size="16px" /> {{ savedLabel }}</p>
         </div>
       </aside>
@@ -586,13 +575,8 @@ button.iw__step-btn:hover .iw__step-label { text-decoration: underline; }
 .iw__preview { position: sticky; top: 24px; }
 .iw__preview-toggle { display: none; }
 .iw__preview-eyebrow { margin-bottom: 10px; }
-.iw__facts { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
-.iw__facts li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.875rem; color: var(--bs-ink); }
-.iw__facts li > .q-icon { color: var(--bs-ink-soft); margin-top: 1px; }
-.iw__facts strong { display: block; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--bs-ink-soft); margin-bottom: 2px; }
-.iw__sw { display: inline-flex; align-items: center; gap: 6px; }
-.iw__sw i { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgb(3 10 38 / 0.12); display: inline-block; }
-.iw__sw em { font-style: normal; color: var(--bs-ink-soft); margin-left: 4px; }
+.iw__phone { height: clamp(460px, calc(100vh - 250px), 760px); }
+.iw__phone :deep(.dvp) { background: transparent; }
 .iw__saved { margin: 18px 0 0; display: flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--bs-ink-soft); }
 
 /* Step transition */
@@ -613,6 +597,7 @@ button.iw__step-btn:hover .iw__step-label { text-decoration: underline; }
   }
   .iw__preview-chev { margin-left: auto; }
   .iw__preview-body { display: none; margin-top: 16px; }
+  .iw__phone { height: 600px; }
   .iw__preview.is-open .iw__preview-body { display: block; }
 }
 @media (max-width: 600px) {

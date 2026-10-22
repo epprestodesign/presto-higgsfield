@@ -13,6 +13,7 @@ import { ref, computed, watch } from 'vue'
 import BrandHero from '../../brand/BrandHero.vue'
 import OptionESteps from './OptionESteps.vue'
 import OptionEFooter from './OptionEFooter.vue'
+import OptionELogoMarquee from './OptionELogoMarquee.vue'
 import { OPTION_E_ART as ART } from '../../../assets/marketing/option-e/index.js'
 import { sampleProject } from '../../../data/sampleEvents.js'
 import { VERTICAL_EXAMPLES } from '../../../data/verticals/index.js'
@@ -201,12 +202,10 @@ function onAnchor(e) {
         </div>
       </section>
 
-      <!-- 2 · Fictional organizer strip -->
-      <section class="oe__trust" aria-label="Example organizers">
-        <p>Example organizers branding their booking pages</p>
-        <div class="oe__logos">
-          <img v-for="o in orgs" :key="o.id" :src="o.logo" :alt="o.name" :title="o.name" />
-        </div>
+      <!-- 2 · Logo marquee (placeholder logos) -->
+      <section class="oe__trust" aria-label="Teams planning group travel">
+        <p>Trusted by teams planning group travel <span class="oe__ph">placeholder</span></p>
+        <option-e-logo-marquee />
       </section>
 
       <!-- 3 · Illustrative voices -->
@@ -349,9 +348,7 @@ function onAnchor(e) {
 
 /* Trust strip */
 .oe__trust { padding: 40px 0 28px; text-align: center; border-top: 1px solid var(--oe-line); }
-.oe__trust p { margin: 0 0 18px; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--oe-soft); }
-.oe__logos { display: flex; gap: 44px; align-items: center; justify-content: center; flex-wrap: nowrap; overflow: hidden; padding: 0 24px; mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
-.oe__logos img { height: 44px; width: auto; max-width: 110px; object-fit: contain; flex: none; filter: grayscale(1) contrast(1.1); opacity: 0.72; }
+.oe__trust p { margin: 0 0 4px; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--oe-soft); }
 
 /* Voices */
 .oe__voices { max-width: 1080px; margin: 0 auto; padding: 24px 24px 72px; }
@@ -440,8 +437,6 @@ function onAnchor(e) {
   .oe__field { flex-direction: column; align-items: stretch; border-radius: 18px; padding: 12px; }
   .oe__field-label { padding: 2px 6px 8px; }
   .oe__btn--go { width: 100%; }
-  .oe__logos { justify-content: flex-start; gap: 28px; }
-  .oe__logos img { height: 36px; }
   .oe__voice-list { grid-template-columns: 1fr; }
   .oe__voices, .oe__stats { padding-bottom: 56px; }
   .oe__stat-grid { grid-template-columns: 1fr; }
