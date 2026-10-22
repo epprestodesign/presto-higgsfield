@@ -10,6 +10,8 @@ import { slugify } from '../models/ids.js'
 import { brandThemeVars } from '../theme/brandTheme.js'
 import { sampleProject } from '../data/sampleEvents.js'
 import { localDraftAdapter } from './persistence.js'
+import { prestoBannerConcept } from '../providers/ai/conceptFactory.js'
+import { getImage } from '../assets/imagery/index.js'
 
 export const useProjectStore = defineStore('bs-project', {
   state: () => ({
@@ -83,9 +85,28 @@ export const useProjectStore = defineStore('bs-project', {
       const bk = this.project.brandKit
       bk.imagery = bk.imagery.filter((a) => a.id !== id)
       if (bk.heroImageId === id) bk.heroImageId = bk.imagery[0]?.id || null
+      if (bk.bannerImageId === id) bk.bannerImageId = bk.heroImageId
       this.touch()
     },
-    setHeroImage(id) { this.project.brandKit.heroImageId = id; this.touch() },
+    /**
+     * Pick the hero/banner photo. Always visible right away: the banner image
+     * follows it, and a graphic-only concept (e.g. Brand Field) switches to the
+     * Presto photo treatment so the chosen image actually shows.
+     */
+    setHeroImage(id) {
+      const bk = this.project.brandKit
+      bk.heroImageId = id
+      bk.bannerImageId = id
+      const c = this.project.concepts
+      const concept = c.items.find((x) => x.id === c.selectedId)
+      const img = (bk.imagery || []).find((a) => a.id === id) || getImage(id)
+      if (concept && img && !concept.treatment?.imageSrc) {
+        const presto = prestoBannerConcept(bk, img)
+        concept.layout = 'presto'
+        concept.treatment = { ...concept.treatment, ...presto.treatment, accent: concept.treatment.accent, highlight: concept.treatment.highlight }
+      }
+      this.touch()
+    },
     setDirection(direction) { this.project.brandKit.direction = direction; this.touch() },
     applyBrandSuggestion(suggestion) {
       Object.assign(this.project.brandKit, { ...suggestion, source: 'suggested' })
@@ -157,6 +178,7 @@ export const useProjectStore = defineStore('bs-project', {
 
     // ── Ads ─────────────────────────────────────────────────────────────────
     setAdsEnabled(on) { this.project.ads.enabled = on; this.touch() },
+    setRailMode(mode) { this.project.ads.railMode = mode; this.touch() },
     applyAdPreset(page, presetId) {
       const ads = this.project.ads
       ads.presets[page] = presetId

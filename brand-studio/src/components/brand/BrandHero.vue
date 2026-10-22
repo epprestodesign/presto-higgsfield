@@ -1,17 +1,22 @@
 <script setup>
 // BrandHero — the branded event banner. One component renders every creative
-// concept (6 layouts × any Brand Kit) at every size: the full landing hero,
-// the compact band on Browse / Details (references/102126), and gallery cards.
+// concept (any Brand Kit) at every size: the full landing hero, the compact
+// band on Browse / Details (references/102126), and gallery cards.
 //
-// Artwork (photo, duotone, patterns) is a background layer; the logo, headline,
-// dates and CTA are live DOM on top — never baked into generated images — so
+// One layout only — the Presto hero standard (presto-2026 LandingPage /
+// HotelListPage): logo, event name and dates stacked and centered over a
+// full-bleed background. Concepts vary the background treatment, never the
+// layout. Older saved concepts (split, band, angled, editorial, framed) are
+// normalized to the centered layout.
+//
+// Artwork (photo, duotone, patterns) is a background layer; the logo, headline
+// and dates are live DOM on top — never baked into generated images — so
 // they stay editable, accessible and sharp. Sizing uses container queries, so
 // the same markup adapts inside a 390px phone frame or a 320px gallery card.
 import { computed } from 'vue'
 import { getFont } from '../../theme/fonts.js'
 import { resolvePalette } from '../../theme/brandTheme.js'
-import { shade } from '../../theme/color.js'
-import { getImage } from '../../assets/imagery/index.js'
+import { resolveHeroConcept } from '../../theme/heroConcept.js'
 
 const props = defineProps({
   concept: { type: Object, default: null },
@@ -20,48 +25,22 @@ const props = defineProps({
   tagline: { type: String, default: '' },
   dates: { type: String, default: '' },
   location: { type: String, default: '' },
-  ctaLabel: { type: String, default: '' },
   showLogo: { type: Boolean, default: true },
   showDates: { type: Boolean, default: true },
   // 'landing' (tall hero) | 'compact' (Browse/Details band) | 'card' (gallery thumbnail)
   size: { type: String, default: 'landing' },
   headingLevel: { type: Number, default: 1 },
 })
-const emit = defineEmits(['cta'])
 
-// No concept selected yet → a clean Brand Signature default from the kit.
-const fallback = computed(() => {
-  const p = resolvePalette(props.brandKit.colors)
-  const hero = getImage(props.brandKit.heroImageId) || (props.brandKit.imagery || []).find((a) => a.id === props.brandKit.heroImageId)
-  return {
-    layout: hero ? 'editorial' : 'centered',
-    headingFont: props.brandKit.typography?.heading,
-    treatment: {
-      background: hero ? shade(p.primary, 0.3) : p.primary,
-      foreground: p.onPrimary,
-      accent: p.secondary,
-      highlight: p.accent,
-      imageSrc: hero?.src || null,
-      imageAlt: '',
-      overlay: hero ? 'scrim' : 'none',
-      pattern: hero ? 'none' : 'dots',
-    },
-  }
-})
-
-const c = computed(() => props.concept || fallback.value)
+// No concept selected yet → a default from the Brand Kit; legacy layouts → centered.
+const c = computed(() => resolveHeroConcept(props.concept, props.brandKit))
 const t = computed(() => c.value.treatment || {})
 const layout = computed(() => c.value.layout || 'centered')
 const palette = computed(() => resolvePalette(props.brandKit.colors))
 
-// Energy layouts shout; premium whispers.
-const uppercase = computed(() => ['band', 'angled'].includes(layout.value))
-const darkArt = computed(() => layout.value !== 'framed')
-
 const logoSrc = computed(() => {
   const bk = props.brandKit
-  if (darkArt.value && bk.logoOnDark?.src) return bk.logoOnDark.src
-  return bk.logo?.src || ''
+  return bk.logoOnDark?.src || bk.logo?.src || ''
 })
 const logoAlt = computed(() => props.brandKit.logo?.alt || props.headline)
 
@@ -72,8 +51,7 @@ const style = computed(() => ({
   '--bh-fg': t.value.foreground,
   '--bh-accent': t.value.accent,
   '--bh-highlight': t.value.highlight || palette.value.accent,
-  '--bh-on-highlight': resolvePalette({ primary: t.value.highlight || palette.value.accent }).onPrimary,
-  '--bh-font': getFont(c.value.headingFont).family,
+    '--bh-font': getFont(c.value.headingFont).family,
 }))
 
 const headingTag = computed(() => `h${Math.min(6, Math.max(1, props.headingLevel))}`)
@@ -82,7 +60,7 @@ const headingTag = computed(() => `h${Math.min(6, Math.max(1, props.headingLevel
 <template>
   <section
     class="bh"
-    :class="[`bh--${layout}`, `bh--${size}`, { 'bh--upper': uppercase }]"
+    :class="[`bh--${layout}`, `bh--${size}`]"
     :style="style"
     :aria-label="headline"
   >
@@ -92,20 +70,15 @@ const headingTag = computed(() => `h${Math.min(6, Math.max(1, props.headingLevel
         <img :src="t.imageSrc" alt="" decoding="async" />
       </div>
       <div v-if="t.pattern && t.pattern !== 'none'" class="bh__pattern" :class="`bh__pattern--${t.pattern}`" />
-      <div v-if="layout === 'angled'" class="bh__slash" />
     </div>
 
     <!-- Live content layer -->
     <div class="bh__content">
       <img v-if="showLogo && logoSrc" :src="logoSrc" :alt="logoAlt" class="bh__logo" />
       <div class="bh__text">
-        <p v-if="meta && size !== 'compact' && layout === 'editorial'" class="bh__eyebrow">{{ meta }}</p>
         <component :is="headingTag" class="bh__headline">{{ headline }}</component>
-        <p v-if="tagline" class="bh__tagline">{{ tagline }}</p>
-        <p v-if="meta && !(size !== 'compact' && layout === 'editorial')" class="bh__meta">{{ meta }}</p>
-        <button v-if="ctaLabel && size === 'landing'" type="button" class="bh__cta" @click="emit('cta')">
-          {{ ctaLabel }}
-        </button>
+        <p v-if="meta" class="bh__meta">{{ meta }}</p>
+        <p v-if="tagline && size !== 'compact'" class="bh__tagline">{{ tagline }}</p>
       </div>
     </div>
   </section>
@@ -132,14 +105,20 @@ const headingTag = computed(() => `h${Math.min(6, Math.max(1, props.headingLevel
 .bh__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bh__photo::after { content: ''; position: absolute; inset: 0; }
 
-/* scrim — readable text over full-bleed photography */
-.bh__photo--scrim::after { background: linear-gradient(90deg, rgb(0 0 0 / 0.72) 0%, rgb(0 0 0 / 0.38) 55%, rgb(0 0 0 / 0.12) 100%); }
+/* dim — even darkening so a centered white logo + headline read anywhere */
+.bh__photo--dim::after { background: linear-gradient(rgb(0 0 0 / 0.28), rgb(0 0 0 / 0.42)); }
+/* scrim — centered vignette: darkest behind the copy, lighter at the edges */
+.bh__photo--scrim::after { background: radial-gradient(ellipse at center, rgb(0 0 0 / 0.58) 0%, rgb(0 0 0 / 0.34) 70%, rgb(0 0 0 / 0.22) 100%); }
+/* soft — defocused photo + dim: atmosphere without competing with the type */
+.bh__photo--soft img { filter: blur(3px) saturate(0.9); transform: scale(1.04); }
+.bh__photo--soft::after { background: rgb(0 0 0 / 0.4); }
 /* tint — brand color wash */
 .bh__photo--tint img { filter: grayscale(0.4) contrast(1.05); }
 .bh__photo--tint::after { background: var(--bh-bg); mix-blend-mode: multiply; opacity: 0.55; }
-/* duotone — grayscale photo multiplied into the brand dark + accent glow */
-.bh__photo--duotone img { filter: grayscale(1) contrast(1.25) brightness(0.95); }
-.bh__photo--duotone::after { background: linear-gradient(120deg, var(--bh-bg) 10%, var(--bh-accent) 130%); mix-blend-mode: multiply; }
+/* duotone — grayscale photo recolored with the brand hues (keeps the photo's
+   light, so dark photos don't go black), dimmed for centered white type */
+.bh__photo--duotone img { filter: grayscale(1) contrast(1.1) brightness(0.72); }
+.bh__photo--duotone::after { background: linear-gradient(120deg, var(--bh-bg) 0%, var(--bh-accent) 100%); mix-blend-mode: color; }
 
 /* patterns */
 .bh__pattern { position: absolute; inset: 0; pointer-events: none; }
@@ -190,74 +169,29 @@ const headingTag = computed(() => `h${Math.min(6, Math.max(1, props.headingLevel
   text-wrap: balance;
   color: inherit;
 }
-.bh--upper .bh__headline { text-transform: uppercase; letter-spacing: 0.01em; }
 .bh__tagline { margin: 0; font-size: clamp(14px, 2cqi, 20px); line-height: 1.35; opacity: 0.92; text-wrap: balance; }
-.bh__meta, .bh__eyebrow { margin: 0; font-size: clamp(12px, 1.5cqi, 15px); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.9; }
-.bh__eyebrow { color: var(--bh-highlight); opacity: 1; }
-.bh__cta {
-  margin-top: clamp(6px, 1.5cqi, 14px);
-  align-self: inherit;
-  padding: 12px 22px;
-  border: 0;
-  border-radius: 6px;
-  background: var(--bh-highlight);
-  color: var(--bh-on-highlight);
-  font: 700 16px/1 var(--brand-font-body, inherit);
-  cursor: pointer;
-  transition: transform var(--ds-duration-fast, 150ms) var(--ds-ease-standard, ease), filter var(--ds-duration-fast, 150ms);
-}
-.bh__cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
-.bh__cta:focus-visible { outline: 3px solid var(--bh-fg); outline-offset: 3px; }
+.bh__meta { margin: 0; font-size: clamp(12px, 1.5cqi, 15px); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.9; }
 
-/* ── Layouts ─────────────────────────────────────────────────────────── */
-/* split — brand panel left, tinted photo right */
-.bh--split .bh__photo { left: 55%; }
-.bh--split .bh__art::after { content: ''; position: absolute; top: 0; bottom: 0; left: 55%; width: 6px; background: var(--bh-highlight); }
-.bh--split .bh__content { align-items: flex-start; text-align: left; padding-right: 48%; }
+/* ── Layout ──────────────────────────────────────────────────────────── */
+/* presto — the Presto banner standard (references/102226): a minimal,
+   system-safe full-bleed background with logo + all copy centered on top. */
+.bh--presto .bh__logo { height: clamp(48px, 11cqi, 120px); }
+.bh--presto .bh__headline,
+.bh--presto .bh__meta,
+.bh--presto .bh__tagline { text-shadow: 0 2px 18px rgb(0 0 0 / 0.35); }
+/* Brand-field backgrounds: keep pattern texture to the edges, clear behind the copy. */
+.bh--presto .bh__pattern--dots,
+.bh--centered .bh__pattern--dots { mask-image: radial-gradient(ellipse at center, transparent 35%, #000 95%); }
 
-/* band — dark band, chevrons left, angled duotone photo right (reference look) */
-.bh--band .bh__photo { left: auto; width: 42%; clip-path: polygon(22% 0, 100% 0, 100% 100%, 0 100%); }
-
-/* angled — full-bleed duotone, diagonal accent slash, left-aligned shout */
-.bh__slash { position: absolute; inset: 0 auto 0 -10%; width: 58%; background: var(--bh-bg); transform: skewX(-14deg); box-shadow: 14px 0 0 var(--bh-accent), 26px 0 0 var(--bh-highlight); }
-.bh--angled .bh__content { align-items: flex-start; text-align: left; padding-right: 46%; }
-
-/* editorial — full-bleed photo, scrim, bottom-left serif */
-.bh--editorial { align-items: flex-end; }
-.bh--editorial .bh__content { align-items: flex-start; text-align: left; }
-.bh--editorial .bh__headline { font-weight: 600; letter-spacing: -0.015em; }
-
-/* framed — light field, framed photograph right, serif left */
-.bh--framed .bh__photo { inset: clamp(12px, 3cqi, 28px) clamp(12px, 3cqi, 28px) clamp(12px, 3cqi, 28px) 52%; border-radius: 4px; overflow: hidden; box-shadow: 0 10px 30px rgb(0 0 0 / 0.18); }
-.bh--framed .bh__content { align-items: flex-start; text-align: left; padding-right: 52%; }
-.bh--framed .bh__headline { font-weight: 600; }
-.bh--framed .bh__meta { opacity: 0.7; }
-
-/* ── Compact band (Browse / Details) — logo beside title, one row ────── */
-.bh--compact .bh__content { flex-direction: row; justify-content: center; text-align: left; padding-block: 18px; gap: 18px; }
-.bh--compact .bh__text { align-items: flex-start; gap: 2px; }
-.bh--compact .bh__logo { height: 64px; max-width: 140px; }
+/* ── Compact band (Browse / Details) — same centered stack, tighter ──── */
+.bh--compact .bh__content { padding-block: 16px; gap: 8px; }
+.bh--compact .bh__text { gap: 4px; }
+.bh--compact .bh__logo,
+.bh--compact.bh--presto .bh__logo { height: clamp(32px, 4.4cqi, 56px); max-width: 180px; }
 .bh--compact .bh__headline { font-size: clamp(18px, 2.6cqi, 30px); }
-.bh--compact .bh__tagline { font-size: clamp(13px, 1.4cqi, 16px); }
-.bh--compact.bh--split .bh__content,
-.bh--compact.bh--angled .bh__content,
-.bh--compact.bh--framed .bh__content { justify-content: flex-start; }
-.bh--compact.bh--editorial { align-items: center; }
 
-/* Narrow containers (phones, gallery cards): stack + recentre side layouts */
 @container (max-width: 560px) {
-  .bh--split .bh__photo { left: 0; opacity: 0.35; }
-  .bh--split .bh__art::after { display: none; }
-  .bh--band .bh__photo { width: 100%; clip-path: none; opacity: 0.28; }
-  .bh__slash { width: 120%; opacity: 0.82; }
-  .bh--framed .bh__photo { inset: auto 0 0 0; height: 38%; border-radius: 0; box-shadow: none; }
-  .bh--framed { align-items: flex-start; }
-  .bh--split .bh__content,
-  .bh--angled .bh__content,
-  .bh--framed .bh__content { padding-right: clamp(16px, 4cqi, 40px); }
-  .bh--framed .bh__content { padding-bottom: 42%; }
-  .bh--compact .bh__content { flex-direction: column; text-align: center; align-items: center; }
-  .bh--compact .bh__text { align-items: center; }
-  .bh--compact .bh__logo { height: 48px; }
+  .bh--compact .bh__logo,
+  .bh--compact.bh--presto .bh__logo { height: 36px; }
 }
 </style>

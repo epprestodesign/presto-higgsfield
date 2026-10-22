@@ -1,0 +1,132 @@
+[
+  {
+    "id": "poster-reunion",
+    "file": "poster-reunion.jpg",
+    "kind": "abstract",
+    "role": "poster",
+    "model": "ideogram/v4.0",
+    "prompt": "Family reunion poster reading \"Okafor Reunion\" in warm hand-lettered script with sunflowers and a picnic blanket pattern, marigold, coral and teal. Square flat graphic poster tile, bold and joyful, full-bleed color with no border and no mockup, crisp vector shapes, perfectly spelled lettering exactly as written and no other text, no watermark.",
+    "requestId": "8c3e45fd-0940-4353-8f47-11155326c83a",
+    "createdAt": "2026-10-21T21:23:11.050Z"
+  },
+  {
+    "id": "poster-crew",
+    "file": "poster-crew.jpg",
+    "kind": "abstract",
+    "role": "poster",
+    "model": "ideogram/v4.0",
+    "prompt": "Construction crew lodging tile reading \"IRONLINE CREW\" with a stylized steel beam and hard hat icon, safety orange and charcoal, bold industrial stencil type. Square flat graphic poster tile, bold and joyful, full-bleed color with no border and no mockup, crisp vector shapes, perfectly spelled lettering exactly as written and no other text, no watermark.",
+    "requestId": "600b4733-c0fe-4b6b-933e-83e8ab440a53",
+    "createdAt": "2026-10-21T21:23:11.274Z"
+  },
+  {
+    "id": "poster-summit",
+    "file": "poster-summit.jpg",
+    "kind": "abstract",
+    "role": "poster",
+    "model": "ideogram/v4.0",
+    "prompt": "Tech conference poster reading \"NORTHSTAR SUMMIT\" with a glowing star and geometric grid, deep indigo with electric violet and peach accents. Square flat graphic poster tile, bold and joyful, full-bleed color with no border and no mockup, crisp vector shapes, perfectly spelled lettering exactly as written and no other text, no watermark.",
+    "requestId": "89b0607b-4c44-4b7f-a181-bc9c3b476f2d",
+    "createdAt": "2026-10-21T21:23:11.275Z"
+  },
+  {
+    "id": "poster-cup",
+    "file": "poster-cup.jpg",
+    "kind": "abstract",
+    "role": "poster",
+    "model": "ideogram/v4.0",
+    "prompt": "Youth soccer tournament poster reading \"PRAIRIE CUP\" with a big bouncing soccer ball, cobalt blue and lime green, playful retro sports type. Square flat graphic poster tile, bold and joyful, full-bleed color with no border and no mockup, crisp vector shapes, perfectly spelled lettering exactly as written and no other text, no watermark.",
+    "requestId": "f2324ba5-a39b-4df5-a126-fd4e0dfa179d",
+    "createdAt": "2026-10-21T21:23:11.577Z"
+  },
+  {
+    "id": "avatar-coach",
+    "file": "avatar-coach.jpg",
+    "kind": "abstract",
+    "role": "avatar",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A cheerful youth soccer coach with a whistle and a cap, warm brown skin, mint green background. Flat vector illustration portrait, stylized and clearly illustrated (not a photo), head and shoulders, centered, friendly expression, simple shapes, soft solid pastel background, no text.",
+    "requestId": "e32de79b-8cc4-495d-a9a8-9973acf73bbd",
+    "createdAt": "2026-10-21T21:23:21.853Z"
+  },
+  {
+    "id": "avatar-planner",
+    "file": "avatar-planner.jpg",
+    "kind": "abstract",
+    "role": "avatar",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A confident conference planner with glasses and a blazer, short silver hair, lavender background. Flat vector illustration portrait, stylized and clearly illustrated (not a photo), head and shoulders, centered, friendly expression, simple shapes, soft solid pastel background, no text.",
+    "requestId": "012b7ac0-48e0-4ac9-8e05-7f1e3dd4907c",
+    "createdAt": "2026-10-21T21:23:22.314Z"
+  },
+  {
+    "id": "avatar-host",
+    "file": "avatar-host.jpg",
+    "kind": "abstract",
+    "role": "avatar",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A smiling family reunion organizer with curly hair and a sunflower pin, peach background. Flat vector illustration portrait, stylized and clearly illustrated (not a photo), head and shoulders, centered, friendly expression, simple shapes, soft solid pastel background, no text.",
+    "requestId": "a85a9916-1a0a-49b2-bee6-b7823811abfd",
+    "createdAt": "2026-10-21T21:23:32.311Z"
+  },
+  {
+    "id": "poster-wedding",
+    "file": "poster-wedding.jpg",
+    "kind": "abstract",
+    "role": "poster",
+    "model": "ideogram/v4.0",
+    "prompt": "Wedding weekend poster reading \"Mara & Theo\" in elegant serif with dried florals and a sun arch, blush pink, sage and cream. Square flat graphic poster tile, bold and joyful, full-bleed color with no border and no mockup, crisp vector shapes, perfectly spelled lettering exactly as written and no other text, no watermark.",
+    "requestId": "c9b617e7-fee0-4efe-909e-70df81d5cb2e",
+    "createdAt": "2026-10-21T21:23:39.610Z"
+  },
+  {
+    "id": "poster-fest",
+    "file": "poster-fest.jpg",
+    "kind": "abstract",
+    "role": "poster",
+    "model": "ideogram/v4.0",
+    "prompt": "Music festival poster reading \"SALT FLATS FEST\" with a desert sunset and sound waves, hot pink, tangerine and deep purple, groovy 70s type. Square flat graphic poster tile, bold and joyful, full-bleed color with no border and no mockup, crisp vector shapes, perfectly spelled lettering exactly as written and no other text, no watermark.",
+    "requestId": "25f0257f-dcb4-4869-82b4-c9bfc7f1588b",
+    "createdAt": "2026-10-21T21:23:40.193Z"
+  },
+  {
+    "id": "scene-lobby",
+    "file": "scene-lobby.jpg",
+    "kind": "photo",
+    "role": "scene",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Modern boutique hotel lobby at dusk, warm pendant lights, soft bokeh, pastel lavender and amber tones. Wide photographic background, softly lit, calm and uncluttered in the center where a phone mockup will sit. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "7cc0b2cd-08df-4341-a725-4e4aa28fe390",
+    "createdAt": "2026-10-21T21:23:51.204Z"
+  },
+  {
+    "id": "scene-stadium",
+    "file": "scene-stadium.jpg",
+    "kind": "photo",
+    "role": "scene",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Empty youth soccer stadium at golden hour seen from the stands, soft haze, pastel sky with lilac and peach clouds. Wide photographic background, softly lit, calm and uncluttered in the center where a phone mockup will sit. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "a01cc52e-3699-4b73-8002-d8b5c73d873e",
+    "createdAt": "2026-10-21T21:24:07.409Z"
+  },
+  {
+    "id": "scene-hall",
+    "file": "scene-hall.jpg",
+    "kind": "photo",
+    "role": "scene",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Bright convention center atrium with tall glass windows and soft morning light, airy mint and sky blue tones. Wide photographic background, softly lit, calm and uncluttered in the center where a phone mockup will sit. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "7b41fbd6-b805-4660-91bc-9ed092cc0f23",
+    "createdAt": "2026-10-21T21:24:08.295Z"
+  },
+  {
+    "id": "scene-waterfront",
+    "file": "scene-waterfront.jpg",
+    "kind": "photo",
+    "role": "scene",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Calm waterfront promenade near hotels at sunset, gentle pastel pink and blue sky reflecting on the water. Wide photographic background, softly lit, calm and uncluttered in the center where a phone mockup will sit. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "29f2c3ba-0c05-49f2-9beb-ab1019f0e4e8",
+    "createdAt": "2026-10-21T21:24:08.827Z"
+  }
+]

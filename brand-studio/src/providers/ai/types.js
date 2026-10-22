@@ -38,7 +38,7 @@
  * @property {'signature'|'energy'|'premium'} direction
  * @property {string} title
  * @property {string} rationale
- * @property {'centered'|'split'|'band'|'angled'|'editorial'|'framed'} layout
+ * @property {'presto'|'centered'} layout  Always centered (Presto standard); legacy values render as 'presto'
  * @property {Object} treatment           { background, foreground, accent, imageId, imageSrc, overlay, pattern }
  * @property {string} headingFont         font id (theme/fonts.js)
  * @property {string} prompt              the background-art prompt sent to the model

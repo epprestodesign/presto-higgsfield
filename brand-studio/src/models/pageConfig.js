@@ -31,7 +31,6 @@ export function createPages(event = {}) {
       hero: {
         headline: '', // '' → falls back to the event name
         tagline: c.tagline,
-        ctaLabel: 'Find your hotel',
         showLogo: true,
         showDates: true,
       },

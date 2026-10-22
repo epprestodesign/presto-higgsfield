@@ -26,7 +26,9 @@ const showTeams = computed(() => !!props.project.pages?.landing?.sections?.widge
 <template>
   <brand-theme-provider :brand-kit="project.brandKit" :start-date="project.event.startDate" :end-date="project.event.endDate" class="bp">
     <page-frame :brand="navBrand(project)" :logo="navLogo(project)" cart-mode="reserve">
+      <!-- Keyed on the rail: the page reads its rail slot once at mount. -->
       <hotel-list-page
+        :key="has('browse.rail') ? 'rail' : 'norail'"
         flow="reserve"
         :show-teams="showTeams"
         :state="browse.resultsState || 'full'"
@@ -44,7 +46,7 @@ const showTeams = computed(() => !!props.project.pages?.landing?.sections?.widge
           <ad-slot slot-id="browse.top" :placements="ads.placements" :sponsors="ads.sponsors" :interactive="interactiveAds" />
         </template>
         <template v-if="has('browse.rail')" #rail>
-          <ad-slot slot-id="browse.rail" :placements="ads.placements" :sponsors="ads.sponsors" :interactive="interactiveAds" />
+          <ad-slot slot-id="browse.rail" :placements="ads.placements" :sponsors="ads.sponsors" :interactive="interactiveAds" :rail-mode="project.ads?.railMode || 'auto'" />
         </template>
         <template v-if="has('browse.bottom')" #results-bottom>
           <ad-slot slot-id="browse.bottom" :placements="ads.placements" :sponsors="ads.sponsors" :interactive="interactiveAds" />
@@ -53,3 +55,10 @@ const showTeams = computed(() => !!props.project.pages?.landing?.sections?.widge
     </page-frame>
   </brand-theme-provider>
 </template>
+
+<style scoped>
+/* The page's own rail is sticky as a whole; AdSlot decides what pins (railMode),
+   so the rail column just stretches the full height of the results. */
+.bp :deep(.hlp__rail--right) { position: static; align-self: stretch; }
+.bp :deep(.hlp__rail--right .hlp__ads) { height: 100%; justify-content: flex-start; }
+</style>

@@ -43,7 +43,6 @@ const pageStory = {
         :headline="project.project.event.name"
         :tagline="project.project.pages.landing.hero.tagline"
         :dates="dates" :location="where"
-        cta-label="Find your hotel"
       />
       <div style="max-width:1040px;margin:0 auto;padding:40px 24px 80px;display:grid;gap:16px;font-family:var(--bs-font)">
         <h2 class="bs-title">Official event hotels</h2>

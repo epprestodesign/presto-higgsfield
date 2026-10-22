@@ -1,0 +1,220 @@
+[
+  {
+    "id": "fintech",
+    "file": "fintech.png",
+    "raw": "fintech-raw.png",
+    "alt": "Fintech Forward Summit 2027 logo",
+    "model": "ideogram/v4.0",
+    "prompt": "Technology conference logo: a solid deep indigo (#1B1F5E) rounded-rectangle badge containing two bold forward-pointing chevrons, one white and one coral (#FF6B4A), next to the wordmark \"fintech forward\" in a modern geometric lowercase sans-serif in white, with \"SUMMIT 2027\" in small coral letter-spaced capitals underneath. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "7af6256d-c3cd-4d4f-bc75-430b41580e95",
+    "createdAt": "2026-10-21T19:50:14.042Z",
+    "fileOnDark": "fintech-dark.png"
+  },
+  {
+    "id": "lakeshore",
+    "file": "lakeshore.png",
+    "raw": "lakeshore-raw.png",
+    "alt": "Lakeshore Half Marathon 2027 emblem",
+    "model": "ideogram/v4.0",
+    "prompt": "City half marathon emblem: a bold rounded-square badge filled deep blue (#0057B8) with a white wave pattern across the lower half, a red (#FF3D2E) rising sun, a dynamic white runner silhouette, the word \"LAKESHORE\" in heavy white italic condensed capitals and \"HALF MARATHON\" in small red letter-spaced capitals beneath. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "6c1fe923-761e-4c3a-a292-4e437dc39fa9",
+    "createdAt": "2026-10-21T19:50:14.913Z"
+  },
+  {
+    "id": "wedding",
+    "file": "wedding.png",
+    "raw": "wedding-raw.png",
+    "alt": "Alvarez and Chen wedding monogram",
+    "model": "ideogram/v4.0",
+    "prompt": "Elegant wedding monogram seal: a solid round medallion filled deep sage green (#3E5245) with a fine champagne gold (#C9A96E) double ring border and a delicate laurel wreath, the initials \"A & C\" in a refined high-contrast serif in champagne gold at the center, the date \"09 · 25 · 2027\" in tiny gold capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "4afc9b2b-591a-4fb5-a6ab-554504f2940f",
+    "createdAt": "2026-10-21T19:50:20.376Z"
+  },
+  {
+    "id": "heartland",
+    "file": "heartland.png",
+    "raw": "heartland-raw.png",
+    "alt": "Heartland Invitational Soccer Cup 2027 crest",
+    "model": "ideogram/v4.0",
+    "prompt": "Youth soccer tournament crest: a bold shield badge filled deep navy (#0E1B2C) with a thick teal (#19C6B8) outline, a white soccer ball at the top center, a small gold (#F5B700) star, the word \"HEARTLAND\" in heavy white athletic block letters across the middle and \"CUP 2027\" in teal on a ribbon banner below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "511082a2-5295-48c8-8086-74e91b680eab",
+    "createdAt": "2026-10-21T19:50:20.965Z"
+  },
+  {
+    "id": "esports",
+    "file": "esports.png",
+    "raw": "esports-raw.png",
+    "alt": "Apex Arena Invitational 2027 logo",
+    "vertical": "esports",
+    "model": "ideogram/v4.0",
+    "prompt": "Esports tournament crest: an angular hexagonal badge filled deep midnight violet (#140C2E) with a glowing violet (#8B5CF6) and cyan (#22D3EE) double outline, a stylized controller-and-lightning mark at the top, the word \"APEX\" in heavy futuristic block capitals in white and \"INVITATIONAL 2027\" in small cyan letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "a03a2907-b79d-4482-94e7-048c3949971f",
+    "createdAt": "2026-10-21T20:37:39.317Z"
+  },
+  {
+    "id": "camps",
+    "file": "camps.png",
+    "raw": "camps-raw.png",
+    "alt": "Camp Pinecrest Family Weekend 2027 logo",
+    "vertical": "camps",
+    "model": "ideogram/v4.0",
+    "prompt": "Summer camp emblem: a round badge filled deep forest green (#1F3D2B) with a cream (#F2E3C6) border ring, a simple pine tree and tent silhouette over a lake with an orange (#E07A2F) sun, the words \"CAMP PINECREST\" in friendly bold rounded capitals in cream arched across the top and \"EST. 1962\" small below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "fa9dbdb7-68ca-4de7-8da3-88dba1e40436",
+    "createdAt": "2026-10-21T20:37:43.747Z"
+  },
+  {
+    "id": "golf",
+    "file": "golf.png",
+    "raw": "golf-raw.png",
+    "alt": "Prairie Ridge Charity Golf Classic 2027 logo",
+    "vertical": "golf",
+    "model": "ideogram/v4.0",
+    "prompt": "Classic golf tournament crest: a shield filled deep pine green (#0F3B2E) with a fine gold (#C8A24B) border, crossed golf clubs and a pin flag in gold, the words \"PRAIRIE RIDGE\" in an elegant serif in cream (#F4F1E8) on a gold ribbon and \"CHARITY CLASSIC\" in tiny letter-spaced capitals. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "4fe8962d-6fe2-48f4-b77d-29a0057cfe16",
+    "createdAt": "2026-10-21T20:38:06.670Z"
+  },
+  {
+    "id": "destinations",
+    "file": "destinations.png",
+    "raw": "destinations-raw.png",
+    "alt": "Meet Cedar Harbor Meetings Week 2027 logo",
+    "vertical": "destinations",
+    "model": "ideogram/v4.0",
+    "prompt": "Destination marketing emblem: a rounded-square badge filled deep navy (#12355B) with a lighthouse and layered harbor-wave shapes in green (#2BA84A) and a golden (#F6AE2D) sun, the word \"MEET\" in bold modern sans-serif capitals in white and \"CEDAR HARBOR\" in small letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "bb9df615-b33f-4a25-b336-f3d351a17e16",
+    "createdAt": "2026-10-21T20:38:35.290Z"
+  },
+  {
+    "id": "corporate",
+    "file": "corporate.png",
+    "raw": "corporate-raw.png",
+    "alt": "Altura Sales Kickoff 2027 logo",
+    "vertical": "corporate",
+    "model": "ideogram/v4.0",
+    "prompt": "Corporate event emblem: a rounded-square badge filled near-black charcoal (#111827) with a bold orange (#F97316) upward mountain-peak arrow mark, the word \"ALTURA\" in heavy geometric sans-serif capitals in white and \"SALES KICKOFF 2027\" in small soft yellow (#FDE68A) letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "c68275db-d221-4f47-b7fc-b6b51c0b5b12",
+    "createdAt": "2026-10-21T20:39:04.052Z"
+  },
+  {
+    "id": "trade-show",
+    "file": "trade-show.png",
+    "raw": "trade-show-raw.png",
+    "alt": "MidAmerica Ag & Equipment Expo 2027 logo",
+    "vertical": "trade-show",
+    "model": "ideogram/v4.0",
+    "prompt": "Agricultural trade show emblem: a bold hexagon badge filled deep green (#1B4332) with a harvest-gold (#F4A100) wheat stalk crossed with a gear, the words \"MIDAMERICA EXPO\" in heavy condensed capitals in white and \"AG & EQUIPMENT 2027\" in small gold letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "5610a1b1-9e4a-410d-b8ba-91a6763d13bc",
+    "createdAt": "2026-10-21T20:39:20.539Z"
+  },
+  {
+    "id": "construction",
+    "file": "construction.png",
+    "raw": "construction-raw.png",
+    "alt": "Ironline Builders · Riverside Bridge Project logo",
+    "vertical": "construction",
+    "model": "ideogram/v4.0",
+    "prompt": "Construction company emblem: a bold shield badge filled charcoal black (#1C1C1C) with a safety-yellow (#F2B705) steel I-beam and bridge-truss mark, the word \"IRONLINE\" in heavy industrial block capitals in white and \"BUILDERS\" in small yellow letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "baa808b7-809e-4983-9ef4-2ec00c1e2ccd",
+    "createdAt": "2026-10-21T20:39:43.322Z"
+  },
+  {
+    "id": "utility-crews",
+    "file": "utility-crews.png",
+    "raw": "utility-crews-raw.png",
+    "alt": "Meridian Power · Storm Response Lodging logo",
+    "vertical": "utility-crews",
+    "model": "ideogram/v4.0",
+    "prompt": "Utility company emblem: a bold circular badge filled deep navy (#0B2545) with a sky-blue (#13B5EA) power-line tower and a yellow (#F5D547) lightning bolt, the word \"MERIDIAN\" in heavy condensed capitals in white and \"POWER CO-OP\" in small blue letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "f5373e42-3f17-42a1-857a-91a5c1304e77",
+    "createdAt": "2026-10-21T20:40:00.457Z"
+  },
+  {
+    "id": "film-production",
+    "file": "film-production.png",
+    "raw": "film-production-raw.png",
+    "alt": "Silverlake Studios · On Location in Savannah logo",
+    "vertical": "film-production",
+    "model": "ideogram/v4.0",
+    "prompt": "Film studio emblem: a rounded-square badge filled near-black (#141414) with a white film-camera and clapperboard mark and a red (#E63946) circle like a recording light, the word \"SILVERLAKE\" in condensed bold capitals in white and \"STUDIOS\" in small red letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "cf3dda7b-f898-42da-985c-f25890525658",
+    "createdAt": "2026-10-21T20:40:16.855Z"
+  },
+  {
+    "id": "hospital-families",
+    "file": "hospital-families.png",
+    "raw": "hospital-families-raw.png",
+    "alt": "St. Brielle Children’s Hospital · Family Stays logo",
+    "vertical": "hospital-families",
+    "model": "ideogram/v4.0",
+    "prompt": "Children’s hospital emblem: a soft rounded-square badge filled deep teal (#0E4D64) with a gentle heart-and-house mark in light teal (#4FB0C6) and a small peach (#F3B391) star, the words \"ST. BRIELLE\" in friendly rounded sans-serif capitals in white and \"CHILDREN’S HOSPITAL\" in small letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "d4ad2eb5-ec78-43e9-945c-a83076472141",
+    "createdAt": "2026-10-21T20:40:39.762Z"
+  },
+  {
+    "id": "travel-nursing",
+    "file": "travel-nursing.png",
+    "raw": "travel-nursing-raw.png",
+    "alt": "Northstar Travel Nurse Housing 2027 logo",
+    "vertical": "travel-nursing",
+    "model": "ideogram/v4.0",
+    "prompt": "Healthcare staffing emblem: a circular badge filled deep navy (#1D3557) with a bold north-star mark in coral (#E76F51) inside a thin light-aqua (#A8DADC) ring, the word \"NORTHSTAR\" in modern bold sans-serif capitals in white and \"TRAVEL NURSING\" in small aqua letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "77504c78-021d-49cb-bd35-901765da4d0f",
+    "createdAt": "2026-10-21T20:41:02.194Z"
+  },
+  {
+    "id": "funeral",
+    "file": "funeral.png",
+    "raw": "funeral-raw.png",
+    "alt": "Whitmore Family Funeral Home · Guest Lodging logo",
+    "vertical": "funeral",
+    "model": "ideogram/v4.0",
+    "prompt": "Funeral home emblem, respectful and understated: an oval medallion filled deep slate (#2F3E46) with a fine sage (#A3B18A) border and a single delicate olive branch in soft cream (#EDE6DB), the word \"WHITMORE\" in a refined classic serif in cream and \"FAMILY FUNERAL HOME\" in tiny letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "ea928e85-9fd0-4239-8619-0add624a3b0a",
+    "createdAt": "2026-10-21T20:41:31.413Z"
+  },
+  {
+    "id": "family-reunion",
+    "file": "family-reunion.png",
+    "raw": "family-reunion-raw.png",
+    "alt": "The Okafor Family Reunion 2027 logo",
+    "vertical": "family-reunion",
+    "model": "ideogram/v4.0",
+    "prompt": "Family reunion emblem: a round badge filled deep plum (#6A1E55) with a warm orange (#F4A261) family-tree mark of interlocking leaves, the words \"OKAFOR FAMILY\" in friendly bold capitals in cream (#FFE8D6) arched at the top and \"REUNION 2027\" in small letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "14e02d99-0715-4549-85b2-55f6f5b48530",
+    "createdAt": "2026-10-21T20:41:47.506Z"
+  },
+  {
+    "id": "faith",
+    "file": "faith.png",
+    "raw": "faith-raw.png",
+    "alt": "Grace Fellowship Annual Gathering 2027 logo",
+    "vertical": "faith",
+    "model": "ideogram/v4.0",
+    "prompt": "Faith community emblem: a circular badge filled deep indigo-charcoal (#2B2D42) with a simple warm-gold (#E9C46A) rising sun and dove mark, the words \"GRACE FELLOWSHIP\" in an elegant serif in soft white arched at the top and \"ANNUAL GATHERING\" in small gold letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "6096d1e5-6c60-4d72-9372-5a53c505c353",
+    "createdAt": "2026-10-21T20:42:16.272Z"
+  },
+  {
+    "id": "commencement",
+    "file": "commencement.png",
+    "raw": "commencement-raw.png",
+    "alt": "Westbrook University Commencement Weekend 2027 logo",
+    "vertical": "commencement",
+    "model": "ideogram/v4.0",
+    "prompt": "University emblem: a classic shield filled deep crimson (#7A0019) with a gold (#FFCC33) open book and laurel wreath, the word \"WESTBROOK\" in a bold traditional serif in white on a gold banner and \"UNIVERSITY · 1891\" in small letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "fb77e55b-6440-430b-a445-8a61bad56f74",
+    "createdAt": "2026-10-21T20:42:38.640Z",
+    "fileOnDark": "commencement-dark.png"
+  },
+  {
+    "id": "music-festival",
+    "file": "music-festival.png",
+    "raw": "music-festival-raw.png",
+    "alt": "Riverbend Music Festival 2027 logo",
+    "vertical": "music-festival",
+    "model": "ideogram/v4.0",
+    "prompt": "Music festival emblem: a round badge filled deep violet night (#231942) with a hot pink (#FF5D8F) and yellow (#FFD166) sunset over a river with sound-wave lines, the word \"RIVERBEND\" in bold condensed capitals in white arched at the top and \"MUSIC FESTIVAL\" in small yellow letter-spaced capitals below. Professional event logo, flat vector style, crisp clean edges, bold simple shapes, high contrast, perfectly spelled lettering, centered with generous margin on a perfectly flat plain pure white background. The emblem is self-contained with its own solid filled shape so it reads on both light and dark backgrounds. No mockup, no paper texture, no shadows, no gradients in the background, no extra text.",
+    "requestId": "869612f4-efbf-4d23-aba1-bca9a50f5b6e",
+    "createdAt": "2026-10-21T20:42:55.601Z"
+  }
+]

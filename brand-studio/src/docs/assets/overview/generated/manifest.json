@@ -1,0 +1,20 @@
+[
+  {
+    "id": "banner-atrium",
+    "file": "banner-atrium.jpg",
+    "kind": "photo",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Modern hotel atrium lobby in soft morning light, white stone floors, pale wood, tall windows with sheer curtains, a few green plants, warm white and very pale blue tones, dreamy soft bokeh. Ultra-wide 21:9 website banner background. Bright, airy, sunlit and soft; gentle shallow depth of field; calm, low-detail light area on the left third for overlaid headline text; nothing important in the center or right where product screenshots will be placed. Photoreal. No people in focus, no faces, no text, no letters, no logos, no signage, no screens, no devices.",
+    "requestId": "ec8ae3e3-49a0-494c-bceb-a76dcd929d87",
+    "createdAt": "2026-10-21T23:12:39.576Z"
+  },
+  {
+    "id": "banner-arrival",
+    "file": "banner-arrival.jpg",
+    "kind": "photo",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Sunlit entrance terrace of a modern resort hotel at golden morning hour, rolling suitcases softly out of focus, potted olive trees, pale stone and warm white tones, hazy soft light, airy. Ultra-wide 21:9 website banner background. Bright, airy, sunlit and soft; gentle shallow depth of field; calm, low-detail light area on the left third for overlaid headline text; nothing important in the center or right where product screenshots will be placed. Photoreal. No people in focus, no faces, no text, no letters, no logos, no signage, no screens, no devices.",
+    "requestId": "e389cf39-107d-4543-88c6-4a85c98b0643",
+    "createdAt": "2026-10-21T23:12:39.585Z"
+  }
+]

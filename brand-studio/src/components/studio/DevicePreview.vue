@@ -1,6 +1,11 @@
 <script setup>
 // DevicePreview — the live, branded booking page inside an <iframe> (the
 // Preview Host, see preview/bridge.js), framed as desktop / tablet / phone.
+// Desktop and tablet sit in the realistic ChromeWindow (sized 1:1 with the
+// page, like a real browser screenshot), optionally on a backdrop (`backdrop`):
+// 'home' = the homepage's airy look — light canvas + tilted, softly blurred
+// Higgsfield lifestyle tiles (Option E art); 'lavender' / 'dune' = Higgsfield
+// wallpapers.
 //
 // The iframe gets a REAL viewport width (1280 / 768 / 390) so Presto's media
 // queries and Quasar's $q.screen behave exactly as on a device; it is then
@@ -10,6 +15,9 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useProjectStore } from '../../stores/project.js'
 import { previewHostUrl, connectPreviewFrame } from '../../preview/bridge.js'
 import { PAGE_META } from '../../models/pageConfig.js'
+import ChromeWindow from '../devices/ChromeWindow.vue'
+import { STUDIO_WALLPAPERS } from '../../assets/studio/index.js'
+import { OPTION_E_ART } from '../../assets/marketing/option-e/index.js'
 
 const props = defineProps({
   page: { type: String, default: 'landing' },
@@ -18,15 +26,19 @@ const props = defineProps({
   src: { type: String, default: '' },
   padding: { type: Number, default: 28 },
   connectTimeoutMs: { type: Number, default: 12000 },
+  // Behind the browser window: '' (none) | 'home' | 'lavender' | 'dune'
+  backdrop: { type: String, default: '' },
 })
 const emit = defineEmits(['update:page', 'ready'])
 
 const store = useProjectStore()
 const doc = computed(() => props.project || store.project)
 
+// chrome = ChromeWindow tab strip + toolbar in design px (scales with the page).
+const CHROME_H = 85
 const DEVICES = {
-  desktop: { w: 1280, h: null, chrome: 36, bezel: 0, label: 'Desktop' },
-  tablet: { w: 768, h: 1024, chrome: 36, bezel: 0, label: 'Tablet' },
+  desktop: { w: 1280, h: null, chrome: CHROME_H, bezel: 0, label: 'Desktop' },
+  tablet: { w: 768, h: 1024, chrome: CHROME_H, bezel: 0, label: 'Tablet' },
   mobile: { w: 390, h: 844, chrome: 0, bezel: 12, label: 'Mobile' },
 }
 const spec = computed(() => DEVICES[props.device] || DEVICES.desktop)
@@ -47,13 +59,13 @@ onBeforeUnmount(() => ro?.disconnect())
 const layout = computed(() => {
   const s = spec.value
   const availW = Math.max(200, box.value.w - props.padding * 2 - s.bezel * 2)
-  const availH = Math.max(200, box.value.h - props.padding * 2 - s.bezel * 2 - s.chrome)
+  const availH = Math.max(200, box.value.h - props.padding * 2 - s.bezel * 2)
   if (!s.h) {
-    // Desktop: fit width, fill the available height.
+    // Desktop: fit width, fill the available height (minus the scaled chrome).
     const scale = Math.min(1, availW / s.w)
-    return { scale, w: s.w, h: Math.round(availH / scale) }
+    return { scale, w: s.w, h: Math.round((availH - s.chrome * scale) / scale) }
   }
-  const scale = Math.min(1, availW / s.w, availH / s.h)
+  const scale = Math.min(1, availW / s.w, availH / (s.h + s.chrome))
   return { scale, w: s.w, h: s.h }
 })
 const zoom = computed(() => `${Math.round(layout.value.scale * 100)}%`)
@@ -121,19 +133,41 @@ const urlLabel = computed(() => {
   const path = props.page === 'landing' ? '' : `/${props.page === 'browse' ? 'hotels' : props.page}`
   return `demo.eventpipe.com/${slug}${path}`
 })
+const pageTitle = computed(() => doc.value?.event?.name || 'Booking page')
+const favicon = computed(() => doc.value?.brandKit?.logo?.src || '')
+const wallpaper = computed(() => STUDIO_WALLPAPERS[props.backdrop] || '')
+// Homepage mosaic, framing the window: tiles peek out around its edges.
+const HOME_TILES = [
+  { art: 'tile-team', x: -3, y: 6, w: 22, r: -7, ratio: '3 / 4' },
+  { art: 'tile-room', x: 14, y: -4, w: 13, r: 4, blur: 2, ratio: '4 / 3' },
+  { art: 'tile-wedding', x: -4, y: 58, w: 24, r: 5, ratio: '4 / 3' },
+  { art: 'tile-breakfast', x: 12, y: 88, w: 12, r: -8, blur: 2.5, ratio: '4 / 3' },
+  { art: 'tile-conference', x: 80, y: -3, w: 23, r: 6, ratio: '4 / 3' },
+  { art: 'tile-nurses', x: 68, y: 90, w: 10, r: -5, blur: 3, ratio: '3 / 4' },
+  { art: 'tile-crew', x: 84, y: 40, w: 19, r: -5, ratio: '3 / 4' },
+  { art: 'tile-reunion', x: 86, y: 80, w: 15, r: 6, blur: 1.5, ratio: '3 / 4' },
+]
+const homeTiles = computed(() => (props.backdrop === 'home' ? HOME_TILES.filter((t) => OPTION_E_ART[t.art]) : []))
 const frameTitle = computed(() => `Branded booking page preview — ${PAGE_META[props.page]?.label || props.page}, ${spec.value.label.toLowerCase()}`)
 </script>
 
 <template>
-  <div ref="stage" class="dvp" :class="`dvp--${device}`">
-    <div class="dvp__device" :class="`dvp__device--${device}`">
-      <!-- Browser chrome (desktop / tablet) -->
-      <div v-if="spec.chrome" class="dvp__chrome" :style="{ width: viewportStyle.width }" aria-hidden="true">
-        <span class="dvp__dots"><i /><i /><i /></span>
-        <span class="dvp__url"><q-icon name="lock" size="12px" /> {{ urlLabel }}</span>
-        <span class="dvp__zoom">{{ zoom }}</span>
-      </div>
-      <div v-else class="dvp__notch" aria-hidden="true" />
+  <div ref="stage" class="dvp" :class="[`dvp--${device}`, { 'dvp--backdrop': wallpaper, 'dvp--home': backdrop === 'home' }]" :style="wallpaper ? { backgroundImage: `url(${wallpaper})` } : undefined">
+    <div v-if="homeTiles.length" class="dvp__tiles" aria-hidden="true">
+      <span
+        v-for="t in homeTiles" :key="t.art" class="dvp__tile"
+        :style="{ left: `${t.x}%`, top: `${t.y}%`, width: `${t.w}%`, aspectRatio: t.ratio, transform: `rotate(${t.r}deg)`, filter: `blur(${(t.blur || 0) + 3}px) grayscale(0.55) saturate(0.7)` }"
+      ><img :src="OPTION_E_ART[t.art]" alt="" loading="lazy" /></span>
+    </div>
+    <span v-if="spec.chrome" class="dvp__zoom" aria-hidden="true">{{ zoom }}</span>
+    <component
+      :is="spec.chrome ? ChromeWindow : 'div'"
+      class="dvp__device"
+      :class="`dvp__device--${device}`"
+      v-bind="spec.chrome ? { url: urlLabel, title: pageTitle, favicon, faviconColor: doc?.brandKit?.colors?.primary, designWidth: spec.w, label: `${spec.label} browser preview` } : {}"
+      :style="spec.chrome ? { width: viewportStyle.width } : undefined"
+    >
+      <div v-if="!spec.chrome" class="dvp__notch" aria-hidden="true" />
 
       <div class="dvp__viewport" :style="viewportStyle">
         <iframe
@@ -165,7 +199,7 @@ const frameTitle = computed(() => `Branded booking page preview — ${PAGE_META[
           </div>
         </transition>
       </div>
-    </div>
+    </component>
   </div>
 </template>
 
@@ -173,13 +207,19 @@ const frameTitle = computed(() => `Branded booking page preview — ${PAGE_META[
 .dvp { position: relative; width: 100%; height: 100%; min-height: 0; display: flex; align-items: flex-start; justify-content: center; padding-top: v-bind('props.padding + "px"'); overflow: hidden; }
 .dvp--mobile, .dvp--tablet { align-items: center; padding-top: 0; }
 .dvp__device { display: flex; flex-direction: column; align-items: center; }
-.dvp__device--desktop, .dvp__device--tablet { border-radius: 10px; overflow: hidden; box-shadow: var(--bs-shadow-3); background: var(--bs-surface); }
-
-.dvp__chrome { height: 36px; display: grid; grid-template-columns: 60px minmax(0, 1fr) 60px; align-items: center; padding: 0 12px; gap: 8px; background: #EEF0F4; border-bottom: 1px solid var(--bs-line); box-sizing: border-box; }
-.dvp__dots { display: flex; gap: 6px; }
-.dvp__dots i { width: 10px; height: 10px; border-radius: 50%; background: #D1D5DB; }
-.dvp__url { justify-self: center; display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 4px 12px; border-radius: 6px; background: #fff; font: 400 0.75rem/1.2 var(--bs-font); color: var(--bs-ink-soft); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.dvp__zoom { justify-self: end; font: 700 0.6875rem/1 var(--bs-font); color: var(--bs-ink-faint); }
+.dvp--backdrop { background-size: cover; background-position: center; }
+/* 'home' — the homepage (Option E) look: airy white canvas, soft accent glows,
+   tilted lifestyle tiles framing the window. */
+.dvp--home { background: radial-gradient(60% 50% at 12% 20%, rgb(124 58 237 / 0.07), transparent 70%), radial-gradient(55% 45% at 88% 85%, rgb(37 99 235 / 0.07), transparent 70%), #F7F8FB; }
+/* Kept quiet so the tiles never compete with the example page in the window:
+   blurred, desaturated, low opacity, washed toward the canvas. */
+.dvp__tiles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.dvp__tiles::after { content: ''; position: absolute; inset: 0; background: rgb(247 248 251 / 0.35); }
+.dvp__tile { position: absolute; display: block; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 24px rgb(15 23 42 / 0.06); opacity: 0.32; }
+.dvp__tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dvp__device { position: relative; z-index: 1; }
+.dvp__device--desktop, .dvp__device--tablet { flex: none; display: block; }
+.dvp__zoom { position: absolute; right: 12px; bottom: 10px; z-index: 1; padding: 3px 8px; border-radius: 999px; background: rgb(255 255 255 / 0.8); backdrop-filter: blur(6px); font: 700 0.6875rem/1 var(--bs-font); color: var(--bs-ink-soft); }
 
 .dvp__device--mobile { padding: 12px; border-radius: 52px; background: #0B0F19; box-shadow: var(--bs-shadow-3), inset 0 0 0 2px #2A2F3A; position: relative; }
 .dvp__device--mobile .dvp__viewport { border-radius: 40px; }

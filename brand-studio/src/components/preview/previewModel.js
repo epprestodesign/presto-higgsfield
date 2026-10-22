@@ -28,7 +28,6 @@ export function heroProps(project, { size = 'landing' } = {}) {
     tagline: hero.tagline || '',
     dates: eventDates(project),
     location: locationLabel(project?.event),
-    ctaLabel: size === 'landing' ? hero.ctaLabel || '' : '',
     showLogo: hero.showLogo !== false,
     showDates: hero.showDates !== false,
     size,

@@ -5,11 +5,13 @@
 // the right (BrandHero) and the autosaved draft are always current. Fields
 // validate on blur and on Continue; Continue with errors shows an error
 // summary and moves focus to the first invalid field.
-import { ref, reactive, computed, nextTick, useId } from 'vue'
+import { ref, reactive, computed, nextTick, useId, watch } from 'vue'
 import { useProjectStore } from '../../stores/project.js'
 import { EVENT_CATEGORIES, validateEvent, validateOrganizer, normalizeWebsiteUrl, formatDateRange, locationLabel } from '../../models/event.js'
+import { verticalsForCategory, getVertical } from '../../data/verticals/index.js'
+import { getSampleEvent, ALL_EXAMPLES } from '../../data/sampleEvents.js'
 import { starterContent } from '../../models/content.js'
-import BrandHero from '../brand/BrandHero.vue'
+import BannerPreviews from '../brand/BannerPreviews.vue'
 import AssetDropzone from './AssetDropzone.vue'
 import ColorRoleField from '../brand-kit/ColorRoleField.vue'
 
@@ -19,7 +21,7 @@ const props = defineProps({
   // Show every error immediately (as if Continue had been pressed).
   showErrors: { type: Boolean, default: false },
 })
-const emit = defineEmits(['complete', 'cancel'])
+const emit = defineEmits(['complete', 'cancel', 'step'])
 
 const project = useProjectStore()
 const ev = computed(() => project.event)
@@ -41,6 +43,8 @@ const LABELS = {
 const ATTENDANCE = ['Under 100', '100–500', '500–1,000', '1,000–5,000', '5,000+']
 
 const step = ref(Math.min(Math.max(props.initialStep, 0), STEPS.length - 1))
+// Deep links (#/intake?step=N) follow the current step; 0-based here.
+watch(step, (n) => emit('step', n), { immediate: true })
 const current = computed(() => STEPS[step.value])
 const touched = reactive({})
 const attempted = reactive(Object.fromEntries(STEPS.map((s) => [s.id, props.showErrors])))
@@ -111,6 +115,41 @@ function onRange(v) {
   if (typeof v === 'string') setEvent({ startDate: v, endDate: v })
   else setEvent({ startDate: v.from, endDate: v.to })
   touched.startDate = touched.endDate = true
+}
+
+// Industry vertical (refines the event type; drives examples + tap-to-fill).
+const verticalOptions = computed(() => verticalsForCategory(ev.value.category))
+// If the name is still one of the example names (tap-to-fill), follow the new
+// industry's example; a name the organizer typed is never touched.
+function chooseVertical(id) {
+  const patch = { vertical: id }
+  const v = getVertical(id)
+  const sample = v && getSampleEvent(v.sample || v.id)
+  if (sample && ALL_EXAMPLES.some((x) => x.event.name === ev.value.name)) patch.name = sample.event.name
+  setEvent(patch)
+}
+function pickCategory(value) {
+  setEvent({ category: value })
+  chooseVertical(verticalsForCategory(value)[0]?.id || '')
+  blur('category')
+}
+const vertical = computed(() => getVertical(ev.value.vertical) || verticalOptions.value[0] || null)
+// The vertical's example brand kit (Higgsfield-generated logo, palette, photos).
+const example = computed(() => {
+  if (!vertical.value) return null
+  const s = getSampleEvent(vertical.value.sample || vertical.value.id)
+  return s?.brandKit?.logo ? s : null
+})
+const exampleApplied = computed(() => !!example.value && bk.value.logo?.src === example.value.brandKit.logo.src)
+function useExample() {
+  const kit = example.value.brandKit
+  project.setLogo({ ...kit.logo })
+  project.updateBrandKit({ logoOnDark: kit.logoOnDark ? { ...kit.logoOnDark } : null, bannerImageId: kit.bannerImageId || null })
+  project.setColor('primary', kit.colors.primary)
+  project.setColor('secondary', kit.colors.secondary)
+  if (kit.colors.accent) project.setColor('accent', kit.colors.accent)
+  for (const img of kit.imagery || []) if (!bk.value.imagery.some((a) => a.id === img.id)) project.addImage({ ...img })
+  if (kit.heroImageId) project.setHeroImage(kit.heroImageId)
 }
 
 // Brand step uploads
@@ -224,7 +263,7 @@ const savedLabel = computed(() => (project.lastSavedAt ? 'Progress saved on this
                     :value="c.value"
                     :checked="ev.category === c.value"
                     :aria-describedby="`${uidBase}-cat-${c.value}`"
-                    @change="setEvent({ category: c.value }); blur('category')"
+                    @change="pickCategory(c.value)"
                   />
                   <span class="iw__cat-icon"><q-icon :name="c.icon" size="22px" /></span>
                   <span class="iw__cat-text">
@@ -235,6 +274,18 @@ const savedLabel = computed(() => (project.lastSavedAt ? 'Progress saved on this
                 </label>
               </div>
               <p v-if="showErr('category')" :id="`${uidBase}-cat-err`" class="iw__err" role="alert">{{ showErr('category') }}</p>
+            </fieldset>
+
+            <fieldset v-if="verticalOptions.length > 1" class="iw__fieldset iw__verticals" data-field="vertical">
+              <legend class="iw__legend">Which fits best?</legend>
+              <p class="iw__help">We’ll show an example brand for your industry on the next steps.</p>
+              <div class="iw__vchips" role="radiogroup" aria-label="Industry">
+                <button
+                  v-for="v in verticalOptions" :key="v.id" type="button" role="radio"
+                  class="iw__vchip bs-focusable" :aria-checked="ev.vertical === v.id"
+                  @click="chooseVertical(v.id)"
+                ><q-icon :name="v.icon" size="16px" /> {{ v.label }}</button>
+              </div>
             </fieldset>
           </div>
 
@@ -315,6 +366,23 @@ const savedLabel = computed(() => (project.lastSavedAt ? 'Progress saved on this
                 <q-icon name="lock" size="16px" />
                 <span>With your approval on the next screen, we’ll read your <strong>public</strong> homepage to suggest your logo, colors and fonts. We never sign in or read private pages.</span>
               </p>
+            </div>
+
+            <div v-if="example" class="iw__example" :class="{ 'is-applied': exampleApplied }">
+              <div class="iw__example-logo"><img :src="example.brandKit.logo.src" :alt="`Example logo for ${vertical.label}`" /></div>
+              <div class="iw__example-body">
+                <p class="bs-eyebrow">Example · {{ vertical.label }}</p>
+                <p class="iw__example-title">{{ example.event.name }}</p>
+                <div class="iw__example-swatches" aria-hidden="true">
+                  <span v-for="c in [example.brandKit.colors.primary, example.brandKit.colors.secondary, example.brandKit.colors.accent]" :key="c" :style="{ background: c }" />
+                  <img v-for="img in (example.brandKit.imagery || []).slice(0, 3)" :key="img.id" :src="img.src" alt="" />
+                </div>
+              </div>
+              <q-btn
+                unelevated no-caps class="bs-btn" :class="exampleApplied ? 'bs-btn--ghost' : 'bs-btn--ai'"
+                :icon="exampleApplied ? 'check' : 'auto_fix_high'" :label="exampleApplied ? 'Example in use' : 'Use this example'"
+                data-autofill-example @click="useExample"
+              />
             </div>
 
             <div class="iw__group">
@@ -413,15 +481,10 @@ const savedLabel = computed(() => (project.lastSavedAt ? 'Progress saved on this
         </button>
         <div class="iw__preview-body">
           <p class="bs-eyebrow iw__preview-eyebrow">Live preview</p>
-          <div class="iw__frame">
-            <div class="iw__frame-bar" aria-hidden="true"><span /><span /><span /><em>book.eventpipe.com/{{ project.project.publishing.slug || 'your-event' }}</em></div>
-            <brand-hero v-bind="hero" size="card" :heading-level="3" />
-            <div class="iw__frame-search" aria-hidden="true">
-              <span><q-icon name="place" size="16px" /> {{ hero.location || 'Location' }}</span>
-              <span><q-icon name="event" size="16px" /> {{ hero.dates || 'Dates' }}</span>
-              <span class="iw__frame-btn" :style="{ background: bk.colors.primary }">Search</span>
-            </div>
-          </div>
+          <banner-previews
+            v-bind="hero" :pages="['landing']" :slug="project.project.publishing.slug || 'your-event'"
+            :fallback-image="example?.brandKit?.imagery?.[0] || null"
+          />
           <ul class="iw__facts">
             <li><q-icon name="badge" size="18px" /><span><strong>Name</strong>{{ ev.name || '—' }}</span></li>
             <li><q-icon name="event" size="18px" /><span><strong>Dates</strong>{{ hero.dates || '—' }}</span></li>
@@ -523,13 +586,6 @@ button.iw__step-btn:hover .iw__step-label { text-decoration: underline; }
 .iw__preview { position: sticky; top: 24px; }
 .iw__preview-toggle { display: none; }
 .iw__preview-eyebrow { margin-bottom: 10px; }
-.iw__frame { border-radius: var(--bs-radius-lg); overflow: hidden; background: #fff; box-shadow: var(--bs-shadow-3); border: 1px solid var(--bs-line); }
-.iw__frame-bar { display: flex; align-items: center; gap: 6px; padding: 9px 12px; background: var(--bs-surface-2); border-bottom: 1px solid var(--bs-line); }
-.iw__frame-bar span { width: 9px; height: 9px; border-radius: 50%; background: var(--bs-line-strong); }
-.iw__frame-bar em { margin-left: 8px; font: 400 0.75rem var(--bs-font); font-style: normal; color: var(--bs-ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.iw__frame-search { display: flex; gap: 8px; align-items: center; padding: 10px 12px; font-size: 0.75rem; color: var(--bs-ink-soft); }
-.iw__frame-search > span { display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; border: 1px solid var(--bs-line); border-radius: 4px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.iw__frame-search > .iw__frame-btn { flex: none; border: 0; color: #fff; font-weight: 700; }
 .iw__facts { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .iw__facts li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.875rem; color: var(--bs-ink); }
 .iw__facts li > .q-icon { color: var(--bs-ink-soft); margin-top: 1px; }
@@ -570,4 +626,19 @@ button.iw__step-btn:hover .iw__step-label { text-decoration: underline; }
   .iw__actions-right { flex-direction: column-reverse; align-items: stretch; margin-left: 0; }
   .iw__actions .q-btn { width: 100%; }
 }
+.iw__verticals { margin-top: 18px; }
+.iw__vchips { display: flex; flex-wrap: wrap; gap: 8px; }
+.iw__vchip { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--bs-line); background: var(--bs-surface); font: 700 0.875rem var(--bs-font); color: var(--bs-ink); cursor: pointer; }
+.iw__vchip .q-icon { color: var(--bs-accent); }
+.iw__vchip[aria-checked='true'] { background: var(--bs-ink); color: #fff; border-color: var(--bs-ink); }
+.iw__vchip[aria-checked='true'] .q-icon { color: #fff; }
+.iw__example { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px; border-radius: var(--bs-radius-md); border: 1px solid var(--bs-accent-line); background: var(--bs-accent-soft); }
+.iw__example.is-applied { border-color: var(--bs-line); background: var(--bs-surface); }
+.iw__example-logo { width: 72px; height: 72px; display: grid; place-items: center; border-radius: var(--bs-radius-sm); background: repeating-conic-gradient(#F1F5F9 0% 25%, #fff 0% 50%) 0 0 / 12px 12px; }
+.iw__example-logo img { max-width: 64px; max-height: 64px; object-fit: contain; }
+.iw__example-title { margin: 4px 0 6px; font: 700 0.9375rem var(--bs-font); color: var(--bs-ink); }
+.iw__example-swatches { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.iw__example-swatches span { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgb(0 0 0 / 0.08); }
+.iw__example-swatches img { width: 44px; height: 24px; object-fit: cover; border-radius: 4px; }
+@media (max-width: 600px) { .iw__example { grid-template-columns: 56px minmax(0, 1fr); } .iw__example .q-btn { grid-column: 1 / -1; } .iw__example-logo { width: 56px; height: 56px; } }
 </style>

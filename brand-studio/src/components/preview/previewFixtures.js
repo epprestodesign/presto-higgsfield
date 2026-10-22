@@ -3,8 +3,8 @@ import { sampleProject } from '../../data/sampleEvents.js'
 import { placementsFromPreset } from '../../models/ads.js'
 import { conceptsFor } from '../../stories/_helpers.js'
 
-// Concept index per sample (0–5: signature centered/split, energy band/angled,
-// premium editorial/framed) — each event shown in its natural direction.
+// Concept index per sample (0–5: signature Presto Banner / Brand Field, energy
+// Duotone / Abstract, premium Soft Focus / Brand Tint) — all centered.
 const NATURAL_CONCEPT = { heartland: 2, fintech: 1, wedding: 4, lakeshore: 3 }
 
 /**

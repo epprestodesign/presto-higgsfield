@@ -6,6 +6,24 @@
 const files = import.meta.glob('./*.jpg', { eager: true, query: '?url', import: 'default' })
 const url = (name) => files[`./${name}.jpg`]
 
+// Banner backgrounds generated with EventPipe's Higgsfield API account
+// (scripts/hf-generate-banners.mjs), following the Presto banner system.
+import generatedManifest from './generated/manifest.json'
+const generatedFiles = import.meta.glob('./generated/*.{jpg,png,webp}', { eager: true, query: '?url', import: 'default' })
+const MODEL_NAMES = { 'marketing-studio/image/flare': 'Marketing Studio Image 2.5 Flare', 'recraft/v4.1/text-to-image': 'Recraft V4.1', 'ideogram/v4.0': 'Ideogram 4.0' }
+const GENERATED = generatedManifest
+  .filter((g) => generatedFiles[`./generated/${g.file}`])
+  .map((g) => ({
+    id: g.id,
+    tags: [g.event, 'generated', g.kind],
+    alt: g.alt,
+    kind: g.kind === 'abstract' ? 'pattern' : 'photo',
+    src: generatedFiles[`./generated/${g.file}`],
+    credit: `Generated with Higgsfield · ${MODEL_NAMES[g.model] || g.model}`,
+    creditUrl: 'https://higgsfield.ai',
+    generated: true,
+  }))
+
 const RAW = [
   { id: 'soccer-night-match', tags: ['sports', 'soccer'], alt: 'Players on a floodlit soccer field at night', by: 'Abigail Keenan', unsplashId: '8-s5QuUBtyM' },
   { id: 'soccer-stadium-lights', tags: ['sports', 'soccer'], alt: 'Green soccer field under bright stadium lights', by: 'Jonathan Petersson', unsplashId: 'ARU18GpF6QQ' },
@@ -23,12 +41,15 @@ const RAW = [
   { id: 'nashville-river-night', tags: ['city', 'nashville'], alt: 'Downtown Nashville and the Cumberland River at night', by: 'Brice Cooper', unsplashId: '6PtSoSxo1bU' },
 ]
 
-export const IMAGERY = RAW.map((img) => ({
-  ...img,
-  src: url(img.id),
-  credit: `Photo by ${img.by} on Unsplash`,
-  creditUrl: `https://unsplash.com/photos/${img.unsplashId}`,
-}))
+export const IMAGERY = [
+  ...GENERATED,
+  ...RAW.map((img) => ({
+    ...img,
+    src: url(img.id),
+    credit: `Photo by ${img.by} on Unsplash`,
+    creditUrl: `https://unsplash.com/photos/${img.unsplashId}`,
+  })),
+]
 
 export const getImage = (id) => IMAGERY.find((img) => img.id === id) || null
 export const imagesTagged = (tag) => IMAGERY.filter((img) => img.tags.includes(tag))

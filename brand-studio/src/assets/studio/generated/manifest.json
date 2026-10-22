@@ -1,0 +1,20 @@
+[
+  {
+    "id": "wallpaper-lavender",
+    "file": "wallpaper-lavender.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Soft abstract wallpaper of large flowing translucent silk ribbons in pale lavender, periwinkle blue and warm white, gentle diffused light, subtle depth, macOS-style. Ultra-wide desktop wallpaper. Calm, minimal, low contrast, mostly soft empty space so a browser window in front stays the focus. No text, no letters, no logos, no UI, no devices, no people.",
+    "requestId": "7cada6f6-a7e8-4235-a3a6-a2c21ec21960",
+    "createdAt": "2026-10-21T22:12:46.660Z"
+  },
+  {
+    "id": "wallpaper-dune",
+    "file": "wallpaper-dune.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Soft abstract wallpaper of smooth layered dunes in pale sand, mist blue and warm white, gentle gradient light, serene and airy, macOS-style. Ultra-wide desktop wallpaper. Calm, minimal, low contrast, mostly soft empty space so a browser window in front stays the focus. No text, no letters, no logos, no UI, no devices, no people.",
+    "requestId": "19b429e3-ca09-4dd2-b10e-2d88af5ed105",
+    "createdAt": "2026-10-21T22:12:46.841Z"
+  }
+]

@@ -6,7 +6,7 @@
 // time limits), extracts logo/colors/fonts, and returns a suggestion. Nothing
 // is applied until the organizer approves it. Same return shape as here.
 import { normalizeWebsiteUrl } from '../../models/event.js'
-import { SAMPLE_EVENTS } from '../../data/sampleEvents.js'
+import { SAMPLE_EVENTS, ALL_EXAMPLES } from '../../data/sampleEvents.js'
 import { FONT_OPTIONS } from '../../theme/fonts.js'
 import { rgbToHex, shade } from '../../theme/color.js'
 
@@ -71,7 +71,7 @@ export async function extractBrandFromUrl(input, { onStage, delayMs = 650, signa
   }
 
   // Known sample sites → their real kits (demo realism).
-  const sample = SAMPLE_EVENTS.find((s) => s.event.websiteUrl && new URL(s.event.websiteUrl).hostname === hostname)
+  const sample = ALL_EXAMPLES.find((s) => s.event.websiteUrl && new URL(s.event.websiteUrl).hostname === hostname)
   if (sample) {
     const k = sample.brandKit
     return {

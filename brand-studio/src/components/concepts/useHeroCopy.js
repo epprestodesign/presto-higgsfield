@@ -14,7 +14,6 @@ export function useHeroCopy() {
       tagline: hero.tagline,
       dates: formatDateRange(ev.startDate, ev.endDate),
       location: locationLabel(ev),
-      ctaLabel: hero.ctaLabel,
       showLogo: hero.showLogo,
       showDates: hero.showDates,
     }

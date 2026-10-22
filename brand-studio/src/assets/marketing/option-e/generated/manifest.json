@@ -1,0 +1,189 @@
+[
+  {
+    "id": "tile-crew",
+    "file": "tile-crew.jpg",
+    "kind": "abstract",
+    "role": "tile",
+    "aspect": "3:4",
+    "model": "marketing-studio/image/flare",
+    "prompt": "A construction crew in hi-vis vests and hard hats under their arms checking in at a hotel front desk at dawn, golden light through tall windows, viewed from behind. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
+    "requestId": "6ddf2a50-b678-44df-91c9-a9e130e7e8a5",
+    "createdAt": "2026-10-21T22:08:53.956Z"
+  },
+  {
+    "id": "tile-wedding",
+    "file": "tile-wedding.jpg",
+    "kind": "abstract",
+    "role": "tile",
+    "aspect": "4:3",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Wedding guests mingling on a sunny hotel terrace with white linen, champagne glasses and greenery, shot from a distance with shallow depth of field. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
+    "requestId": "167fe58f-4a4f-49f6-9a19-ee4d42e08ac5",
+    "createdAt": "2026-10-21T22:08:54.022Z"
+  },
+  {
+    "id": "tile-team",
+    "file": "tile-team.jpg",
+    "kind": "abstract",
+    "role": "tile",
+    "aspect": "3:4",
+    "model": "marketing-studio/image/flare",
+    "prompt": "A youth soccer team with matching duffel bags arriving in a bright modern hotel lobby, seen from behind, kids and coach rolling bags across a light marble floor. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
+    "requestId": "874d1397-4308-415d-8a79-7b1a7db9d5a1",
+    "createdAt": "2026-10-21T22:08:54.029Z"
+  },
+  {
+    "id": "tile-conference",
+    "file": "tile-conference.jpg",
+    "kind": "abstract",
+    "role": "tile",
+    "aspect": "4:3",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Conference attendees with lanyards chatting in a bright airy hotel atrium with plants and skylights, blurred motion, morning light. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
+    "requestId": "b1da7b05-f1df-4bc5-b57f-335cd08abb3c",
+    "createdAt": "2026-10-21T22:09:00.131Z"
+  },
+  {
+    "id": "tile-reunion",
+    "file": "tile-reunion.jpg",
+    "kind": "abstract",
+    "role": "tile",
+    "aspect": "3:4",
+    "model": "marketing-studio/image/flare",
+    "prompt": "A multigenerational family reunion relaxing around a sparkling hotel pool, towels and sun hats, bright summer afternoon, people small in frame. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
+    "requestId": "b3933c98-796a-4a4e-8176-a6423e21547b",
+    "createdAt": "2026-10-21T22:09:22.819Z"
+  },
+  {
+    "id": "tile-golf",
+    "file": "tile-golf.jpg",
+    "kind": "abstract",
+    "role": "tile",
+    "aspect": "4:3",
+    "model": "marketing-studio/image/flare",
+    "prompt": "A group of friends with golf bags on a resort patio overlooking a green fairway, late afternoon sun, relaxed and candid, faces not visible. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
+    "requestId": "508625e6-d3fa-4efd-be5f-74cb394798f0",
+    "createdAt": "2026-10-21T22:09:23.212Z"
+  },
+  {
+    "id": "tile-festival",
+    "file": "tile-festival.jpg",
+    "kind": "abstract",
+    "role": "tile",
+    "aspect": "3:4",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Festival friends laughing on a hotel rooftop at golden hour with string lights and a city skyline softly blurred behind them. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
+    "requestId": "e507b813-6045-4146-a0c2-770327668045",
+    "createdAt": "2026-10-21T22:09:29.340Z"
+  },
+  {
+    "id": "tile-nurses",
+    "file": "tile-nurses.jpg",
+    "kind": "abstract",
+    "role": "tile",
+    "aspect": "3:4",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Two travel nurses in scrubs with rolling suitcases walking into a calm, sunlit hotel entrance, viewed from behind, soft morning light. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
+    "requestId": "f0d236cd-0614-41bb-9c3a-76ef9e93885b",
+    "createdAt": "2026-10-21T22:09:35.353Z"
+  },
+  {
+    "id": "tile-room",
+    "file": "tile-room.jpg",
+    "kind": "abstract",
+    "role": "tile",
+    "aspect": "4:3",
+    "model": "marketing-studio/image/flare",
+    "prompt": "A bright hotel room with crisp white bedding, an open suitcase with a team jersey folded on top, sunlight through sheer curtains, no people. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
+    "requestId": "5fa0215b-0f0f-4051-934d-afa403317555",
+    "createdAt": "2026-10-21T22:09:51.678Z"
+  },
+  {
+    "id": "tile-arrival",
+    "file": "tile-arrival.jpg",
+    "kind": "abstract",
+    "role": "tile",
+    "aspect": "3:4",
+    "model": "marketing-studio/image/flare",
+    "prompt": "A coach bus unloading a cheerful group with luggage at a sunny hotel entrance with palm trees, people small and soft in the frame. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
+    "requestId": "c08bdacc-061a-4abb-a967-ffa4741d1bb9",
+    "createdAt": "2026-10-21T22:09:52.447Z"
+  },
+  {
+    "id": "tile-breakfast",
+    "file": "tile-breakfast.jpg",
+    "kind": "abstract",
+    "role": "tile",
+    "aspect": "4:3",
+    "model": "marketing-studio/image/flare",
+    "prompt": "A hotel breakfast terrace with coffee cups, pastries and orange juice on a sunlit table, a group gathering softly blurred in the background. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
+    "requestId": "d3fdab95-7425-4017-94f1-fa9e9aaf469a",
+    "createdAt": "2026-10-21T22:09:58.153Z"
+  },
+  {
+    "id": "footer-skyline",
+    "file": "footer-skyline.jpg",
+    "kind": "photo",
+    "role": "footer",
+    "aspect": "21:9",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Ultra-wide panorama of a fictional, generic mid-size American downtown at blue hour: simple modern glass hotel towers and brick buildings with warm lit windows, a quiet river reflecting the lights, calm and cinematic, dark sky at the top for overlaid type. Not any real city; no recognizable landmarks, no famous towers, no signage. Bright, airy, sunlit lifestyle photograph with soft natural light, warm and optimistic, editorial travel photography. Faces soft, turned away or out of focus; people are never the sharp focal point. No text, no letters, no numbers, no logos, no brand names, no signage, no watermarks.",
+    "requestId": "564ff170-f0bf-48ae-ab18-dade83080d2d",
+    "createdAt": "2026-10-21T22:28:33.321Z"
+  },
+  {
+    "id": "step-1",
+    "file": "step-1.jpg",
+    "kind": "abstract",
+    "role": "step",
+    "aspect": "1:1",
+    "model": "marketing-studio/image/flare",
+    "prompt": "A modern hotel atrium with a sweeping curved glass roof and steel ribs, soft daylight, viewed from below, cool neutral tones. Softly out of focus, shallow depth of field, calm and uncluttered so a crisp interface can sit on top. No people in focus, no text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "3e5dbb51-553a-4031-9d83-ec22172fba25",
+    "createdAt": "2026-10-21T22:19:43.877Z"
+  },
+  {
+    "id": "step-3",
+    "file": "step-3.jpg",
+    "kind": "abstract",
+    "role": "step",
+    "aspect": "1:1",
+    "model": "marketing-studio/image/flare",
+    "prompt": "A warm hotel front desk and lobby with rolling luggage and a bell cart, pendant lights glowing, evening ambience. Softly out of focus, shallow depth of field, calm and uncluttered so a crisp interface can sit on top. No people in focus, no text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "866d33fd-84a7-4a94-a844-9e43ecbb4b6a",
+    "createdAt": "2026-10-21T22:19:44.090Z"
+  },
+  {
+    "id": "step-2",
+    "file": "step-2.jpg",
+    "kind": "abstract",
+    "role": "step",
+    "aspect": "1:1",
+    "model": "marketing-studio/image/flare",
+    "prompt": "A stadium concourse at dusk with warm floodlights and an open view toward a glowing pitch, long exposure light trails, deep blue sky. Softly out of focus, shallow depth of field, calm and uncluttered so a crisp interface can sit on top. No people in focus, no text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "0785c53d-19c4-4a35-9f65-98c62aa9d15f",
+    "createdAt": "2026-10-21T22:19:44.247Z"
+  },
+  {
+    "id": "footer-texture-warm",
+    "file": "footer-texture-warm.jpg",
+    "kind": "abstract",
+    "role": "footer",
+    "aspect": "2:1",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Soft flowing gradient ribbons and silk folds in coral, magenta, violet and warm amber, luminous, smooth, premium. Abstract, no text, no letters, no logos, no shapes that read as symbols.",
+    "requestId": "02fdab6d-72a5-4751-b562-cea11d2753fc",
+    "createdAt": "2026-10-21T22:19:54.178Z"
+  },
+  {
+    "id": "footer-texture-cool",
+    "file": "footer-texture-cool.jpg",
+    "kind": "abstract",
+    "role": "footer",
+    "aspect": "2:1",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Soft flowing gradient ribbons and silk folds in teal, electric blue, emerald and navy, luminous, smooth, premium. Abstract, no text, no letters, no logos, no shapes that read as symbols.",
+    "requestId": "c74b6512-b453-40b2-bbd0-abc1cf6b03e9",
+    "createdAt": "2026-10-21T22:19:54.490Z"
+  }
+]

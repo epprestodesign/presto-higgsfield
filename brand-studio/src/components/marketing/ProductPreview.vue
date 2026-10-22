@@ -14,7 +14,8 @@ import GlobalNav from '@lib/components/GlobalNav.vue'
 import BookingWidget from '@lib/components/BookingWidget.vue'
 import HotelCardGroup from '@lib/components/browse/HotelCardGroup.vue'
 import { sampleProject } from '../../data/sampleEvents.js'
-import { buildConcept } from '../../providers/ai/conceptFactory.js'
+import { buildConcept, prestoBannerConcept } from '../../providers/ai/conceptFactory.js'
+import { getImage } from '../../assets/imagery/index.js'
 import { HOTELS, groupAvailability } from '../../data/upstream/hotels.js'
 import { formatDateRange, locationLabel } from '../../models/event.js'
 
@@ -27,18 +28,21 @@ const props = defineProps({
   designHeight: { type: Number, default: 860 },
   hotels: { type: Number, default: 3 },
   headline: { type: String, default: '' },
-  ctaLabel: { type: String, default: 'Find your hotel' },
 })
 
 const project = computed(() => sampleProject(props.sample))
 const kit = computed(() => props.brandKit || project.value.brandKit)
 const event = computed(() => project.value.event)
 
-// Concept: explicit override, else the kit's preferred direction (template 0).
+// Concept: explicit override, else the Presto banner standard on the kit's
+// generated banner, else the kit's preferred direction (template 0).
 const TEMPLATE = { signature: 0, energy: 0, premium: 0 }
-const concept = computed(
-  () => props.concept || buildConcept({ direction: kit.value.direction, templateIndex: TEMPLATE[kit.value.direction] ?? 0, brandKit: kit.value, event: event.value }),
-)
+const concept = computed(() => {
+  if (props.concept) return props.concept
+  const banner = getImage(kit.value.bannerImageId)
+  if (banner) return prestoBannerConcept(kit.value, banner)
+  return buildConcept({ direction: kit.value.direction, templateIndex: TEMPLATE[kit.value.direction] ?? 0, brandKit: kit.value, event: event.value })
+})
 
 const hero = computed(() => ({
   concept: concept.value,
@@ -47,7 +51,6 @@ const hero = computed(() => ({
   tagline: project.value.pages.landing.hero.tagline,
   dates: formatDateRange(event.value.startDate, event.value.endDate),
   location: locationLabel(event.value),
-  ctaLabel: props.ctaLabel,
 }))
 
 // Featured hotels — real cards fed by the prototype's mock hotel database.
@@ -77,7 +80,11 @@ const slug = computed(() => `demo.eventpipe.com/${project.value.publishing.slug}
 </script>
 
 <template>
-  <browser-frame v-if="variant === 'desktop'" :url="slug" :label="`Desktop preview of the ${event.name} booking page`">
+  <browser-frame
+    v-if="variant === 'desktop'" :url="slug" :title="`${event.name} · Official Hotels`"
+    :favicon="kit.logo?.src || ''" :favicon-color="kit.colors?.primary" :design-width="1200"
+    :label="`Desktop preview of the ${event.name} booking page`"
+  >
     <scaled-frame :design-width="1200" :design-height="designHeight">
       <brand-theme-provider :brand-kit="kit" class="pp" inert>
         <global-nav :brand="navBrand" :show-cart="false" />
@@ -95,7 +102,7 @@ const slug = computed(() => `demo.eventpipe.com/${project.value.publishing.slug}
     </scaled-frame>
   </browser-frame>
 
-  <phone-frame v-else :label="`Mobile preview of the ${event.name} booking page`" :screen-height="designHeight">
+  <phone-frame v-else :url="slug" :label="`Mobile preview of the ${event.name} booking page`" :screen-height="designHeight">
     <brand-theme-provider :brand-kit="kit" class="pp pp--mobile" inert>
       <brand-hero v-bind="hero" :heading-level="2" />
       <section class="pp__hotels">

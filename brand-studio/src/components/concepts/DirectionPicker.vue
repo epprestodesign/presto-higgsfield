@@ -1,21 +1,27 @@
 <script setup>
 // DirectionPicker — choose which of the three creative directions to explore.
 // Multi-select (checkbox semantics); at least one stays on.
+import { computed } from 'vue'
 import { CREATIVE_DIRECTIONS } from '../../models/brandKit.js'
+import { DIRECTION_THEMES, DEFAULT_DIRECTION_THEME } from '../../assets/directions/index.js'
 
 const props = defineProps({
   modelValue: { type: Array, default: () => CREATIVE_DIRECTIONS.map((d) => d.id) },
   disabled: { type: Boolean, default: false },
   // The Brand Kit's current direction — marked "Suggested for you".
   suggested: { type: String, default: '' },
+  // Card art: a Higgsfield theme pass ('a' | 'b' | 'c'), or 'flat' for CSS gradients.
+  theme: { type: String, default: DEFAULT_DIRECTION_THEME },
 })
 const emit = defineEmits(['update:modelValue'])
 
-const SWATCH = {
+const FLAT = {
   signature: 'linear-gradient(135deg, var(--ds-palette-navy-900), var(--ds-palette-navy-500))',
-  energy: 'repeating-linear-gradient(115deg, var(--ds-palette-amber-400, #FBBF24) 0 6px, var(--ds-palette-navy-950) 6px 20px)',
+  energy: 'linear-gradient(120deg, #2A0E5C, #7C3AED 60%, #FF6B5A)',
   premium: 'linear-gradient(160deg, #E9E4DA, #B9A88A)',
 }
+const art = computed(() => DIRECTION_THEMES[props.theme]?.art || {})
+const swatchStyle = (id) => (art.value[id] ? { backgroundImage: `url(${art.value[id]})` } : { background: FLAT[id] })
 
 const isOn = (id) => props.modelValue.includes(id)
 function toggle(id) {
@@ -40,7 +46,7 @@ function toggle(id) {
       :aria-disabled="disabled || (isOn(d.id) && modelValue.length === 1)"
       @click="toggle(d.id)"
     >
-      <span class="dp__swatch" :style="{ background: SWATCH[d.id] }" aria-hidden="true">
+      <span class="dp__swatch" :style="swatchStyle(d.id)" aria-hidden="true">
         <q-icon :name="d.icon" size="22px" />
       </span>
       <span class="dp__body">
@@ -69,7 +75,7 @@ function toggle(id) {
 .dp__card:hover { border-color: var(--bs-line-strong); box-shadow: var(--bs-shadow-2); }
 .dp__card--on { border-color: var(--bs-accent); box-shadow: 0 0 0 3px var(--bs-accent-soft); }
 .dp:disabled .dp__card { cursor: not-allowed; opacity: 0.7; }
-.dp__swatch { height: 64px; border-radius: var(--bs-radius-md); display: flex; align-items: flex-end; justify-content: flex-end; padding: 8px; color: #fff; }
+.dp__swatch { background-size: cover; background-position: center; height: 64px; border-radius: var(--bs-radius-md); display: flex; align-items: flex-end; justify-content: flex-end; padding: 8px; color: #fff; }
 .dp__swatch .q-icon { background: rgb(0 0 0 / 0.35); border-radius: 999px; padding: 6px; }
 .dp__body { display: flex; flex-direction: column; gap: 4px; padding-right: 22px; }
 .dp__name { font-weight: 700; font-size: 1.0625rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

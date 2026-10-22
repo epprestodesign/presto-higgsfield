@@ -1,0 +1,56 @@
+[
+  {
+    "id": "1-home",
+    "file": "1-home.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A homepage: a thin top nav bar with a small logo circle and a pill button, a large centered two-line headline made of thick grey bars, three short check-mark lines, then a wide rounded input pill with a violet pill button inside it at the right. Minimalist skeleton wireframe of a mobile app screen, seen flat and straight-on, cropped to the top part of the screen. Loading-skeleton style: soft rounded light-grey placeholder bars for text, rounded rectangles for images and inputs, simple circles for avatars and icons, plenty of white space, crisp clean edges, no shadows except very subtle ones. Palette: white, very light cool grey, pale lavender, one small violet accent element. Absolutely no text, no letters, no numbers, no logos, no photos — only abstract placeholder shapes.",
+    "requestId": "6e692f62-7ab9-4ad4-add7-39c5207f8e37",
+    "createdAt": "2026-10-22T00:19:46.665Z"
+  },
+  {
+    "id": "2-intake",
+    "file": "2-intake.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A form screen: a step progress bar of four dots at the top, a bold heading bar, two lines of body bars, then an outlined input field box with a label bar, and below it two option cards with a small icon circle each, one card selected with a violet check circle. Minimalist skeleton wireframe of a mobile app screen, seen flat and straight-on, cropped to the top part of the screen. Loading-skeleton style: soft rounded light-grey placeholder bars for text, rounded rectangles for images and inputs, simple circles for avatars and icons, plenty of white space, crisp clean edges, no shadows except very subtle ones. Palette: white, very light cool grey, pale lavender, one small violet accent element. Absolutely no text, no letters, no numbers, no logos, no photos — only abstract placeholder shapes.",
+    "requestId": "7529158f-42f9-4961-970c-b74ef20a6df6",
+    "createdAt": "2026-10-22T00:19:46.824Z"
+  },
+  {
+    "id": "3-brand",
+    "file": "3-brand.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A brand kit screen: a heading bar, a row of four round color swatches, an outlined card containing a square logo placeholder on a checkerboard grid, and a second card with two font sample bars of different weights; one violet checkbox. Minimalist skeleton wireframe of a mobile app screen, seen flat and straight-on, cropped to the top part of the screen. Loading-skeleton style: soft rounded light-grey placeholder bars for text, rounded rectangles for images and inputs, simple circles for avatars and icons, plenty of white space, crisp clean edges, no shadows except very subtle ones. Palette: white, very light cool grey, pale lavender, one small violet accent element. Absolutely no text, no letters, no numbers, no logos, no photos — only abstract placeholder shapes.",
+    "requestId": "005bf244-83f1-43f1-b2d9-0feb31558f4f",
+    "createdAt": "2026-10-22T00:19:47.037Z"
+  },
+  {
+    "id": "4-concepts",
+    "file": "4-concepts.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A gallery screen: a row of filter pill chips at the top, then a large wide banner card with a dark grey image rectangle and a centered small circle and two centered bars on it, below it a title bar with a heart icon outline, and the edge of a second card. Minimalist skeleton wireframe of a mobile app screen, seen flat and straight-on, cropped to the top part of the screen. Loading-skeleton style: soft rounded light-grey placeholder bars for text, rounded rectangles for images and inputs, simple circles for avatars and icons, plenty of white space, crisp clean edges, no shadows except very subtle ones. Palette: white, very light cool grey, pale lavender, one small violet accent element. Absolutely no text, no letters, no numbers, no logos, no photos — only abstract placeholder shapes.",
+    "requestId": "b46b5820-5b13-4864-ab27-126bbeca4384",
+    "createdAt": "2026-10-22T00:19:47.092Z"
+  },
+  {
+    "id": "6-demo",
+    "file": "6-demo.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "A published booking page: a slim banner strip with a small badge pill and a button outline at the top, a nav row with a logo circle and a menu icon, then a large dark banner rectangle with a centered emblem circle and two centered bars, then a stacked search form of three input boxes and a wide violet button. Minimalist skeleton wireframe of a mobile app screen, seen flat and straight-on, cropped to the top part of the screen. Loading-skeleton style: soft rounded light-grey placeholder bars for text, rounded rectangles for images and inputs, simple circles for avatars and icons, plenty of white space, crisp clean edges, no shadows except very subtle ones. Palette: white, very light cool grey, pale lavender, one small violet accent element. Absolutely no text, no letters, no numbers, no logos, no photos — only abstract placeholder shapes.",
+    "requestId": "2a992f36-276d-4743-976f-7bdc9cc22591",
+    "createdAt": "2026-10-22T00:19:57.504Z"
+  },
+  {
+    "id": "5-studio",
+    "file": "5-studio.jpg",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "An editor screen: a top toolbar of small rounded icon buttons and one violet pill button, a dropdown bar and a segmented three-icon control, and below a smaller phone-shaped preview frame showing a dark banner rectangle and grey bars. Minimalist skeleton wireframe of a mobile app screen, seen flat and straight-on, cropped to the top part of the screen. Loading-skeleton style: soft rounded light-grey placeholder bars for text, rounded rectangles for images and inputs, simple circles for avatars and icons, plenty of white space, crisp clean edges, no shadows except very subtle ones. Palette: white, very light cool grey, pale lavender, one small violet accent element. Absolutely no text, no letters, no numbers, no logos, no photos — only abstract placeholder shapes.",
+    "requestId": "a3bb8bfc-1b49-4aca-9228-adca15cf2659",
+    "createdAt": "2026-10-22T00:20:03.288Z"
+  }
+]

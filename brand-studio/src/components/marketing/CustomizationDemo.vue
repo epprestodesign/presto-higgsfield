@@ -5,7 +5,8 @@
 import { ref, reactive, computed } from 'vue'
 import ProductPreview from './ProductPreview.vue'
 import { sampleProject } from '../../data/sampleEvents.js'
-import { buildConcept } from '../../providers/ai/conceptFactory.js'
+import { buildConcept, prestoBannerConcept } from '../../providers/ai/conceptFactory.js'
+import { getImage } from '../../assets/imagery/index.js'
 import { CREATIVE_DIRECTIONS } from '../../models/brandKit.js'
 import { getFont } from '../../theme/fonts.js'
 import { onColor } from '../../theme/color.js'
@@ -28,7 +29,6 @@ const state = reactive({
   font: 'barlow-condensed',
   direction: 'energy',
   headline: 'Heartland Invitational Soccer Cup 2027',
-  cta: 'Find your hotel',
 })
 
 const palette = computed(() => PALETTES.find((p) => p.id === state.palette))
@@ -38,7 +38,14 @@ const kit = computed(() => ({
   typography: { ...base.brandKit.typography, heading: state.font },
   direction: state.direction,
 }))
-const concept = computed(() => buildConcept({ direction: state.direction, templateIndex: DIRECTION_TEMPLATE[state.direction], brandKit: kit.value, event: base.event }))
+// Every palette × direction has a Higgsfield-generated background (scripts/
+// hf-generate-banners.mjs --set demo) shown in the Presto banner standard.
+const concept = computed(() => {
+  const bg = getImage(`demo-${state.palette}-${state.direction}`)
+  return bg
+    ? prestoBannerConcept(kit.value, bg)
+    : buildConcept({ direction: state.direction, templateIndex: DIRECTION_TEMPLATE[state.direction], brandKit: kit.value, event: base.event })
+})
 
 const announce = ref('')
 const set = (key, value, label) => {
@@ -107,15 +114,14 @@ const set = (key, value, label) => {
 
         <div class="cd__group">
           <q-input v-model="state.headline" outlined dense label="Headline" maxlength="80" counter @update:model-value="announce = 'Preview updated: headline'" />
-          <q-input v-model="state.cta" outlined dense label="Button label" maxlength="28" @update:model-value="announce = 'Preview updated: button label'" />
         </div>
         <p class="bs-sr-only" aria-live="polite">{{ announce }}</p>
       </form>
 
       <div class="cd__preview">
-        <product-preview class="cd__desk" sample="heartland" :brand-kit="kit" :concept="concept" :headline="state.headline" :cta-label="state.cta" :design-height="700" />
+        <product-preview class="cd__desk" sample="heartland" :brand-kit="kit" :concept="concept" :headline="state.headline" :design-height="700" />
         <div class="cd__phone">
-          <product-preview sample="heartland" variant="mobile" :brand-kit="kit" :concept="concept" :headline="state.headline" :cta-label="state.cta" :design-height="640" />
+          <product-preview sample="heartland" variant="mobile" :brand-kit="kit" :concept="concept" :headline="state.headline" :design-height="640" />
         </div>
       </div>
     </div>

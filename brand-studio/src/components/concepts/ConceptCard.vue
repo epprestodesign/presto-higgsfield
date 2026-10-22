@@ -165,10 +165,8 @@ const titleId = computed(() => `cc-title-${props.concept.id}`)
    is visible in the Preview dialog. */
 .cc__media :deep(.bh--card) { aspect-ratio: 16 / 9; }
 .cc__media :deep(.bh--card .bh__tagline),
-.cc__media :deep(.bh--card .bh__cta) { display: none; }
 .cc__media :deep(.bh--card .bh__content) { padding-block: 52px 16px; gap: 6px; }
 .cc__media :deep(.bh--card .bh__logo) { height: 40px; }
-.cc__media :deep(.bh--card.bh--framed .bh__content) { padding-block: 48px 104px; }
 .cc__badges { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px; }
 .cc__badge {
   display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 999px;

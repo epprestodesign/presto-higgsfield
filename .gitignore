@@ -13,3 +13,7 @@ coverage
 
 # Design reference screenshots — kept local only, not tracked
 references/
+/brand-studio/src/assets/presto-templates/
+
+# Raw Higgsfield logo output (kept locally for scripts/recut-logos.mjs)
+brand-studio/src/assets/logos/generated/*-raw.png

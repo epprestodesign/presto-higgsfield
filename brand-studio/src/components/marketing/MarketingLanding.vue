@@ -4,6 +4,7 @@
 import MarketingNav from './MarketingNav.vue'
 import MarketingHero from './MarketingHero.vue'
 import EventTypeShowcase from './EventTypeShowcase.vue'
+import IndustriesSection from './IndustriesSection.vue'
 import HowItWorks from './HowItWorks.vue'
 import CustomizationDemo from './CustomizationDemo.vue'
 import SponsorshipSection from './SponsorshipSection.vue'
@@ -22,6 +23,7 @@ const emit = defineEmits(['start', 'sample', 'lead', 'signin'])
     <main id="ml-main">
       <marketing-hero @start="emit('start')" @sample="emit('sample', $event)" />
       <event-type-showcase @sample="emit('sample', $event)" />
+      <industries-section @sample="emit('sample', $event)" />
       <how-it-works @start="emit('start')" />
       <customization-demo />
       <sponsorship-section />

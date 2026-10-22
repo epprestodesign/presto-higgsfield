@@ -1,43 +1,18 @@
 <script setup>
-// BrandPanel — the Brand Kit, compact: color roles, fonts, logo, hero image.
+// BrandPanel — the Brand Kit, compact: color wheel (roles + harmonies), fonts,
+// logo, hero image.
 // Edits go straight to the project store, so every page preview re-themes live.
 import { ref, computed } from 'vue'
 import { useProjectStore } from '../../../stores/project.js'
 import { FONT_OPTIONS, getFont } from '../../../theme/fonts.js'
-import { normalizeHex } from '../../../theme/color.js'
-import { paletteChecks } from '../../../theme/brandTheme.js'
 import { validateUpload } from '../../../models/brandKit.js'
 import { uid } from '../../../models/ids.js'
 import { IMAGERY } from '../../../assets/imagery/index.js'
 import PanelGroup from './PanelGroup.vue'
+import ColorWheelPicker from '../../brand-kit/ColorWheelPicker.vue'
 
 const store = useProjectStore()
 const bk = computed(() => store.brandKit)
-
-const ROLES = [
-  { id: 'primary', label: 'Primary', hint: 'Buttons, hero, links' },
-  { id: 'secondary', label: 'Secondary', hint: 'Supporting color' },
-  { id: 'accent', label: 'Accent', hint: 'Highlights & CTAs' },
-  { id: 'ink', label: 'Text', hint: 'Body copy' },
-]
-
-// Hex fields keep a local draft so half-typed values never hit the store.
-const drafts = ref({})
-const hexDraft = (role) => drafts.value[role] ?? bk.value.colors[role]
-const hexError = ref({})
-function onHexInput(role, v) {
-  drafts.value = { ...drafts.value, [role]: v }
-  const hex = normalizeHex(v)
-  hexError.value = { ...hexError.value, [role]: !hex && v.length >= 4 }
-  if (hex) store.setColor(role, hex)
-}
-function onHexBlur(role) {
-  const { [role]: _, ...rest } = drafts.value
-  drafts.value = rest
-  hexError.value = { ...hexError.value, [role]: false }
-}
-
-const failing = computed(() => paletteChecks(bk.value.colors).filter((c) => !c.pass && !c.label.includes('(raw)')))
 
 const fontOptions = FONT_OPTIONS.map((f) => ({ label: f.label, value: f.id, family: f.family, note: f.note }))
 
@@ -76,41 +51,8 @@ function onHeroKey(e, i) {
 
 <template>
   <div class="bp">
-    <PanelGroup title="Colors" hint="Applied to every page at once.">
-      <div v-for="r in ROLES" :key="r.id" class="bp__color">
-        <button type="button" class="bp__swatch bs-focusable" :style="{ background: bk.colors[r.id] }" :aria-label="`Pick ${r.label} color, currently ${bk.colors[r.id]}`">
-          <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-            <q-color
-              :model-value="bk.colors[r.id]"
-              format-model="hex"
-              no-header-tabs
-              default-view="spectrum"
-              class="bp__picker"
-              @update:model-value="(v) => store.setColor(r.id, normalizeHex(v) || v)"
-            />
-          </q-popup-proxy>
-        </button>
-        <div class="bp__color-meta">
-          <label :for="`hex-${r.id}`" class="bp__label">{{ r.label }}</label>
-          <span class="bp__sub">{{ r.hint }}</span>
-        </div>
-        <input
-          :id="`hex-${r.id}`"
-          class="bp__hex bs-focusable"
-          :class="{ 'is-error': hexError[r.id] }"
-          :value="hexDraft(r.id)"
-          spellcheck="false"
-          maxlength="7"
-          :aria-invalid="!!hexError[r.id]"
-          @input="onHexInput(r.id, $event.target.value)"
-          @blur="onHexBlur(r.id)"
-        />
-      </div>
-      <div v-if="failing.length" class="bp__warn" role="status">
-        <q-icon name="contrast" size="16px" />
-        <span>{{ failing[0].label }} is {{ failing[0].ratio }}:1 — below the 4.5:1 AA minimum. Try a darker or lighter shade.</span>
-      </div>
-      <p v-else class="bp__ok"><q-icon name="check_circle" size="16px" /> Text contrast passes WCAG AA</p>
+    <PanelGroup title="Colors" hint="Applied to every page at once. Drag on the wheel or pick a harmony.">
+      <color-wheel-picker />
     </PanelGroup>
 
     <PanelGroup title="Typography">
@@ -158,7 +100,7 @@ function onHeroKey(e, i) {
       <p v-else class="bp__sub">SVG or transparent PNG works best · up to 2 MB</p>
     </PanelGroup>
 
-    <PanelGroup title="Hero image" hint="Used by photographic concepts on the landing banner.">
+    <PanelGroup title="Hero image" hint="Shown behind your logo and copy on every banner — homepage, hotel directory and hotel details.">
       <div class="bp__heroes" role="radiogroup" aria-label="Hero image">
         <button
           v-for="(img, i) in heroChoices"
@@ -185,18 +127,7 @@ function onHeroKey(e, i) {
 
 <style scoped>
 .bp { font-family: var(--bs-font); }
-.bp__color { display: grid; grid-template-columns: 36px minmax(0, 1fr) 92px; align-items: center; gap: 10px; }
-.bp__swatch { width: 36px; height: 36px; border-radius: var(--bs-radius-sm); border: 1px solid rgb(0 0 0 / 0.12); box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.5); cursor: pointer; padding: 0; }
-.bp__color-meta { display: flex; flex-direction: column; min-width: 0; }
-.bp__label { font: 700 0.875rem/1.2 var(--bs-font); color: var(--bs-ink); }
 .bp__sub { font: 400 0.75rem/1.35 var(--bs-font); color: var(--bs-ink-soft); margin: 0; }
-.bp__hex { width: 100%; height: 34px; padding: 0 8px; border: 1px solid var(--bs-line-strong); border-radius: var(--bs-radius-sm); font: 400 0.8125rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; text-transform: uppercase; color: var(--bs-ink); background: var(--bs-surface); }
-.bp__hex:focus { border-color: var(--bs-accent); }
-.bp__hex.is-error { border-color: var(--bs-danger); }
-.bp__picker { max-width: 260px; }
-.bp__warn { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: var(--bs-radius-sm); background: #FFFBEB; color: #92400E; font: 400 0.8125rem/1.4 var(--bs-font); }
-.bp__warn .q-icon { margin-top: 1px; }
-.bp__ok { display: flex; align-items: center; gap: 6px; margin: 0; font: 400 0.8125rem/1.3 var(--bs-font); color: #166534; }
 .bp__font :deep(.q-field__control) { border-radius: var(--bs-radius-sm); }
 .bp__logo { display: flex; align-items: center; gap: 12px; }
 .bp__logo-box { width: 72px; height: 72px; flex: none; display: grid; place-items: center; border-radius: var(--bs-radius-md); border: 1px solid var(--bs-line); background: repeating-conic-gradient(#F1F5F9 0 25%, #fff 0 50%) 0 0 / 14px 14px; overflow: hidden; }

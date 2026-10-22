@@ -1,0 +1,87 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks'
+import * as HF from '../components/higgsfield/Higgsfield.stories.js'
+
+<Meta title="Brand Studio/Higgsfield/Setup Guide" />
+
+<p className="bs-eyebrow">Brand Studio · Higgsfield</p>
+
+# From an API key to generated banners
+
+These steps take you from a Higgsfield account to generating event hero banners and sponsor display ads with three models: **Marketing Studio Image 2.5 Flare**, **Recraft V4.1** and **Ideogram 4.0**. The output is shown in place on the real Presto pages.
+
+<div style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 12, padding: '14px 18px', margin: '18px 0', color: '#4C1D95' }}>
+  <strong>Your key never reaches the browser.</strong> The local Storybook/prototype dev server reads it from <code>.env</code> and calls Higgsfield for you. Live generation therefore works only on <code>localhost</code>; the GitHub Pages build runs in sample mode.
+</div>
+
+## Step 1: Create a Higgsfield API account and add credits
+
+1. Go to **[open.higgsfield.ai](https://open.higgsfield.ai)** and sign up or log in.
+2. Add credits or billing for the API. Generations are charged **only on success**, and failed or moderated requests are refunded. Credits expire one year after purchase.
+3. API credits may be separate from your Higgsfield web subscription, so check your API balance in the console.
+
+## Step 2: Create an API key
+
+1. Open **[open.higgsfield.ai/api-keys](https://open.higgsfield.ai/api-keys)** and click **Create key**.
+2. Copy both the **key ID** and the **secret**. The secret is usually shown only once.
+3. Create one key for development now and a separate one for production later.
+
+**Don't paste the secret into chat, Slack, screenshots or code.** If it leaks, revoke it on that page and create a new one.
+
+## Step 3: Put the key in `.env`
+
+In the repo root (`presto-higgsfield/.env`, which git ignores), add:
+
+```bash
+HIGGSFIELD_API_KEY_ID=your-key-id
+HIGGSFIELD_API_KEY_SECRET=your-key-secret
+```
+
+- **No `VITE_` prefix.** Vite bundles anything starting with `VITE_` into the browser.
+- `.env.example` shows the same two lines, and `.env` is already gitignored.
+- The proxy re-reads `.env` on every request, so you don't need to restart.
+
+## Step 4: Check the connection
+
+The check below calls your local dev server. It confirms the proxy is running and the key was found, then verifies the key with Higgsfield. Verifying is free: no image is generated.
+
+<Canvas of={HF.Connection} />
+
+## Step 5: Generate your first banner
+
+Open **[Banner Generator](?path=/story/brand-studio-higgsfield--banner-generator-live)**:
+
+1. **What are you making?** An event hero banner (desktop or mobile), or a sponsor ad: billboard, leaderboard, rectangle, skyscraper or mobile banner.
+2. **Brief.** Choose what the artwork shows, the mood, time and light, where to leave room for the headline, whether to put text in the artwork, and how to use the logo.
+3. **Logo and references.** The event or sponsor logo is included automatically. SVG logos are converted to PNG, since Higgsfield accepts only PNG, JPEG and WebP. Add photos, past banners or products as extra references.
+4. **Model.** The recommendation follows your answers:
+   - **Marketing Studio 2.5 Flare** (best starting point): uses up to 16 reference images, logo first, at up to 4K. Good for themed banners built from an organizer's uploaded assets.
+   - **Recraft V4.1**: enforces your exact brand palette. Good for branded illustrations and graphic backgrounds. It takes no reference images.
+   - **Ideogram 4.0**: typography-led promo layouts. Pick "bake the headline in" to render the event name and dates inside the artwork.
+5. **Prompt.** It's written from your answers, and you can edit it freely. Under *Request JSON* you can see exactly what will be sent.
+6. **Generate.** The button shows the live cost estimate. Progress runs *Uploading → Queued → Generating → Done*. Higgsfield allows 4 requests at once.
+7. **Use it.** **Use on my page** sets it as the hero image or the sponsor's ad artwork, everywhere in the project. **Save to repo** copies it into `brand-studio/src/assets/generated/` with a manifest. Do this for keepers, because Higgsfield keeps outputs for only 7 days.
+
+<Canvas of={HF.BannerGeneratorSample} />
+
+## Step 6: Use it in the full flow
+
+Generated images flow into the rest of Brand Studio through the project store:
+
+- Hero images show up in the **[Studio Editor](?path=/story/brand-studio-studio-editor-editor--default)** preview and the published demo.
+- Sponsor artwork shows up in the **[ad layouts](?path=/story/brand-studio-advertising-browse-layouts--billboards-rail)**.
+
+## Step 7: Going to production (later)
+
+The dev proxy is for local work only. For organizers using the hosted app, the same calls move to a backend that adds authentication, quotas and permanent storage:
+
+| Piece | What it's for | Needed when |
+|---|---|---|
+| **Higgsfield API key** (production) | Generation | Phase 3 |
+| **Supabase** project | Sign-in, saved projects, image storage, and an Edge Function that holds the Higgsfield key and enforces credit limits | Phase 2–3 |
+| **Vercel** *(optional)* | Hosting the app with per-PR previews and serverless functions. Not needed if the backend runs on Supabase Edge Functions; GitHub Pages can keep hosting the static app | Only if you want Vercel hosting |
+| **Anthropic API key** *(optional)* | Claude for the real "Scan my website" step (reading a page and naming its brand colors, fonts and tone), for turning questionnaire answers into better prompts, and for writing page copy | Phase 3, optional |
+| **Firecrawl** *(optional)* | Fetching and scraping organizer websites safely (it has a branding extractor) | Phase 3, optional |
+
+Scraping itself doesn't need Claude: the backend fetches the page, or Firecrawl does. Claude only makes the extracted brand smarter.
+
+Docs: [Authentication](https://docs.higgsfield.ai/docs/authentication) · [Requests & polling](https://docs.higgsfield.ai/docs/concepts/polling) · [File uploads](https://docs.higgsfield.ai/docs/concepts/file-uploads) · [Billing & retention](https://docs.higgsfield.ai/docs/concepts/billing-and-retention) · [Marketing Studio 2.5 Flare](https://docs.higgsfield.ai/docs/models/marketing-studio-image/flare) · [Recraft V4.1](https://docs.higgsfield.ai/docs/models/recraft-v4-1/text-to-image) · [Ideogram 4.0](https://docs.higgsfield.ai/docs/models/ideogram-4/generate)

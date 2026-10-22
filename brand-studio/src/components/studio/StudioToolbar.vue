@@ -3,7 +3,7 @@
 // and passes it in; every action is an emitted event.
 //   left   · back · inline-editable page name · status chip
 //   centre · page switcher · device toggle
-//   right  · undo / redo · save state · Preview · Publish
+//   right  · undo / redo · Examples · save state · Export · Preview · Publish
 import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { PAGE_META } from '../../models/pageConfig.js'
 import { PROJECT_STATUS } from '../../models/project.js'
@@ -21,8 +21,10 @@ const props = defineProps({
   dirty: { type: Boolean, default: false },
   // Narrow screens: page + device move to a second row; labels collapse to icons.
   compact: { type: Boolean, default: false },
+  // Prototype: show "Copy link to this view" (deep link for feedback).
+  canShare: { type: Boolean, default: false },
 })
-const emit = defineEmits(['back', 'rename', 'update:page', 'update:device', 'undo', 'redo', 'save', 'preview', 'publish'])
+const emit = defineEmits(['back', 'rename', 'update:page', 'update:device', 'undo', 'redo', 'save', 'preview', 'publish', 'examples', 'export', 'copy-link'])
 
 const DEVICES = [
   { id: 'desktop', icon: 'desktop_windows', label: 'Desktop', width: 1280 },
@@ -99,6 +101,9 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
           <span v-if="!compact" class="stb__status" :class="`stb__status--${status}`">
             <q-icon :name="statusMeta.icon" size="14px" /> {{ statusMeta.label }}
           </span>
+          <q-btn v-if="canShare" flat round dense icon="link" class="stb__icon" aria-label="Copy link to this view" data-copy-link @click="emit('copy-link')">
+            <q-tooltip>Copy link to this view (for feedback)</q-tooltip>
+          </q-btn>
         </div>
       </div>
 
@@ -135,19 +140,36 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
       <!-- RIGHT -->
       <div class="stb__group stb__group--right">
         <template v-if="!compact">
-          <q-btn flat round dense icon="undo" class="stb__icon" aria-label="Undo" :disable="!canUndo" @click="emit('undo')">
+          <q-btn flat round dense icon="undo" class="stb__icon stb__history" aria-label="Undo" :disable="!canUndo" @click="emit('undo')">
             <q-tooltip>Undo · {{ mod }}Z</q-tooltip>
           </q-btn>
-          <q-btn flat round dense icon="redo" class="stb__icon" aria-label="Redo" :disable="!canRedo" @click="emit('redo')">
+          <q-btn flat round dense icon="redo" class="stb__icon stb__history" aria-label="Redo" :disable="!canRedo" @click="emit('redo')">
             <q-tooltip>Redo · {{ isMac ? '⇧⌘Z' : 'Ctrl+Shift+Z' }}</q-tooltip>
           </q-btn>
           <span class="stb__divider" aria-hidden="true" />
         </template>
+        <q-btn
+          flat no-caps no-wrap class="bs-btn stb__btn stb__examples" icon="auto_awesome_mosaic"
+          :label="compact ? undefined : 'Examples'" aria-label="Examples by industry"
+          @click="emit('examples')"
+        >
+          <q-tooltip>Start from an industry example</q-tooltip>
+        </q-btn>
         <button type="button" class="stb__save bs-focusable" :aria-label="`Save draft. ${savedLabel}`" @click="emit('save')">
           <q-icon :name="savedIcon" size="18px" :class="{ 'stb__spin': saving }" />
           <span v-if="!compact" class="stb__save-label" aria-live="polite">{{ savedLabel }}</span>
           <q-tooltip>Save draft · {{ mod }}S</q-tooltip>
         </button>
+        <q-btn
+          unelevated no-caps no-wrap
+          class="bs-btn bs-btn--ghost stb__btn stb__export"
+          icon="download"
+          :label="compact ? undefined : 'Export'"
+          aria-label="Export assets"
+          @click="emit('export')"
+        >
+          <q-tooltip>Preview and download your banners and ads as a ZIP</q-tooltip>
+        </q-btn>
         <q-btn
           unelevated no-caps
           class="bs-btn bs-btn--ghost stb__btn"
@@ -196,7 +218,8 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
 
 <style scoped>
 .stb { background: var(--bs-surface); border-bottom: 1px solid var(--bs-line); font-family: var(--bs-font); color: var(--bs-ink); }
-.stb__row { height: var(--bs-toolbar-h); display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px; padding: 0 12px; }
+/* Right column never narrower than its buttons; the name column shrinks (ellipsis). */
+.stb__row { height: var(--bs-toolbar-h); display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(max-content, 1fr); align-items: center; gap: 16px; padding: 0 12px; }
 .stb--compact .stb__row { grid-template-columns: minmax(0, 1fr) auto; height: 56px; gap: 8px; }
 .stb__row--sub { display: flex; height: 52px; border-top: 1px solid var(--bs-line); gap: 8px; }
 .stb__group { display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -234,4 +257,12 @@ const savedIcon = computed(() => (props.saving ? 'sync' : props.dirty || !props.
 .stb__page-select { flex: 1; min-width: 0; }
 .stb__page-select :deep(.q-field__control) { min-height: 36px; border-radius: var(--bs-radius-sm); }
 @media (prefers-reduced-motion: reduce) { .stb__spin { animation: none; } }
+/* Mid-width desktops: Examples / Export collapse to icons and the save state to
+   its icon, so the centred page + device switcher never collides. */
+@media (max-width: 1599px) {
+  /* Quasar's .block utility is display:block !important. */
+  .stb__examples :deep(.block), .stb__export :deep(.block) { display: none !important; }
+  .stb__examples :deep(.q-icon), .stb__export :deep(.q-icon) { margin: 0; }
+}
+@media (max-width: 1599px) { .stb__save-label { display: none; } }
 </style>

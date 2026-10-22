@@ -1,0 +1,110 @@
+[
+  {
+    "id": "a-energy",
+    "file": "a-energy.jpg",
+    "pass": "a",
+    "passName": "Soft gradients",
+    "direction": "energy",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Vivid abstract mesh gradient with flowing blurred light trails in electric violet, magenta and warm coral over deep indigo, a strong sense of motion and energy. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "0df370a7-c808-4227-a3a2-ef0cca9193b8",
+    "createdAt": "2026-10-21T20:59:02.119Z"
+  },
+  {
+    "id": "a-signature",
+    "file": "a-signature.jpg",
+    "pass": "a",
+    "passName": "Soft gradients",
+    "direction": "signature",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Smooth abstract mesh gradient in deep navy and midnight blue with a soft cool light bloom, calm, trustworthy and corporate, fine matte grain. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "e95162b4-29fe-42e6-8b79-c154f005a74b",
+    "createdAt": "2026-10-21T20:59:02.380Z"
+  },
+  {
+    "id": "a-premium",
+    "file": "a-premium.jpg",
+    "pass": "a",
+    "passName": "Soft gradients",
+    "direction": "premium",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Soft abstract gradient in warm champagne, ivory and muted gold with silky diffused light, elegant, quiet and luxurious. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "17a03cec-4801-484e-8354-893fc91fbf52",
+    "createdAt": "2026-10-21T20:59:03.221Z"
+  },
+  {
+    "id": "b-signature",
+    "file": "b-signature.jpg",
+    "pass": "b",
+    "passName": "Light & place",
+    "direction": "signature",
+    "kind": "abstract",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Minimal modern hotel lobby architecture, softly out of focus, cool blue evening light, clean lines and calm symmetry, photographic. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "a1180241-1e26-447a-90e6-f482e8bb44f8",
+    "createdAt": "2026-10-21T20:59:08.745Z"
+  },
+  {
+    "id": "c-signature",
+    "file": "c-signature.jpg",
+    "pass": "c",
+    "passName": "Sculpted materials",
+    "direction": "signature",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Folded matte paper sculpture in navy and slate blue, soft studio light, minimal geometric layers, calm and precise. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "3b01fec7-c046-4c1d-9d23-65beae99919d",
+    "createdAt": "2026-10-21T20:59:20.111Z"
+  },
+  {
+    "id": "b-energy",
+    "file": "b-energy.jpg",
+    "pass": "b",
+    "passName": "Light & place",
+    "direction": "energy",
+    "kind": "abstract",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Stadium floodlights at dusk, out-of-focus bokeh, deep blue sky with a warm orange glow, electric game-night atmosphere, photographic. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "a9daaddc-ccfc-400b-9057-7c6018ca0f48",
+    "createdAt": "2026-10-21T20:59:24.538Z"
+  },
+  {
+    "id": "b-premium",
+    "file": "b-premium.jpg",
+    "pass": "b",
+    "passName": "Light & place",
+    "direction": "premium",
+    "kind": "abstract",
+    "model": "marketing-studio/image/flare",
+    "prompt": "Luxury hotel suite detail, soft morning light through sheer curtains, linen and brushed brass tones, shallow depth of field, photographic. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "7ab00b61-d517-457a-89c6-7e71d04ef9f3",
+    "createdAt": "2026-10-21T20:59:32.772Z"
+  },
+  {
+    "id": "c-energy",
+    "file": "c-energy.jpg",
+    "pass": "c",
+    "passName": "Sculpted materials",
+    "direction": "energy",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Flowing translucent glass ribbons in violet, magenta and coral on a dark indigo background, dynamic sweeping curves, studio lighting. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "5142114d-b7a8-4315-b1da-c94f93e7b58e",
+    "createdAt": "2026-10-21T20:59:34.262Z"
+  },
+  {
+    "id": "c-premium",
+    "file": "c-premium.jpg",
+    "pass": "c",
+    "passName": "Sculpted materials",
+    "direction": "premium",
+    "kind": "abstract",
+    "model": "recraft/v4.1/text-to-image",
+    "prompt": "Travertine stone and brushed brass surfaces in a minimal still life, warm soft light, refined and luxurious. Ultra-wide website hero background. Minimal, system-safe and uncluttered: a simple background that lets a centered logo and white headline sit on top. Keep the central area calm, low-detail and evenly toned; put any texture or detail toward the outer edges. Muted and slightly dark overall so white text stays readable; no bright hot spots in the center. Important content stays within the middle horizontal band so the image also works cropped to a thin 6:1 strip. No people as a focal point, no faces in focus. No text, no letters, no numbers, no logos, no signage, no watermarks.",
+    "requestId": "71cdf744-82bc-4988-a9b1-47c6b9ac6e3d",
+    "createdAt": "2026-10-21T20:59:36.840Z"
+  }
+]
