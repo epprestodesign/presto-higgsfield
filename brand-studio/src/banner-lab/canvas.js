@@ -9,8 +9,16 @@ import {
 import { vectorize } from './vectorize.js'
 import { analyzeReference } from './optimizePrompt.js'
 
-/** Remote generated images go through the dev proxy so canvases stay exportable. */
-export const sameOrigin = (src) => (/^https:\/\//.test(src) ? `/hf-api/_image?url=${encodeURIComponent(src)}` : src)
+/**
+ * Images from another site go through the dev proxy so canvases stay
+ * exportable. Same-site URLs (e.g. built assets on GitHub Pages, which Vite
+ * can emit as absolute https URLs) load directly.
+ */
+export const sameOrigin = (src) => {
+  if (!/^https:\/\//.test(src)) return src
+  try { if (typeof location !== 'undefined' && new URL(src).origin === location.origin) return src } catch { /* fall through */ }
+  return `/hf-api/_image?url=${encodeURIComponent(src)}`
+}
 
 export function loadImage(src) {
   return new Promise((resolve, reject) => {
