@@ -1,7 +1,7 @@
 import LabStudioApp from './LabStudioApp.vue'
 import campsRaw from '../../assets/logos/uploads/camps.png'
-import ref1 from '../../assets/presto-templates/volleyball-net.png'
-import ref2 from '../../assets/presto-templates/basketball.png'
+import ref1 from '../../assets/imagery/generated/heartland-photo.jpg'
+import ref2 from '../../assets/imagery/generated/heartland-photo2.jpg'
 
 export default {
   title: 'Banner Lab/Studio concept',
@@ -32,9 +32,9 @@ export const HomeModelMenu = story('1 · Home · Model menu (Auto + best for)', 
   homeText: 'Lakeside summer camp at golden hour, pine trees and canoes at the edges', modelMenuOpen: true,
 })
 export const HomeAttachments = story('1 · Home · Logo + references attached', {
-  homeText: 'A volleyball net close-up in deep blue, arena lights from the right',
+  homeText: 'A floodlit soccer stadium at night in deep blue, lights from the right',
   homeLogo: { src: campsRaw, name: 'Camp Pinecrest' },
-  homeReferences: [{ src: ref1, name: 'volleyball-net.png' }, { src: ref2, name: 'basketball.png' }],
+  homeReferences: [{ src: ref1, name: 'stadium-night.jpg' }, { src: ref2, name: 'stadium-dusk.jpg' }],
 })
 export const HomeLogoMode = story('1 · Home · Logo mode', { homeMode: 'logo', homeLogo: { src: campsRaw, name: 'Camp Pinecrest' } })
 
