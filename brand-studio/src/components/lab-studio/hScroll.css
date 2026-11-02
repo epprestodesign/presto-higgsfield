@@ -1,0 +1,20 @@
+/* Horizontally scrolling row (see useHScroll.js) */
+.hs {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain; /* a swipe at the end doesn't trigger browser back/forward */
+  scrollbar-width: none;
+  scroll-padding-inline: 24px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--hs-l, 0px), #000 calc(100% - var(--hs-r, 0px)), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 var(--hs-l, 0px), #000 calc(100% - var(--hs-r, 0px)), transparent 100%);
+}
+.hs::-webkit-scrollbar { display: none; }
+.hs--fade-l { --hs-l: 48px; }
+.hs--fade-r { --hs-r: 64px; }
+/* Room above and below so focus rings and borders aren't clipped by the scroller */
+.hs { padding-block: 4px; padding-inline: 2px; }
+/* Drag-to-scroll rows */
+.hs--drag { cursor: grab; user-select: none; }
+.hs--drag img { -webkit-user-drag: none; user-drag: none; }
+.hs.is-dragging { cursor: grabbing; scroll-behavior: auto; }
+.hs.is-dragging * { pointer-events: none; }

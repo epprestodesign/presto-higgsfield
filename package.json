@@ -13,11 +13,14 @@
     "test:watch": "vitest",
     "test-storybook": "test-storybook --url http://localhost:6006",
     "a11y:report": "node scripts/a11y-report.mjs",
-    "test-stories": "node scripts/run-stories.mjs brand-studio http://localhost:6006"
+    "test-stories": "node scripts/run-stories.mjs brand-studio http://localhost:6006",
+    "banner-lab": "vite --config brand-studio/banner-lab/vite.config.js",
+    "build-banner-lab": "vite build --config brand-studio/banner-lab/vite.config.js"
   },
   "dependencies": {
     "@googlemaps/markerclusterer": "^2.6.2",
     "@quasar/extras": "^1.16.12",
+    "imagetracerjs": "1.2.6",
     "pinia": "^4.1.0",
     "quasar": "^2.17.4",
     "vue": "^3.5.13"
@@ -31,10 +34,10 @@
     "@storybook/vue3-vite": "10.6.3",
     "@vitejs/plugin-vue": "^5.2.1",
     "axe-playwright": "^2",
+    "playwright": "^1.64.1",
     "sass-embedded": "^1.83.0",
     "storybook": "10.6.3",
     "vite": "^6.4.0",
-    "vitest": "^5.0.5",
-    "playwright": "^1.64.1"
+    "vitest": "^5.0.5"
   }
 }
