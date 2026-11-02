@@ -1,53 +1,48 @@
 <script setup>
-// Quick tutorial for the project canvas: a carousel of short looping clips
-// (made with Higgsfield, Kling 3.0 Turbo), one per quick action: just the
-// cursor on the canvas. Opened from the ?
-// button by the zoom control. ← / → move between slides; swipe on touch.
-import { computed, nextTick, ref, watch } from 'vue'
-import panMp4 from '../../assets/tutorial/pan.mp4'
-import panJpg from '../../assets/tutorial/pan.jpg'
-import zoomMp4 from '../../assets/tutorial/zoom.mp4'
-import zoomJpg from '../../assets/tutorial/zoom.jpg'
-import promptMp4 from '../../assets/tutorial/prompt.mp4'
-import promptJpg from '../../assets/tutorial/prompt.jpg'
-import logoMp4 from '../../assets/tutorial/logo.mp4'
-import logoJpg from '../../assets/tutorial/logo.jpg'
-import exportMp4 from '../../assets/tutorial/export.mp4'
-import exportJpg from '../../assets/tutorial/export.jpg'
-import zoomKeysMp4 from '../../assets/tutorial/zoom-keys.mp4'
-import zoomKeysJpg from '../../assets/tutorial/zoom-keys.jpg'
+// Quick tutorial for the project canvas: a carousel of short looping SVG
+// animations (hand-built in tour/, real English labels), one per quick
+// action. Opened from the ? button by the zoom control. ← / → move between
+// slides; swipe on touch. Only the visible slide animates, restarting from
+// the top each time it is shown; reduced motion shows a still frame.
+import { computed, ref, watch } from 'vue'
+import TourPan from './tour/TourPan.vue'
+import TourZoom from './tour/TourZoom.vue'
+import TourZoomKeys from './tour/TourZoomKeys.vue'
+import TourPrompt from './tour/TourPrompt.vue'
+import TourLogo from './tour/TourLogo.vue'
+import TourExport from './tour/TourExport.vue'
 
 const open = defineModel({ type: Boolean, default: false })
 const props = defineProps({ start: { type: Number, default: 0 } })
 
 const SLIDES = [
   {
-    id: 'pan', video: panMp4, poster: panJpg, title: 'Move around the canvas',
+    id: 'pan', anim: TourPan, title: 'Move around the canvas',
     body: 'Hold Space and drag with the hand to pan, or pick the hand tool. Scrolling pans too.',
     keys: [['Space', 'hold + drag'], ['H', 'hand'], ['V', 'select']],
   },
   {
-    id: 'zoom', video: zoomMp4, poster: zoomJpg, title: 'Zoom to any frame',
+    id: 'zoom', anim: TourZoom, title: 'Zoom to any frame',
     body: 'Double-click a frame to fill the screen with it. Esc, or double-click empty canvas, to see everything again.',
     keys: [['Double-click', 'zoom to frame'], ['Esc', 'see all']],
   },
   {
-    id: 'zoom-keys', video: zoomKeysMp4, poster: zoomKeysJpg, title: 'Zoom in and out',
+    id: 'zoom-keys', anim: TourZoomKeys, title: 'Zoom in and out',
     body: 'Use the + and − buttons in the corner, or the keyboard. ⌘ 0 fits everything back on screen.',
     keys: [['⌘ +', 'zoom in'], ['⌘ −', 'zoom out'], ['⌘ 0', 'fit all']],
   },
   {
-    id: 'prompt', video: promptMp4, poster: promptJpg, title: 'Start from a suggestion',
+    id: 'prompt', anim: TourPrompt, title: 'Start from a suggestion',
     body: 'Click a chip to drop a full prompt into the box. Read it, change anything, then send. Swipe the chips sideways for more.',
     keys: [['Enter', 'send'], ['Shift + Enter', 'new line']],
   },
   {
-    id: 'logo', video: logoMp4, poster: logoJpg, title: 'Make the logo read on dark banners',
+    id: 'logo', anim: TourLogo, title: 'Make the logo read on dark banners',
     body: 'Logo projects try a few clean-ups and looks (white, glow, white box and more), each scored for contrast. Click a look to use it, then make banners with it.',
     keys: [],
   },
   {
-    id: 'export', video: exportMp4, poster: exportJpg, title: 'Preview and export',
+    id: 'export', anim: TourExport, title: 'Preview and export',
     body: '▶ Preview on a page mockup opens the real Presto pages on desktop and phone. Export downloads the logo and banners as a ZIP.',
     keys: [],
   },
@@ -55,17 +50,13 @@ const SLIDES = [
 
 const index = ref(props.start)
 const slide = computed(() => SLIDES[index.value])
-const videos = ref([])
 const last = computed(() => index.value === SLIDES.length - 1)
+// Bumped whenever the visible slide changes: it re-keys that slide's
+// animation, so it restarts from the first frame.
+const run = ref(0)
 
 function go(i) { index.value = (i + SLIDES.length) % SLIDES.length }
-function play() {
-  nextTick(() => videos.value.forEach((v, i) => {
-    if (!v) return
-    if (i === index.value && open.value) { v.currentTime = 0; v.play().catch(() => {}) } else v.pause()
-  }))
-}
-watch([index, open], play)
+watch([index, open], () => { run.value++ })
 watch(open, (o) => { if (o) index.value = props.start })
 
 function onKey(e) {
@@ -83,7 +74,7 @@ function onTouchEnd(e) {
 </script>
 
 <template>
-  <q-dialog v-model="open" @show="play" @keydown="onKey">
+  <q-dialog v-model="open" @keydown="onKey">
     <!-- Must be a <div>: Quasar only makes a dialog's direct div child clickable -->
     <div class="tut" role="group" aria-roledescription="carousel" aria-label="Canvas tutorial">
       <header class="tut__top">
@@ -93,11 +84,11 @@ function onTouchEnd(e) {
 
       <div class="tut__stage" @touchstart.passive="onTouchStart" @touchend="onTouchEnd">
         <div class="tut__track" :style="{ transform: `translateX(-${index * 100}%)` }">
-          <div v-for="(s, i) in SLIDES" :key="s.id" class="tut__slide" :aria-hidden="i !== index" role="group" aria-roledescription="slide" :aria-label="`${i + 1} of ${SLIDES.length}: ${s.title}`">
-            <video
-              :ref="(el) => (videos[i] = el)" class="tut__video" :src="s.video" :poster="s.poster"
-              muted loop playsinline preload="metadata" aria-hidden="true"
-            />
+          <div
+            v-for="(s, i) in SLIDES" :key="s.id" class="tut__slide" :class="{ 'is-live': open && i === index }" :aria-hidden="i !== index"
+            role="group" aria-roledescription="slide" :aria-label="`${i + 1} of ${SLIDES.length}: ${s.title}`"
+          >
+            <component :is="s.anim" :key="i === index ? `${s.id}-${run}` : s.id" />
           </div>
         </div>
       </div>
@@ -133,7 +124,8 @@ function onTouchEnd(e) {
 .tut__stage { overflow: hidden; background: #eceef2; aspect-ratio: 16 / 9; }
 .tut__track { display: flex; height: 100%; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .tut__slide { flex: none; width: 100%; height: 100%; }
-.tut__video { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Hidden slides hold still on their first frame; the visible one plays. */
+.tut__slide:not(.is-live) :deep(*) { animation-play-state: paused !important; }
 .tut__copy { padding: 18px 22px 6px; min-height: 132px; }
 .tut__title { margin: 0 0 6px; font: 600 1.25rem/1.3 var(--bs-font); letter-spacing: -0.01em; color: var(--bs-ink); }
 .tut__body { margin: 0; font-size: 0.9375rem; line-height: 1.55; color: var(--bs-ink-soft); }
@@ -147,5 +139,9 @@ function onTouchEnd(e) {
 .tut__spacer { flex: 1; }
 .tut__btn { border-radius: 999px; padding: 4px 16px; font-weight: 600; }
 .tut__btn--primary { background: var(--bs-ink); color: #fff; }
-@media (prefers-reduced-motion: reduce) { .tut__track { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .tut__track { transition: none; }
+  /* No motion: freeze every animation on its still frame (--tour-still). */
+  .tut__stage .tut__slide :deep(*) { animation-play-state: paused !important; animation-delay: calc(-1 * var(--tour-still, 0s)) !important; }
+}
 </style>

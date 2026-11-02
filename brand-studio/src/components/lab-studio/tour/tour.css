@@ -1,0 +1,18 @@
+/* Shared look for the quick-tour SVG animations (tour/Tour*.vue). Each
+   animation loops on one duration with no delays, so TutorialDialog can
+   pause the hidden slides and, for reduced motion, freeze each one on a
+   still frame (--tour-still, set on the svg root). */
+.tour { display: block; width: 100%; height: 100%; font-family: var(--bs-font, 'Inter', system-ui, sans-serif); user-select: none; }
+.tour text { font-family: inherit; }
+.tour-bg { fill: #eceef2; }
+.tour-dot { fill: #c6cad4; }
+.tour-card { fill: #fff; stroke: #dde0e7; stroke-width: 1; }
+.tour-shadow { fill: rgb(3 10 38 / 0.06); }
+.tour-label { font-size: 11px; font-weight: 500; fill: #6b7180; }
+.tour-cursor path { fill: #000; stroke: #fff; stroke-width: 1.3; stroke-linejoin: round; }
+.tour-hand path { fill: #fff; stroke: #030a26; stroke-width: 1.3; stroke-linejoin: round; }
+.tour-ripple { fill: none; stroke: #7c3aed; stroke-width: 2; transform-box: fill-box; transform-origin: center; opacity: 0; }
+.tour-key__cap { fill: #fff; stroke: #cfd3dc; }
+.tour-key__edge { fill: #cfd3dc; }
+.tour-key__text { font-size: 13px; font-weight: 600; fill: #030a26; }
+.tour-key__hint { font-size: 12px; font-weight: 500; fill: #6b7180; }
