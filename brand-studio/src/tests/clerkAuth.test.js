@@ -32,6 +32,10 @@ describe('Clerk error → AuthError', () => {
   it('falls back to longMessage, then message, with no field', () => {
     expect(toAuthError(apiError('something_new', { longMessage: 'A long message.' })))
       .toMatchObject({ field: null, code: 'something_new', message: 'A long message.' })
+    // Allowlist rejections (non-@eventpipe.com addresses)
+    for (const code of ['not_allowed_access', 'identifier_not_allowed_access', 'some_future_not_allowed_code']) {
+      expect(toAuthError(apiError(code, { longMessage: 'Access not allowed.' }))).toMatchObject({ field: 'email', message: 'Banner Lab is for EventPipe accounts. Use your @eventpipe.com email.' })
+    }
     expect(toAuthError(new Error('boom'))).toMatchObject({ field: null, message: 'boom' })
     expect(toAuthError(undefined).message).toBe('Something went wrong. Try again.')
   })

@@ -179,7 +179,7 @@ const firstLetter = computed(() => (user.value?.name || '?').split(' ')[0])
               </button>
             </div>
             <p class="auth__or"><span>or</span></p>
-            <AuthField v-model="email" label="Email" type="email" autocomplete="username" inputmode="email" placeholder="you@company.com" :error="errFor('email')">
+            <AuthField v-model="email" label="Email" type="email" autocomplete="username" inputmode="email" placeholder="you@eventpipe.com" :error="errFor('email')">
               <p v-if="error?.code === 'form_identifier_not_found'" class="auth__hint">New here? <button type="button" class="auth__link" @click="go('sign-up')">Create an account with this email</button></p>
             </AuthField>
             <AuthField v-model="password" label="Password" type="password" autocomplete="current-password" :error="errFor('password')">
@@ -198,7 +198,7 @@ const firstLetter = computed(() => (user.value?.name || '?').split(' ')[0])
             <span class="auth__icon"><q-icon name="auto_awesome" size="26px" /></span>
             <h1 id="auth-title-magic-email" class="auth__title">Log in with a magic link</h1>
             <p class="auth__sub">We’ll email you a link that logs you straight in. No password needed.</p>
-            <AuthField v-model="email" label="Email" type="email" autocomplete="username" inputmode="email" placeholder="you@company.com" :error="errFor('email')" autofocus />
+            <AuthField v-model="email" label="Email" type="email" autocomplete="username" inputmode="email" placeholder="you@eventpipe.com" :error="errFor('email')" autofocus />
             <button type="submit" class="auth__primary" :disabled="!!busy">
               <q-spinner v-if="busy === 'magic'" size="18px" /> {{ busy === 'magic' ? 'Sending…' : 'Email me a link' }}
             </button>
@@ -240,7 +240,7 @@ const firstLetter = computed(() => (user.value?.name || '?').split(' ')[0])
               <AuthField v-model="firstName" label="First name" autocomplete="given-name" :error="errFor('firstName')" />
               <AuthField v-model="lastName" label="Last name" autocomplete="family-name" />
             </div>
-            <AuthField v-model="email" label="Work email" type="email" autocomplete="email" inputmode="email" placeholder="you@company.com" :error="errFor('email')">
+            <AuthField v-model="email" label="Work email" type="email" autocomplete="email" inputmode="email" placeholder="you@eventpipe.com" :error="errFor('email')">
               <p v-if="error?.code === 'form_identifier_exists'" class="auth__hint"><button type="button" class="auth__link" @click="go('sign-in')">Log in instead</button> or <button type="button" class="auth__link" @click="go('forgot')">reset your password</button></p>
             </AuthField>
             <AuthField v-model="password" label="Password" type="password" autocomplete="new-password" :error="errFor('password')">
@@ -281,7 +281,7 @@ const firstLetter = computed(() => (user.value?.name || '?').split(' ')[0])
             <span class="auth__icon"><q-icon name="lock_reset" size="26px" /></span>
             <h1 id="auth-title-forgot" class="auth__title">Reset your password</h1>
             <p class="auth__sub">Enter the email for your account and we’ll send you a 6-digit code.</p>
-            <AuthField v-model="email" label="Email" type="email" autocomplete="username" inputmode="email" placeholder="you@company.com" :error="errFor('email')" autofocus />
+            <AuthField v-model="email" label="Email" type="email" autocomplete="username" inputmode="email" placeholder="you@eventpipe.com" :error="errFor('email')" autofocus />
             <button type="submit" class="auth__primary" :disabled="!!busy">
               <q-spinner v-if="busy === 'reset'" size="18px" /> {{ busy === 'reset' ? 'Sending…' : 'Send code' }}
             </button>
