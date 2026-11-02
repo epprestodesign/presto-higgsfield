@@ -33,6 +33,8 @@ const FIELD_FOR_PARAM = {
 }
 
 // Same wording as the mock where the case exists there.
+const EVENTPIPE_ONLY = 'Banner Lab is for EventPipe accounts. Use your @eventpipe.com email.'
+
 const MESSAGES = {
   form_identifier_not_found: ['We couldn’t find an account with that email.', 'email'],
   form_password_incorrect: ['That password isn’t right. Try again or reset it.', 'password'],
@@ -51,6 +53,10 @@ const MESSAGES = {
   user_locked: ['Too many attempts. Your account is locked for a while; try again later.', null],
   too_many_requests: ['Too many attempts. Wait a moment and try again.', null],
   network_error: ['We couldn’t reach the log-in service. Check your connection and try again.', null],
+  // Allowlist: Banner Lab is restricted to @eventpipe.com addresses.
+  not_allowed_access: [EVENTPIPE_ONLY, 'email'],
+  identifier_not_allowed_access: [EVENTPIPE_ONLY, 'email'],
+  sign_up_restricted_waitlist: [EVENTPIPE_ONLY, 'email'],
   // EmailLinkError codes (magic link)
   expired: ['That link has expired. Send a new one.', null],
   failed: ['That link didn’t work. Send a new one.', null],
@@ -67,7 +73,7 @@ export function toAuthError(err) {
   const first = Array.isArray(err?.errors) ? err.errors[0] : null
   const code = first?.code || err?.code || ''
   const param = first?.meta?.paramName || first?.meta?.param_name || ''
-  const known = MESSAGES[code]
+  const known = MESSAGES[code] || (/not_allowed/.test(code) ? [EVENTPIPE_ONLY, 'email'] : null)
   let field = known ? known[1] : null
   if (param && FIELD_FOR_PARAM[param]) field = FIELD_FOR_PARAM[param]
   if (code === 'form_param_format_invalid' && field === 'email') return new AuthError('Enter a valid email address.', { field, code })
