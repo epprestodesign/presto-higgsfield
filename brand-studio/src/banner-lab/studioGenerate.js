@@ -8,6 +8,7 @@ import { hf } from '../providers/higgsfield/client.js'
 import { optimizePrompt } from './optimizePrompt.js'
 import { flareInput } from './prompt.js'
 import { GENERATION } from './standards.js'
+import { loadImage, canvasOf } from './canvas.js'
 
 // A follow-up that changes the last set ("make it darker", "more space in the
 // center") rather than describing a new scene.
@@ -36,12 +37,38 @@ const friendly = (e) => {
 /**
  * @returns {{ brief, prompt, images: string[], errors: string[] }}
  */
-export async function generateBanners({ text, previousBrief = '', palette = [], count = 3, onProgress } = {}) {
+/** Higgsfield takes PNG, JPEG or WebP references: redraw anything else (SVG, GIF) as a PNG. */
+async function uploadable(src) {
+  if (/^data:image\/(png|jpeg|jpg|webp);base64,/.test(src)) return src
+  const img = await loadImage(src)
+  const scale = Math.min(1, 2048 / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height))
+  const c = canvasOf(Math.round((img.naturalWidth || img.width) * scale), Math.round((img.naturalHeight || img.height) * scale))
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
+  return c.toDataURL('image/png')
+}
+
+/** Upload reference images once (shared by every request in the set). */
+export async function uploadReferences(references = [], upload = (d) => hf.uploadDataUrl(d)) {
+  const urls = []
+  for (const r of references.slice(0, GENERATION.maxReferences)) urls.push(await upload(await uploadable(r.src || r)))
+  return urls
+}
+
+export const REFERENCE_NOTE = 'Use the attached reference images for the venue, mood, light and colour; do not copy any text, logos or people from them.'
+
+export async function generateBanners({ text, previousBrief = '', palette = [], count = 3, references = [], onProgress } = {}) {
   const brief = composeBrief(text, previousBrief)
+  let referenceUrls = []
+  if (references.length) {
+    try { referenceUrls = await uploadReferences(references) } catch (e) {
+      return { brief, prompt: '', images: [], errors: [`Couldn’t upload the reference images: ${friendly(e)}`] }
+    }
+  }
   // A brief that's already structured (the composer's ✨ optimize ran, or a
   // tweak on one) is sent as is; optimizing it again doubled "Scene:".
-  const prompt = /^\s*Scene:/m.test(brief) ? brief : optimizePrompt({ description: brief, palette, usePalette: palette.length > 0 }).prompt
-  const input = flareInput(prompt, [], GENERATION)
+  const base = /^\s*Scene:/m.test(brief) ? brief : optimizePrompt({ description: brief, palette, usePalette: palette.length > 0 }).prompt
+  const prompt = referenceUrls.length ? `${base.trim()}\n${REFERENCE_NOTE}` : base
+  const input = flareInput(prompt, referenceUrls, GENERATION)
   let finished = 0
   const one = async () => {
     try {

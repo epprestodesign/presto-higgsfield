@@ -496,3 +496,36 @@ describe('banner requests while the logo is selected', () => {
     expect(picked.some((p) => p.method)).toBe(false)
   })
 })
+
+describe('canvas attachments', () => {
+  it('swapping the logo restarts the clean-up from the new file', async () => {
+    const { createProject, swapLogo } = await import('../banner-lab/studioProjects.js')
+    const p = createProject({ prompt: 'Gala banners', mode: 'banner' })
+    expect(p.logoLab).toBeNull()
+    swapLogo(p, { src: 'data:image/png;base64,BBBB', name: 'Acme' })
+    expect(p.logo).toMatchObject({ src: 'data:image/png;base64,BBBB', name: 'Acme' })
+    expect(p.logoLab.source).toBe('data:image/png;base64,BBBB')
+    expect(p.colorsFromLogo).toBe(true)
+    expect(p.messages.at(-1).text).toMatch(/Swapped in the new logo \(Acme\)/)
+  })
+  it('sends reference images with every request in the set', async () => {
+    vi.resetModules()
+    const sent = []
+    const uploads = []
+    vi.doMock('../providers/higgsfield/client.js', () => ({
+      hf: {
+        uploadDataUrl: async (d) => (uploads.push(d), `https://cdn.example.com/ref${uploads.length}.png`),
+        submit: async (_ep, input) => (sent.push(input), { request_id: 'r' }),
+        waitFor: async () => ({ status: 'completed', images: [{ url: 'https://x/1.png' }] }),
+      },
+    }))
+    const { generateBanners, REFERENCE_NOTE } = await import('../banner-lab/studioGenerate.js')
+    const refs = [{ src: 'data:image/png;base64,AAAA' }, { src: 'data:image/jpeg;base64,CCCC' }]
+    const r = await generateBanners({ text: 'basketball arena at night', references: refs, count: 3 })
+    expect(uploads).toHaveLength(2) // once, not per request
+    expect(sent).toHaveLength(3)
+    for (const input of sent) expect(input.image_urls).toEqual(['https://cdn.example.com/ref1.png', 'https://cdn.example.com/ref2.png'])
+    expect(r.prompt).toContain(REFERENCE_NOTE)
+    vi.doUnmock('../providers/higgsfield/client.js')
+  })
+})
