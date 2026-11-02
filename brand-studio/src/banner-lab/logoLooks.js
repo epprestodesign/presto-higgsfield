@@ -7,7 +7,7 @@
 //      and scored on how well its edge separates from what's around it.
 import { loadImage, canvasOf, pixelsOf, canvasFromPixels, vectorizeCanvas, svgDataUrl } from './canvas.js'
 import {
-  detectBackground, removeBackground, keyOut, alphaBounds, extractPalette, reverseKnockout, knockout,
+  detectBackground, removeBackground, keyOut, lumaKey, dropStrays, alphaBounds, extractPalette, reverseKnockout, knockout,
   edgeContrast, haloShare, luminance, contrastRatio, hexToRgb,
 } from './pixels.js'
 import { SYSTEM_DARK, PLACEMENTS, fitInBox } from './standards.js'
@@ -86,14 +86,39 @@ export async function cleanupMethods(src) {
     ])
     add('soft', 'Soft edges', 'A wider blend at the edge: best for JPEGs and soft shadows, can thin very fine lines.', soft)
   } else {
+    // A photo, gradient or smoke behind the logo: key it out by brightness and
+    // colour (dark backgrounds first when the border is dark), and keep the
+    // untouched version as a fallback.
+    const borderL = background.color ? luminance(...background.color) : 0.2
+    const order = borderL < 0.35 ? [true, false] : [false, true]
+    for (const dark of order) {
+      const { img: keyedRaw, kept } = lumaKey(raw, { dark })
+      const { img: keyed } = dropStrays(keyedRaw) // lights or specks far from the logo
+      if (kept < 0.01) continue
+      methods.push({
+        id: dark ? 'darkkey' : 'lightkey',
+        label: dark ? 'Remove dark background' : 'Remove light background',
+        hint: dark
+          ? 'Lifts bright and colourful lettering off a dark photo, gradient or smoke. Very dark parts of the logo go too.'
+          : 'Lifts dark and colourful lettering off a light photo or texture. Very light parts of the logo go too.',
+        canvas: trimmed(keyed), kept,
+        stats: [
+          { label: `${Math.round((1 - kept) * 100)}% removed`, tone: 'ok' },
+          kept > 0.85 ? { label: 'Most of it stayed: check the edges', tone: 'warn' } : { label: 'Busy background lifted', tone: 'ok' },
+        ],
+      })
+    }
     methods.push({
-      id: 'asis', label: 'Keep the background', hint: 'There’s a photo or gradient behind the logo, which can’t come out cleanly. Use the white box look, or upload a PNG or SVG.',
+      id: 'asis', label: 'Keep the background', hint: 'Leaves the photo or gradient behind the logo. Use the white box look with it, or upload a PNG or SVG.',
       canvas: base, stats: [{ label: 'Busy background', tone: 'warn' }],
     })
   }
   methods.forEach((m) => { m.url = png(m.canvas) })
 
-  const pick = methods.find((m) => m.id === 'trim' || m.id === 'asis')
+  // On a busy background, recommend the key that matches it if it removed a
+  // real share without wiping the logo.
+  const keyPick = methods.find((m) => (m.id === 'darkkey' || m.id === 'lightkey') && m.kept > 0.02 && m.kept < 0.85)
+  const pick = methods.find((m) => m.id === 'trim') || keyPick || methods.find((m) => m.id === 'asis')
     || (() => {
       const flood = methods.find((m) => m.id === 'flood')
       const soft = methods.find((m) => m.id === 'soft')

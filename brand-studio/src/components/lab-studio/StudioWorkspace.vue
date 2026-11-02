@@ -29,6 +29,7 @@ const props = defineProps({
   previewDevice: { type: String, default: 'desktop' },
   tutorialOpen: { type: Boolean, default: false },
   user: { type: Object, default: null },
+  generate: { type: Function, default: undefined }, // live Higgsfield generation (see LabStudioApp)
 })
 const emit = defineEmits(['home', 'sign-out'])
 
@@ -175,7 +176,9 @@ function onBoardDown(e, id) {
 let drag = null
 const dragging = ref(false)
 function onDown(e) {
-  if (activeTool.value !== 'hand' && e.target !== viewport.value && !e.target.classList?.contains('ws__stage')) return
+  const empty = e.target === viewport.value || e.target.classList?.contains('ws__stage')
+  if (empty && activeTool.value !== 'hand') selectedBoard.value = '' // clicking empty canvas clears the selection
+  if (activeTool.value !== 'hand' && !empty) return
   drag = { x: e.clientX, y: e.clientY, pan: { ...pan.value } }
   dragging.value = true
   window.addEventListener('pointermove', onMove)
@@ -234,12 +237,29 @@ const text = ref('')
 const model = ref('auto')
 // A chip fills the prompt with its full description; the user reads or edits
 // it, then sends with Enter or the arrow.
-const SUGGEST = computed(() => (isLogoOnly.value
+// What a prompt edits: the logo when a logo frame is selected, banners when a
+// banner set is, otherwise it's worked out from the words.
+const LOGO_FRAMES = ['cleanup', 'looks', 'kit']
+const editTarget = computed(() => (LOGO_FRAMES.includes(selectedBoard.value) ? 'logo' : selectedBoard.value.startsWith('set:') ? 'banners' : ''))
+const LOGO_WORDS = /\b(logo|isolate|cut ?out|extract|remove (the )?(dark |light )?background|transparent|knock ?out|trace|svg|vector|white version|outline|glow|drop shadow|white box|plate|badge|lettering|wordmark)\b/i
+const BANNER_WORDS = /\b(banners?|background|backdrop|hero|scene|photo|set)\b/i
+function routeFor(t) {
+  if (editTarget.value === 'logo') return 'logo'
+  if (editTarget.value === 'banners') return isLogoOnly.value ? 'make' : 'banners'
+  if (hasLogoWork.value && LOGO_WORDS.test(t)) return 'logo'
+  if (isLogoOnly.value) return BANNER_WORDS.test(t) ? 'make' : 'logo'
+  return 'banners'
+}
+const LOGO_SUGGEST = [
+  { label: 'Isolate the logo from its background', prompt: 'Isolate the logo from its background so only the lettering and artwork are left, on a transparent background.' },
+  { label: 'Use the white version', prompt: 'Use the white version of the logo on dark banners.' },
+  { label: 'Use the SVG trace', prompt: 'Use the SVG trace so the logo is sharp at every size.' },
+  { label: 'Put it in a white box', prompt: 'Put the logo on a white box so it keeps its colours on dark banners.' },
+]
+const SUGGEST = computed(() => (editTarget.value === 'logo' && !isLogoOnly.value ? LOGO_SUGGEST : isLogoOnly.value
   ? [
       { label: 'Make banners for this logo', prompt: BANNERS_FOR_LOGO(props.project, lookLabel.value) },
-      { label: 'Use the white version', prompt: 'Use the white version of the logo on dark banners.' },
-      { label: 'Use the SVG trace', prompt: 'Use the SVG trace so the logo is sharp at every size.' },
-      { label: 'Put it in a white box', prompt: 'Put the logo on a white box so it keeps its colours on dark banners.' },
+      ...LOGO_SUGGEST,
     ]
   : [
       { label: 'Make it darker and moodier', prompt: 'Make the banner darker and moodier: deepen the shadows, lower the overall exposure and cool the colour slightly, keeping the center especially dark and calm so the white logo and text stand out.' },
@@ -257,16 +277,11 @@ const lookLabel = computed(() => logoLab.state.looks.find((l) => l.id === props.
 async function send(t = text.value) {
   if (!t.trim() || building.value) return
   text.value = ''
-  if (isLogoOnly.value) {
-    if (/banner|background|hero|backdrop/i.test(t)) {
-      await makeBanners(props.project, { text: t, modelId: model.value })
-    } else {
-      logoReply(props.project, t, { pick: logoLab.pick })
-    }
-    return
-  }
+  const route = routeFor(t)
+  if (route === 'logo') { logoReply(props.project, t, { pick: logoLab.pick, methods: logoLab.state.methods }); return }
+  if (route === 'make') { await makeBanners(props.project, { text: t, modelId: model.value }, { generate: props.generate }); return }
   // A new set: zoom to its frame while it builds, and again when it's done.
-  const set = await revise(props.project, { text: t, modelId: model.value }, { onSet: (s) => nextTick(() => zoomToBoard(`set:${s.id}`, { max: 1 })) })
+  const set = await revise(props.project, { text: t, modelId: model.value }, { generate: props.generate, onSet: (s) => nextTick(() => zoomToBoard(`set:${s.id}`, { max: 1 })) })
   nextTick(() => zoomToBoard(`set:${set.id}`))
 }
 const history = computed(() => [...(props.project.sets || [])].reverse())
@@ -369,6 +384,11 @@ function openPreview(withExport, board = null) {
     </nav>
 
     <div class="ws__bottom">
+      <p v-if="editTarget" class="ws__ctx">
+        <q-icon :name="editTarget === 'logo' ? 'auto_fix_high' : 'wallpaper'" size="16px" />
+        Editing: <strong>{{ editTarget === 'logo' ? 'Logo' : BOARDS.find((b) => b.id === selectedBoard)?.label.split(' · ')[0] || 'Banners' }}</strong>
+        <button type="button" aria-label="Stop editing this frame" @click="selectedBoard = ''"><q-icon name="close" size="14px" /></button>
+      </p>
       <div :ref="(el) => (chips.el.value = el)" class="ws__suggest hs" :class="chips.classes.value" @scroll="chips.onScroll" @wheel="chips.onWheel">
         <button v-for="(sg, i) in SUGGEST" :key="sg.label" type="button" class="ws__chip" :class="{ 'is-on': text === sg.prompt }" :disabled="building" @click="useSuggestion(sg)">{{ sg.label }} <span>{{ i + 1 }}</span></button>
       </div>
@@ -442,6 +462,10 @@ function openPreview(withExport, board = null) {
 .ws__tools .q-btn.is-on { background: var(--bs-ink); color: #fff; }
 .ws__bottom { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(640px, calc(100% - 700px)); min-width: 420px; z-index: 5; display: grid; gap: 8px; }
 .ws__suggest { display: flex; gap: 8px; }
+.ws__ctx { margin: 0; justify-self: start; display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-radius: 999px; background: var(--bs-accent-soft); color: var(--bs-accent); font: 500 0.75rem var(--bs-font); }
+.ws__ctx strong { font-weight: 700; }
+.ws__ctx button { display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
+.ws__ctx button:hover { background: rgb(124 58 237 / 0.12); }
 .ws__chip { flex: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--bs-line); background: rgb(255 255 255 / 0.85); border-radius: 999px; padding: 5px 6px 5px 12px; font: 500 0.75rem var(--bs-font); color: var(--bs-ink); cursor: pointer; }
 .ws__chip span { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--bs-surface-2); font-size: 0.6875rem; color: var(--bs-ink-soft); }
 .ws__chip:disabled { opacity: 0.5; cursor: default; }
