@@ -30,7 +30,7 @@ const isStudio = !isPreview && window.location.hash.startsWith('#/studio')
 configurePreviewHost(`${window.location.pathname}?bsPreview=1&bsEmbed=1`)
 
 const app = isPreview ? createApp(PreviewHost)
-  : isStudio ? createApp(LabStudioApp, { requireAuth: true })
+  : isStudio ? createApp(LabStudioApp, { requireAuth: true, liveGeneration: true })
     : createApp(BannerLabApp, { syncHash: true })
 if (isStudio) document.title = 'Banner Lab Studio · Prototype'
 // Moving between Banner Lab and the Studio swaps the whole app.

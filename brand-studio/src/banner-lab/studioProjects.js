@@ -237,7 +237,62 @@ export function createProject({ prompt = '', mode = 'banner', modelId = 'auto', 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 
 /** Walk the build steps, then fill in the banners and the agent's summary. */
-export async function runBuild(project, { stepMs = 650 } = {}) {
+// ── Real generation (Higgsfield) ──────────────────────────────────────────
+// `generate` is studioGenerate.generateBanners, passed in by the app when live
+// generation is on (the standalone app and the Vercel site). Without it, sets
+// are simulated from the background library (Storybook, tests).
+
+const lastBrief = (project, except) => [...(project.sets || [])].reverse().find((s) => s !== except && s.status === 'ready' && s.brief)?.brief || ''
+const brandPalette = (project) => [project.colors?.primary, project.colors?.secondary, project.colors?.accent].filter(Boolean)
+
+/**
+ * Fill `set` with real Higgsfield banners, walking `steps` (first = writing the
+ * prompt, second = generating). Returns the banners made (may be empty).
+ */
+async function fillSetLive(project, set, text, generate, steps) {
+  steps[0].status = 'active'
+  const run = generate({
+    text, previousBrief: lastBrief(project, set), palette: brandPalette(project),
+    onProgress: (n, total) => { steps[1].label = `Generating ${total} banners with Higgsfield Flare (${n} of ${total} done)` },
+  })
+  steps[0].status = 'done'
+  steps[1].status = 'active'
+  const r = await run
+  steps[1].status = 'done'
+  set.brief = r.brief
+  set.sentPrompt = r.prompt
+  set.modelId = 'flare'
+  const createdAt = new Date()
+  const made = r.images.map((url, i) => ({
+    id: uid('ban'), imageId: null, setId: set.id, src: url, alt: r.brief, kind: 'photo',
+    model: 'flare', prompt: text, createdAt: new Date(+createdAt + i),
+  }))
+  for (const st of steps.slice(2)) { st.status = 'active'; await wait(250); st.status = 'done' }
+  if (made.length) {
+    project.banners.unshift(...[...made].reverse())
+    project.selectedBannerId = made[0].id
+    set.status = 'ready'
+  } else {
+    set.status = 'failed'
+  }
+  set.error = r.errors.join(' ')
+  return made
+}
+
+const liveSteps = (count = SET_SIZE) => ['Writing an explicit Higgsfield prompt', `Generating ${count} banners with Higgsfield Flare (about a minute)`, 'Fitting to 1440×400 and 1440×240']
+  .map((label) => ({ label, status: 'pending' }))
+
+export async function runBuild(project, { stepMs = 650, generate } = {}) {
+  if (generate && project.kind !== 'logo') {
+    const set = addSet(project, { prompt: project.prompt, modelId: 'flare', status: 'building' })
+    project.steps = liveSteps()
+    const made = await fillSetLive(project, set, project.prompt, generate, project.steps)
+    project.messages.push(made.length
+      ? { role: 'agent', text: `I made ${made.length} banners with Higgsfield Flare from your brief, each with a calm, dark center for the logo. The exact prompt I sent is on the set.`, items: ['Banners: both Presto crops, scored against the standard', 'Mockups: the landing and hotel details pages on desktop and phone'] }
+      : { role: 'agent', text: `Higgsfield couldn’t make these banners. ${set.error}` })
+    project.status = 'ready'
+    return
+  }
   const set = project.kind !== 'logo' ? addSet(project, { prompt: project.prompt, modelId: project.modelId, status: 'building' }) : null
   for (const step of project.steps) {
     step.status = 'active'
@@ -289,7 +344,7 @@ export function applyLogoLook(project, { method, look, recommended = false }) {
 }
 
 /** Logo project → logo + banners: generates banners that use the chosen look. */
-export async function makeBanners(project, { text, modelId = 'auto' }, { stepMs = 550 } = {}) {
+export async function makeBanners(project, { text, modelId = 'auto' }, { stepMs = 550, generate } = {}) {
   const model = resolveModel(modelId, { mode: 'banner', prompt: text, references: 0, hasLogo: true })
   project.messages.push({ role: 'user', text })
   // Becomes a logo + banners project right away, so the banner and page frames
@@ -297,6 +352,15 @@ export async function makeBanners(project, { text, modelId = 'auto' }, { stepMs 
   project.kind = 'kit'
   project.status = 'building'
   const set = addSet(project, { prompt: text, modelId: model.id, status: 'building' })
+  if (generate) {
+    project.steps = liveSteps()
+    const made = await fillSetLive(project, set, text, generate, project.steps)
+    project.messages.push(made.length
+      ? { role: 'agent', text: `I made ${made.length} banners with Higgsfield Flare for your logo, and mocked up your Presto pages. The exact prompt I sent is on the set.` }
+      : { role: 'agent', text: `Higgsfield couldn’t make these banners. ${set.error}` })
+    project.status = 'ready'
+    return
+  }
   project.steps = ['Reading your brief', 'Using your chosen logo look', `Generating banners with ${getModel(model.id).name}`, 'Fitting to 1440×400 and 1440×240', 'Mocking up your Presto pages']
     .map((label) => ({ label, status: 'pending' }))
   for (const step of project.steps) { step.status = 'active'; await wait(stepMs); step.status = 'done' }
@@ -343,12 +407,21 @@ export function logoReply(project, text, { pick, methods = [] }) {
  * stay on the canvas as the project's history.
  * @returns the new set
  */
-export async function revise(project, { text, modelId = 'auto' }, { stepMs = 500, onSet } = {}) {
+export async function revise(project, { text, modelId = 'auto' }, { stepMs = 500, onSet, generate } = {}) {
   const model = resolveModel(modelId, { mode: 'banner', prompt: text, references: 0, hasLogo: !!project.logo })
   project.messages.push({ role: 'user', text })
   project.status = 'building'
-  const set = addSet(project, { prompt: text, modelId: model.id, status: 'building' })
+  const set = addSet(project, { prompt: text, modelId: generate ? 'flare' : model.id, status: 'building' })
   onSet?.(set)
+  if (generate) {
+    project.steps = liveSteps()
+    const made = await fillSetLive(project, set, text, generate, project.steps)
+    project.messages.push(made.length
+      ? { role: 'agent', text: `Set ${set.n} is ready: ${made.length} new banners from Higgsfield Flare. The exact prompt I sent is on the set${set.error ? ` (some requests failed: ${set.error})` : ''}.` }
+      : { role: 'agent', text: `Set ${set.n} failed: ${set.error}` })
+    project.status = 'ready'
+    return set
+  }
   project.steps = ['Updating the prompt', `Generating ${SET_SIZE} banners with ${getModel(model.id).name}`, 'Fitting to 1440×400 and 1440×240', 'Checking them against the banner standard']
     .map((label) => ({ label, status: 'pending' }))
   for (const step of project.steps) { step.status = 'active'; await wait(stepMs); step.status = 'done' }

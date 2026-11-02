@@ -77,6 +77,8 @@ const SCENES = [
   { k: /conference|summit|expo|keynote|tech|convention/, scene: 'a modern conference hall: a wide stage with soft LED light, audience silhouettes, light haze' },
   { k: /wedding|bridal/, scene: 'an elegant wedding venue: soft florals and draped fabric at the edges, warm candle glow' },
   { k: /graduat|commencement|campus|school|college|university/, scene: 'a university campus: stately buildings and trees at the edges, open quad, gentle light' },
+  { k: /church|chapel|cathedral|worship|sanctuary|faith|gospel|congregation|parish/, scene: 'a dark church interior: tall stained-glass windows glowing softly at the far left and right, rows of wooden pews receding into shadow, warm candlelight, stone arches, a quiet dark nave in the middle' },
+  { k: /gala|ballroom|banquet|black[- ]tie|awards/, scene: 'an elegant ballroom: chandeliers and warm uplighting at the edges, round tables softly out of focus, a dark polished floor in the middle' },
   { k: /concert|music|festival|band/, scene: 'a concert stage: light beams cutting through haze, crowd silhouettes at the bottom edges' },
   { k: /camp|outdoor|lake|mountain|forest|trail/, scene: 'an outdoor landscape: pine forest and lake at the edges, open sky, distant mountains' },
   { k: /reunion|family|gala|party|celebration/, scene: 'a celebration venue: string lights and soft bokeh, tables and guests out of focus at the edges' },
@@ -119,8 +121,18 @@ const AVOID = 'Avoid: any text, letters, numbers, logos, jersey numbers, signage
  * @param brief { description, style, moods[], palette[], usePalette, references: [analysis] }
  * @returns { prompt, sections: [{ label, text }], changes: string[] }
  */
+/** A chat-style request ("can we add in a church dark background?") → its subject. */
+export function briefFromRequest(text = '') {
+  return text.trim().replace(/\s+/g, ' ')
+    .replace(/^(hey|hi|ok(ay)?|please|pls)[,!\s]+/i, '')
+    .replace(/^(can|could|would|will) (we|you|i)( please)?\s+/i, '')
+    .replace(/^(please\s+)?(add( in)?|make( me)?|create|generate|give (me|us)|try|show( me)?|use|do|i want|we want|let'?s (do|try|make|add))\s+/i, '')
+    .replace(/^(a|an|the|some)\s+/i, '')
+    .replace(/[?!.\s]+$/, '')
+}
+
 export function optimizePrompt({ description = '', style = 'photo', moods = [], palette = [], usePalette = true, references = [] } = {}) {
-  const words = description.trim().replace(/\s+/g, ' ')
+  const words = briefFromRequest(description)
   const lower = words.toLowerCase()
   const refs = references.filter(Boolean)
   const changes = []

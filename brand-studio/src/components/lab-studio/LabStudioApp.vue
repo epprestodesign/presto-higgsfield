@@ -10,6 +10,7 @@ import { studio, getProject, createProject, runBuild } from '../../banner-lab/st
 import StudioHome from './StudioHome.vue'
 import StudioWorkspace from './StudioWorkspace.vue'
 import AuthScreen from '../auth/AuthScreen.vue'
+import { generateBanners } from '../../banner-lab/studioGenerate.js'
 import AccountMenu from '../auth/AccountMenu.vue'
 import * as auth from '../../auth/index.js'
 
@@ -18,6 +19,9 @@ const props = defineProps({
   // Start at the log-in instead of signed in. With Clerk configured
   // (VITE_CLERK_PUBLISHABLE_KEY), an existing Clerk session skips it.
   requireAuth: { type: Boolean, default: false },
+  // Real Higgsfield generation for banner sets (spends credits). Off in
+  // Storybook, where sets are simulated from the background library.
+  liveGeneration: { type: Boolean, default: false },
   // Story hooks
   modelMenuOpen: { type: Boolean, default: false },
   homeText: { type: String, default: '' },
@@ -33,6 +37,7 @@ const props = defineProps({
   stepMs: { type: Number, default: 650 },
 })
 
+const generator = props.liveGeneration ? generateBanners : undefined
 const projectId = ref(props.initialProjectId)
 const user = ref(props.requireAuth ? null : { name: 'Justin Girard', email: 'justin@eventpipe.com' })
 // Clerk only: hold the log-in until we know whether there's already a session.
@@ -64,7 +69,7 @@ const project = computed(() => (projectId.value ? getProject(projectId.value) : 
 function create(input) {
   const p = createProject(input)
   projectId.value = p.id
-  runBuild(p, { stepMs: props.stepMs })
+  runBuild(p, { stepMs: props.stepMs, generate: generator })
 }
 if (props.buildDemo) create({ modelId: 'auto', references: [], logo: null, ...props.buildDemo })
 const count = computed(() => studio.projects.length)
@@ -89,7 +94,7 @@ const count = computed(() => studio.projects.length)
         :initial-logo="homeLogo" :initial-references="homeReferences" @open="(id) => (projectId = id)" @create="create"
       />
     </template>
-    <StudioWorkspace v-else :key="project.id" :project="project" :preview-open="previewOpen" :export-open="exportOpen" :preview-page="previewPage" :preview-device="previewDevice" :tutorial-open="tutorialOpen" :user="user" @home="projectId = ''" @sign-out="signOut" />
+    <StudioWorkspace v-else :key="project.id" :project="project" :preview-open="previewOpen" :export-open="exportOpen" :preview-page="previewPage" :preview-device="previewDevice" :tutorial-open="tutorialOpen" :generate="generator" :user="user" @home="projectId = ''" @sign-out="signOut" />
   </div>
 </template>
 

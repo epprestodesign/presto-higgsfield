@@ -29,6 +29,7 @@ const props = defineProps({
   previewDevice: { type: String, default: 'desktop' },
   tutorialOpen: { type: Boolean, default: false },
   user: { type: Object, default: null },
+  generate: { type: Function, default: undefined }, // live Higgsfield generation (see LabStudioApp)
 })
 const emit = defineEmits(['home', 'sign-out'])
 
@@ -278,9 +279,9 @@ async function send(t = text.value) {
   text.value = ''
   const route = routeFor(t)
   if (route === 'logo') { logoReply(props.project, t, { pick: logoLab.pick, methods: logoLab.state.methods }); return }
-  if (route === 'make') { await makeBanners(props.project, { text: t, modelId: model.value }); return }
+  if (route === 'make') { await makeBanners(props.project, { text: t, modelId: model.value }, { generate: props.generate }); return }
   // A new set: zoom to its frame while it builds, and again when it's done.
-  const set = await revise(props.project, { text: t, modelId: model.value }, { onSet: (s) => nextTick(() => zoomToBoard(`set:${s.id}`, { max: 1 })) })
+  const set = await revise(props.project, { text: t, modelId: model.value }, { generate: props.generate, onSet: (s) => nextTick(() => zoomToBoard(`set:${s.id}`, { max: 1 })) })
   nextTick(() => zoomToBoard(`set:${set.id}`))
 }
 const history = computed(() => [...(props.project.sets || [])].reverse())
