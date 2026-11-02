@@ -529,3 +529,25 @@ describe('canvas attachments', () => {
     vi.doUnmock('../providers/higgsfield/client.js')
   })
 })
+
+describe('rename and delete', () => {
+  it('renames, ignoring blank names', async () => {
+    const { createProject, renameProject } = await import('../banner-lab/studioProjects.js')
+    const p = createProject({ prompt: 'Gala banners', mode: 'banner' })
+    renameProject(p.id, '  Spring   Gala  ')
+    expect(p.name).toBe('Spring Gala')
+    renameProject(p.id, '   ')
+    expect(p.name).toBe('Spring Gala')
+  })
+  it('removes a project and can put it back where it was', async () => {
+    const { createProject, removeProject, studio } = await import('../banner-lab/studioProjects.js')
+    const p = createProject({ prompt: 'Gala banners', mode: 'banner' })
+    const before = studio.projects.length
+    const removed = removeProject(p.id)
+    expect(studio.projects.length).toBe(before - 1)
+    expect(studio.projects.includes(p)).toBe(false)
+    studio.projects.splice(removed.index, 0, removed.project)
+    expect(studio.projects[removed.index]).toBe(p)
+    expect(removeProject('nope')).toBeNull()
+  })
+})

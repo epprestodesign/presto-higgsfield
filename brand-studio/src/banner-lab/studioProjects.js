@@ -187,6 +187,20 @@ export const studio = reactive({
 
 export const getProject = (id) => studio.projects.find((p) => p.id === id) || null
 
+/** Rename a project (blank names are ignored). */
+export function renameProject(id, name) {
+  const p = getProject(id)
+  const n = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 80)
+  if (p && n) p.name = n
+  return p
+}
+
+/** Take a project off the list; returns it (and where it was) so it can be put back. */
+export function removeProject(id) {
+  const i = studio.projects.findIndex((p) => p.id === id)
+  return i < 0 ? null : { project: studio.projects.splice(i, 1)[0], index: i }
+}
+
 // ── New projects (mock agent) ─────────────────────────────────────────────
 
 const MATCH = [
