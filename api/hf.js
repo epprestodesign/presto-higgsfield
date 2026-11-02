@@ -5,7 +5,8 @@
 //     paid credits); no Clerk config → 503 "Auth not configured";
 //   • the Higgsfield key comes from the project's environment variables;
 //   • `_save` is 404 (no repo to write into);
-//   • `_image` streams, so big generations don't hit the response-size cap.
+//   • `_image` streams, so big generations don't hit the response-size cap;
+//   • `_brand` (a website's logo via Firecrawl) uses FIRECRAWL_API_KEY.
 import { send } from '../brand-studio/server/http.js'
 import { authenticate, clerkConfig } from '../brand-studio/server/auth.js'
 import { handleHiggsfield, credentialsFrom, mask } from '../brand-studio/server/higgsfield.js'
@@ -41,5 +42,5 @@ export default async function handler(req, res) {
 
   const auth = await authenticate(req)
   if (!auth.ok) return send(res, auth.status, { detail: auth.detail, code: auth.code, reason: auth.reason })
-  return handleHiggsfield(req, res, { route, query, creds, save: null, streamImages: true })
+  return handleHiggsfield(req, res, { route, query, creds, save: null, streamImages: true, firecrawlKey: process.env.FIRECRAWL_API_KEY || '' })
 }

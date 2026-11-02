@@ -70,6 +70,12 @@ async function saveToRepo(root, { url, name, meta }) {
   return { file, path: `brand-studio/src/assets/generated/${file}` }
 }
 
+/** FIRECRAWL_API_KEY from the shell or .env / .env.local (re-read each request). */
+function firecrawlKey(root) {
+  const k = 'FIRECRAWL_API_KEY'
+  return readEnvFile(path.join(root, '.env.local'))[k] || readEnvFile(path.join(root, '.env'))[k] || START_ENV[k] || ''
+}
+
 export function higgsfieldDevProxy({ root = process.cwd() } = {}) {
   return {
     name: 'brand-studio:higgsfield-dev-proxy',
@@ -84,6 +90,7 @@ export function higgsfieldDevProxy({ root = process.cwd() } = {}) {
           query: url.searchParams,
           creds: credentials(root),
           save: (body) => saveToRepo(root, body),
+          firecrawlKey: firecrawlKey(root),
         })
       })
     },

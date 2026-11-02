@@ -14,6 +14,10 @@ const props = defineProps({
   initialLogo: { type: Object, default: null },
   initialReferences: { type: Array, default: () => [] },
   showAnnouncement: { type: Boolean, default: true },
+  // While the app fetches a logo from a website, and anything it needs to say
+  // about it ("Getting the logo from espn.com…", or why it couldn't).
+  busy: { type: Boolean, default: false },
+  notice: { type: String, default: '' },
 })
 const emit = defineEmits(['open', 'create'])
 
@@ -98,14 +102,19 @@ const thumb = (p) => p.banners.find((b) => b.id === p.selectedBannerId)?.src || 
       </div>
       <PromptComposer
         ref="composer" v-model:text="text" v-model:mode="mode" v-model:model="model" v-model:logo="logo" v-model:references="references"
-        :model-menu-open="modelMenuOpen" class="sh__composer" @submit="create"
+        :model-menu-open="modelMenuOpen" :busy="busy" class="sh__composer" @submit="create"
       />
+      <p v-if="notice" class="sh__notice" :class="{ 'is-busy': busy }" role="status">
+        <q-spinner v-if="busy" size="14px" /><q-icon v-else name="info" size="16px" />{{ notice }}
+      </p>
       <p class="sh__foot">Every project keeps its logo, banners and Presto mockups. Pick up any of them on the left.</p>
     </main>
   </div>
 </template>
 
 <style scoped>
+.sh__notice { margin: 10px 4px 0; display: flex; align-items: center; gap: 8px; font: 500 0.875rem var(--bs-font); color: var(--bs-ink); }
+.sh__notice.is-busy { color: var(--bs-ink-soft); }
 .sh__heading { margin: 2px 4px 0; display: flex; align-items: center; gap: 8px; font: 600 0.9375rem var(--bs-font); color: var(--bs-ink); }
 .sh__heading span { padding: 1px 8px; border-radius: 999px; background: var(--bs-surface-2); color: var(--bs-ink-soft); font-size: 0.75rem; }
 .sh { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 16px; height: 100%; padding: 0 16px 16px; }
