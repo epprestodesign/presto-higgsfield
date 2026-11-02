@@ -1,3 +1,4 @@
+import { expect, userEvent, within, waitFor } from 'storybook/test'
 import LabStudioApp from './LabStudioApp.vue'
 import campsRaw from '../../assets/logos/uploads/camps.png'
 import ref1 from '../../assets/imagery/generated/heartland-photo.jpg'
@@ -51,6 +52,33 @@ export const ProjectDetailsPhone = story('2 · Project · Preview · Hotel detai
 export const ProjectDetailsDesktop = story('2 · Project · Preview · Hotel details on desktop', { initialProjectId: 'lab-camps', previewOpen: true, previewPage: 'details', previewDevice: 'desktop' })
 export const ProjectTutorial = story('2 · Project · Quick tour (help)', { initialProjectId: 'lab-camps', tutorialOpen: true })
 export const ProjectExport = story('2 · Project · Preview + export', { initialProjectId: 'lab-camps', exportOpen: true })
+export const ProjectPageText = story('2 · Project · Page text (click a mockup)', { initialProjectId: 'lab-heartland', copyOpen: true })
+/** Click the landing mockup → the Page text dialog → change the headline, hide the tagline → the mockups follow. */
+export const ProjectPageTextFlow = {
+  ...story('2 · Project · Page text · click → edit → save', { initialProjectId: 'lab-camps' }),
+  play: async ({ canvasElement }) => {
+    const page = within(document.body)
+    const frame = await waitFor(() => {
+      const el = canvasElement.querySelector('.ws__art--desktop .ws__shield')
+      if (!el) throw new Error('no landing mockup yet')
+      return el
+    }, { timeout: 8000 })
+    await userEvent.click(frame)
+    const dialog = await page.findByRole('document', { name: 'Page text' }, { timeout: 3000 })
+    const box = within(dialog)
+    const headline = dialog.querySelector('[data-line="headline"]')
+    await userEvent.clear(headline)
+    await userEvent.type(headline, 'Summer Camps 2027')
+    await userEvent.click(box.getByRole('switch', { name: 'Show the second subheadline' }))
+    // The live preview follows the draft.
+    await waitFor(() => expect(dialog.querySelector('.pc__hero .bh__headline').textContent).toBe('Summer Camps 2027'))
+    await expect(dialog.querySelector('.pc__hero .bh__tagline')).toBeNull()
+    await userEvent.click(box.getByRole('button', { name: 'Save' }))
+    // …and so do the mockups on the canvas.
+    await waitFor(() => expect(canvasElement.querySelector('.ws__art--desktop .bh__headline').textContent).toBe('Summer Camps 2027'), { timeout: 3000 })
+    await expect(canvasElement.querySelector('.ws__art--desktop .bh__tagline')).toBeNull()
+  },
+}
 
 // ── End to end ───────────────────────────────────────────────────────────
 export const FullFlow = story('Full flow (click through, from log-in)', { requireAuth: true })

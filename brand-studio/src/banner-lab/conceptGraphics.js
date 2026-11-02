@@ -1,8 +1,8 @@
-// Every graphic made for one concept (a project's chosen banner + its logo and
-// chosen look), itemized: the logo files, the logo at each Presto placement,
-// and the banner at both crops with and without the logo. Each item can be
-// previewed, downloaded on its own, or zipped with the rest.
-import { loadImage, canvasOf, renderBanner, placementAssets, vectorizeCanvas } from './canvas.js'
+// The graphics for one concept (a project's chosen banner + its chosen logo
+// look), itemized: the logo in that look at the two Presto banner sizes, and
+// the banner at both Presto crops (1440×400 landing, 1440×240 listings). Each
+// item can be previewed, downloaded on its own, or zipped with the rest.
+import { loadImage, canvasOf, renderBanner, placementAssets } from './canvas.js'
 import { BANNER_SPECS } from './standards.js'
 import { slug } from './download.js'
 
@@ -22,73 +22,43 @@ const thumbOf = (canvas, max = 360, type = 'image/png') => {
   return t.toDataURL(type, 0.85)
 }
 
+// The logo sizes the Presto banners use: centered on each crop.
+const LOGO_SLOTS = ['hero', 'listings']
+
 /**
  * @param project   lab project (logo, logoLab, name)
  * @param banner    the chosen banner (or null)
  * @param lookLabel the chosen dark-banner look's name, if any
- * @returns [{ id, group, label, detail, w, h, format, file, canvas?, text?, thumb, bg }]
+ * @returns [{ id, group, label, detail, w, h, format, file, canvas, retina?, thumb, bg }]
  */
 export async function conceptGraphics(project, banner, { lookLabel = '' } = {}) {
   const name = slug(project.name)
   const items = []
-  const logoSrc = project.logo?.src
+  const logoSrc = project.logo?.onDarkSrc || project.logo?.src
   const logo = logoSrc ? await canvasFromSrc(logoSrc) : null
-  const onDark = project.logo?.onDarkSrc ? await canvasFromSrc(project.logo.onDarkSrc) : logo
 
   if (logo) {
-    items.push({
-      id: 'logo-clean', group: 'Logo', label: 'Cleaned-up logo', detail: 'Transparent background, trimmed',
-      w: logo.width, h: logo.height, format: 'PNG', file: `logo/${name}-logo.png`, canvas: logo, bg: 'light',
-    })
-    if (onDark !== logo) {
+    const look = lookLabel ? ` · ${lookLabel}` : ''
+    for (const p of placementAssets(logo).filter((a) => LOGO_SLOTS.includes(a.id))) {
       items.push({
-        id: 'logo-dark', group: 'Logo', label: `Dark-banner look${lookLabel ? ` · ${lookLabel}` : ''}`, detail: 'Used on every banner and dark surface',
-        w: onDark.width, h: onDark.height, format: 'PNG', file: `logo/${name}-logo-on-dark.png`, canvas: onDark, bg: 'dark',
+        id: `logo-${p.id}`, group: 'Logo for the Presto pages', label: `${p.label}${look}`, detail: `${p.where} · with a 2x copy`,
+        w: p.size.w, h: p.size.h, format: 'PNG', file: `logo/${name}-${p.id}-${p.size.w}x${p.size.h}.png`, canvas: p.png1x, retina: p.png2x, bg: 'dark',
       })
     }
-    const svg = /\.svg(\?|$)|^data:image\/svg/.test(logoSrc) ? await (await fetch(logoSrc)).text() : vectorizeCanvas(logo, { colors: 6 }).svg
-    items.push({
-      id: 'logo-svg', group: 'Logo', label: 'Vector logo', detail: 'Sharp at any size',
-      w: logo.width, h: logo.height, format: 'SVG', file: `logo/${name}-logo.svg`, text: svg, bg: 'light',
-      thumb: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
-    })
-    const light = placementAssets(logo)
-    const dark = placementAssets(onDark)
-    items.push({
-      id: 'slot', group: 'Logo sizes in Presto', label: 'Brand logo', detail: `${light[0].where} · with a 2x copy`,
-      w: light[0].size.w, h: light[0].size.h, format: 'PNG', file: `logo/presto/brand-logo-200x200.png`, canvas: light[0].png1x, retina: light[0].png2x, bg: 'light',
-    })
-    // Banner overlays get the dark-banner look; the nav bar is white, so it
-    // gets the cleaned-up logo as is.
-    dark.slice(1).forEach((d, i) => {
-      const onBanner = !/^nav/.test(d.id)
-      const p = onBanner ? d : light[i + 1]
-      items.push({
-        id: `place-${p.id}`, group: 'Logo sizes in Presto', label: p.label, detail: `${p.where} · with a 2x copy`,
-        w: p.size.w, h: p.size.h, format: 'PNG', file: `logo/presto/${p.id}-${p.size.w}x${p.size.h}.png`, canvas: p.png1x, retina: p.png2x, bg: onBanner ? 'dark' : 'light',
-      })
-    })
   }
 
   if (banner) {
     const art = await loadImage(banner.src)
     for (const spec of BANNER_SPECS) {
-      const plain = renderBanner(art, spec, {}, null).canvas
       items.push({
-        id: `banner-${spec.id}`, group: 'Banners', label: spec.label, detail: 'Background only (Presto adds the logo)',
-        w: spec.width, h: spec.height, format: 'JPG', file: `banners/${spec.id}-${spec.width}x${spec.height}.jpg`, canvas: plain, type: 'image/jpeg', bg: 'dark',
+        id: `banner-${spec.id}`, group: 'Banners', label: spec.label, detail: 'Background only (Presto adds the logo and text)',
+        w: spec.width, h: spec.height, format: 'JPG', file: `banners/${name}-${spec.id}-${spec.width}x${spec.height}.jpg`,
+        canvas: renderBanner(art, spec, {}, null).canvas, type: 'image/jpeg', bg: 'dark',
       })
-      if (onDark) {
-        const withLogo = renderBanner(art, spec, {}, onDark).canvas
-        items.push({
-          id: `banner-${spec.id}-logo`, group: 'Banners', label: `${spec.label} with logo`, detail: 'For decks, emails and social',
-          w: spec.width, h: spec.height, format: 'JPG', file: `banners/${spec.id}-${spec.width}x${spec.height}-with-logo.jpg`, canvas: withLogo, type: 'image/jpeg', bg: 'dark',
-        })
-      }
     }
   }
 
-  for (const it of items) it.thumb ||= thumbOf(it.canvas, it.group === 'Banners' ? 560 : 360, it.type === 'image/jpeg' ? 'image/jpeg' : 'image/png')
+  for (const it of items) it.thumb = thumbOf(it.canvas, it.group === 'Banners' ? 560 : 360, it.type === 'image/jpeg' ? 'image/jpeg' : 'image/png')
   return items
 }
 

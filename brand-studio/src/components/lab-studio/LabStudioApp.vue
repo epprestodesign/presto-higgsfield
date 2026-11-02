@@ -36,6 +36,7 @@ const props = defineProps({
   previewPage: { type: String, default: 'landing' },
   previewDevice: { type: String, default: 'desktop' },
   tutorialOpen: { type: Boolean, default: false },
+  copyOpen: { type: Boolean, default: false },
   buildDemo: { type: Object, default: null }, // start a project on mount: { prompt, mode }
   stepMs: { type: Number, default: 650 },
 })
@@ -153,7 +154,7 @@ const count = computed(() => studio.projects.length)
         :initial-logo="homeLogo" :initial-references="homeReferences" :busy="lookingUp || persistence.status === 'loading'" :notice="homeStatus" @open="(id) => (projectId = id)" @create="createFromHome" @rename="rename" @delete="deleteProject"
       />
     </template>
-    <StudioWorkspace v-else :key="project.id" :project="project" :preview-open="previewOpen" :export-open="exportOpen" :preview-page="previewPage" :preview-device="previewDevice" :tutorial-open="tutorialOpen" :generate="generator" :user="user" @home="projectId = ''" @sign-out="signOut" />
+    <StudioWorkspace v-else :key="project.id" :project="project" :preview-open="previewOpen" :export-open="exportOpen" :preview-page="previewPage" :preview-device="previewDevice" :tutorial-open="tutorialOpen" :copy-open="copyOpen" :generate="generator" :user="user" @home="projectId = ''" @sign-out="signOut" />
   </div>
 </template>
 

@@ -47,14 +47,21 @@ const concept = computed(() => {
   return buildConcept({ direction: kit.value.direction, templateIndex: TEMPLATE[kit.value.direction] ?? 0, brandKit: kit.value, event: event.value })
 })
 
-const hero = computed(() => ({
-  concept: concept.value,
-  brandKit: kit.value,
-  headline: props.headline || event.value.name,
-  tagline: project.value.pages.landing.hero.tagline,
-  dates: formatDateRange(event.value.startDate, event.value.endDate),
-  location: locationLabel(event.value),
-}))
+const hero = computed(() => {
+  const h = project.value.pages.landing.hero
+  return {
+    concept: concept.value,
+    brandKit: kit.value,
+    headline: props.headline || h.headline?.trim() || event.value.name,
+    tagline: h.tagline,
+    dates: formatDateRange(event.value.startDate, event.value.endDate),
+    location: locationLabel(event.value),
+    meta: h.meta || '',
+    showHeadline: h.showHeadline !== false,
+    showMeta: h.showMeta !== false,
+    showTagline: h.showTagline !== false,
+  }
+})
 
 // Featured hotels — real cards fed by the prototype's mock hotel database.
 const cards = computed(() =>

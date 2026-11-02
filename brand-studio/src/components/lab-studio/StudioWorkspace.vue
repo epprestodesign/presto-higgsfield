@@ -18,6 +18,7 @@ import LogoLooksBoard from './LogoLooksBoard.vue'
 import { useLogoLab } from './useLogoLab.js'
 import { useHScroll } from './useHScroll.js'
 import PrestoPreviewModal from './PrestoPreviewModal.vue'
+import PageCopyDialog from './PageCopyDialog.vue'
 import ProductPreview from '../marketing/ProductPreview.vue'
 import DevicePreview from '../studio/DevicePreview.vue'
 
@@ -28,6 +29,7 @@ const props = defineProps({
   previewPage: { type: String, default: 'landing' },
   previewDevice: { type: String, default: 'desktop' },
   tutorialOpen: { type: Boolean, default: false },
+  copyOpen: { type: Boolean, default: false },
   user: { type: Object, default: null },
   generate: { type: Function, default: undefined }, // live Higgsfield generation (see LabStudioApp)
 })
@@ -145,6 +147,23 @@ function zoomToBoard(id, { max = 1.5 } = {}) {
   selectedBoard.value = id
   focusedBoard.value = id
 }
+// Clicking a page mockup opens its text (headline, subheadline, tagline). The
+// click waits a beat so a double-click still zooms instead.
+const copyOpen = ref(props.copyOpen)
+let clickTimer = 0
+function onBoardClick(e, b) {
+  if (!isMockup(b) || building.value || activeTool.value === 'hand' || e.detail > 1) return
+  clearTimeout(clickTimer)
+  clickTimer = setTimeout(() => { copyOpen.value = true }, 240)
+}
+function onBoardDblClick(b) {
+  clearTimeout(clickTimer)
+  zoomToBoard(b.id)
+}
+function saveCopy(copy) {
+  if (copy) props.project.copy = copy
+  else delete props.project.copy
+}
 function onCanvasDblClick(e) {
   if (e.target === viewport.value || e.target.classList?.contains('ws__stage')) fit({ smooth: true })
 }
@@ -226,6 +245,7 @@ onMounted(() => {
   window.addEventListener('blur', releaseSpace)
 })
 onBeforeUnmount(() => {
+  clearTimeout(clickTimer)
   window.removeEventListener('pointermove', onMove)
   window.removeEventListener('keydown', onKeyDown)
   window.removeEventListener('keyup', onKeyUp)
@@ -363,7 +383,8 @@ function openPreview(withExport, board = null) {
         <section
           v-for="b in BOARDS" :key="b.id" :ref="(el) => (boardEls[b.id] = el)" class="ws__board" :class="{ 'is-on': selectedBoard === b.id }"
           :style="{ left: `${b.x}px`, top: `${b.y}px`, width: `${b.w}px` }" @pointerdown="onBoardDown($event, b.id)"
-          @dblclick.stop="zoomToBoard(b.id)"
+          :title="isMockup(b) && !building ? 'Click to edit the page text' : undefined"
+          @click="onBoardClick($event, b)" @dblclick.stop="onBoardDblClick(b)"
         >
           <p class="ws__label" :class="{ 'ws__label--set': b.set }" :style="{ fontSize: `${Math.max(13, 13 / zoom)}px`, maxWidth: `${b.w}px` }" :title="b.label">
             <q-icon :name="b.icon" /> <span class="ws__label-text">{{ b.label }}</span>
@@ -371,6 +392,10 @@ function openPreview(withExport, board = null) {
               v-if="isMockup(b) && !building" type="button" class="ws__open" :title="`Open ${b.label} in the Presto preview`"
               @pointerdown.stop @dblclick.stop @click.stop="openPreview(false, b)"
             ><q-icon name="play_arrow" /><span v-if="zoom >= 0.5"> Preview</span></button>
+            <button
+              v-if="isMockup(b) && !building" type="button" class="ws__open" title="Edit the page text"
+              @pointerdown.stop @dblclick.stop @click.stop="copyOpen = true"
+            ><q-icon name="title" /><span v-if="zoom >= 0.5"> Text</span></button>
           </p>
           <div class="ws__art" :class="`ws__art--${b.id}`">
             <!-- Live page mockups (some are iframes) would swallow clicks; the shield lets the canvas select and zoom them -->
@@ -426,6 +451,7 @@ function openPreview(withExport, board = null) {
             <li><span>Fit everything</span><span><kbd>⌘ 0</kbd> or <kbd>Esc</kbd></span></li>
             <li><span>Zoom to a frame</span><span>Double-click it</span></li>
             <li><span>Open a page</span><span>▶ Preview on a mockup</span></li>
+            <li><span>Edit the page text</span><span>Click a mockup</span></li>
           </ul>
           <p>Click for a quick tour</p>
         </q-tooltip>
@@ -433,6 +459,7 @@ function openPreview(withExport, board = null) {
     </div>
 
     <TutorialDialog v-model="tutorial" />
+    <PageCopyDialog v-if="!building" v-model="copyOpen" :project="project" @save="saveCopy" />
     <PrestoPreviewModal v-if="!building" v-model="preview" :project="project" :initial-panel="previewPanel" :initial-page="previewPage" :initial-device="previewDevice" :key="`pm-${previewPanel}-${previewPage}-${previewDevice}`" />
   </div>
 </template>

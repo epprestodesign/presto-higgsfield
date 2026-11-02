@@ -27,6 +27,12 @@ const props = defineProps({
   location: { type: String, default: '' },
   showLogo: { type: Boolean, default: true },
   showDates: { type: Boolean, default: true },
+  // Page text edited in the Studio: a custom subheadline (replaces dates ·
+  // place), and a switch for each line.
+  meta: { type: String, default: '' },
+  showHeadline: { type: Boolean, default: true },
+  showMeta: { type: Boolean, default: true },
+  showTagline: { type: Boolean, default: true },
   // 'landing' (tall hero) | 'compact' (Browse/Details band) | 'card' (gallery thumbnail)
   size: { type: String, default: 'landing' },
   headingLevel: { type: Number, default: 1 },
@@ -44,7 +50,7 @@ const logoSrc = computed(() => {
 })
 const logoAlt = computed(() => props.brandKit.logo?.alt || props.headline)
 
-const meta = computed(() => [props.showDates && props.dates, props.location].filter(Boolean).join('  ·  '))
+const metaLine = computed(() => (!props.showMeta ? '' : props.meta || [props.showDates && props.dates, props.location].filter(Boolean).join('  ·  ')))
 
 const style = computed(() => ({
   '--bh-bg': t.value.background,
@@ -76,9 +82,9 @@ const headingTag = computed(() => `h${Math.min(6, Math.max(1, props.headingLevel
     <div class="bh__content">
       <img v-if="showLogo && logoSrc" :src="logoSrc" :alt="logoAlt" class="bh__logo" />
       <div class="bh__text">
-        <component :is="headingTag" class="bh__headline">{{ headline }}</component>
-        <p v-if="meta" class="bh__meta">{{ meta }}</p>
-        <p v-if="tagline && size !== 'compact'" class="bh__tagline">{{ tagline }}</p>
+        <component :is="headingTag" v-if="showHeadline" class="bh__headline">{{ headline }}</component>
+        <p v-if="metaLine" class="bh__meta">{{ metaLine }}</p>
+        <p v-if="showTagline && tagline && size !== 'compact'" class="bh__tagline">{{ tagline }}</p>
       </div>
     </div>
   </section>

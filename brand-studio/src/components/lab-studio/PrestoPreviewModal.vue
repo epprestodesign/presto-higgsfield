@@ -2,7 +2,7 @@
 // PrestoPreviewModal — the real Presto booking pages, branded with this
 // project's logo and selected banner, at full size; switch page, device and
 // banner. The right panel itemizes every graphic made for the chosen concept
-// (logo files, Presto logo sizes, both banner crops), each previewable and
+// (the logo look at the two Presto banner sizes, both banner crops), each previewable and
 // downloadable, or all as a ZIP.
 import { computed, markRaw, nextTick, ref, watch } from 'vue'
 import BrandedSite from '../preview/BrandedSite.vue'
@@ -190,7 +190,7 @@ async function exportZip() {
               <img :src="concept.thumb" alt="" />
               <span><strong>{{ concept.title }}</strong><small>Logo: {{ lookLabel || 'original colours' }}</small></span>
             </div>
-            <p class="bs-caption">Every file made for this banner and logo, sized to the Presto standard. Click one to preview it.</p>
+            <p class="bs-caption">The selected logo look at its two Presto banner sizes, and this banner at 1440×400 and 1440×240. Click one to preview it.</p>
           </div>
 
           <div v-if="loading" class="pm__loading"><q-spinner size="20px" /> Making the graphics…</div>
