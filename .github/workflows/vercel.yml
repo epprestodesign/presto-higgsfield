@@ -1,0 +1,72 @@
+name: Deploy Banner Lab Studio to Vercel
+
+# Vercel can't import this repo directly (its GitHub login, girardjustin1, can't
+# list repos owned by another personal account), so GitHub Actions builds and
+# deploys it with the Vercel CLI instead:
+#   push to main  → production (banner-lab project)
+#   pull request  → preview (Vercel login required to view)
+# Needs one repo secret: VERCEL_TOKEN (vercel.com/account/tokens, scoped to
+# "girardjustin1's projects"). Build settings and env vars come from the
+# Vercel project + vercel.json.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vercel-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERCEL_ORG_ID: team_DZzfXFGiVEXwGZSMkhcfJADa      # girardjustin1's projects (not secret)
+  VERCEL_PROJECT_ID: prj_lKOyBbsgU1E4aeozXo9rXSXYu9Bt # banner-lab (not secret)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Skip cleanly (instead of failing) until the token secret exists, and on
+    # PRs from forks, which can't read secrets.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Check the Vercel token
+        id: token
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::warning::VERCEL_TOKEN isn't set yet, so nothing was deployed. Add it in Settings → Secrets and variables → Actions."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Pull project settings and env vars
+        if: steps.token.outputs.ready == 'true'
+        run: npx --yes vercel@latest pull --yes --environment=${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        if: steps.token.outputs.ready == 'true'
+        run: npx --yes vercel@latest build ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        id: deploy
+        if: steps.token.outputs.ready == 'true'
+        run: |
+          url=$(npx --yes vercel@latest deploy --prebuilt ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "### Deployed to Vercel: $url" >> "$GITHUB_STEP_SUMMARY"
