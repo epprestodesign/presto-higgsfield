@@ -14,9 +14,13 @@ import { analyzeReference } from './optimizePrompt.js'
  * exportable. Same-site URLs (e.g. built assets on GitHub Pages, which Vite
  * can emit as absolute https URLs) load directly.
  */
+// Saved files (Supabase Storage signed URLs) send CORS headers, so they load
+// directly with crossOrigin="anonymous" instead of through the proxy.
+const corsHost = (src) => { try { return /\.supabase\.co$/.test(new URL(src).hostname) } catch { return false } }
 export const sameOrigin = (src) => {
   if (!/^https:\/\//.test(src)) return src
   try { if (typeof location !== 'undefined' && new URL(src).origin === location.origin) return src } catch { /* fall through */ }
+  if (corsHost(src)) return src
   return `/hf-api/_image?url=${encodeURIComponent(src)}`
 }
 
@@ -26,6 +30,7 @@ export function loadImage(src) {
     img.decoding = 'async'
     img.onload = () => resolve(img)
     img.onerror = () => reject(new Error('Could not read that image.'))
+    if (corsHost(src)) img.crossOrigin = 'anonymous'
     img.src = sameOrigin(src)
   })
 }

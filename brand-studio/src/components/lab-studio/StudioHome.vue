@@ -87,7 +87,7 @@ const thumb = (p) => p.banners.find((b) => b.id === p.selectedBannerId)?.src || 
             </span>
           </button>
         </li>
-        <li v-if="!list.length" class="sh__empty">No projects match.</li>
+        <li v-if="!list.length" class="sh__empty">{{ studio.projects.length ? 'No projects match.' : 'No projects yet. Start one with the prompt.' }}</li>
       </ul>
     </aside>
 

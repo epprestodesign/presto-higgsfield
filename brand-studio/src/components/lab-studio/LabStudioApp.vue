@@ -5,7 +5,7 @@
 //                             → ▶ Presto preview modal → export
 // Concept data (studioProjects.js): seeded from the Brand Studio examples and
 // kept in memory; "building" is a mock agent walking its steps.
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { studio, getProject, createProject, runBuild } from '../../banner-lab/studioProjects.js'
 import StudioHome from './StudioHome.vue'
 import StudioWorkspace from './StudioWorkspace.vue'
@@ -13,6 +13,7 @@ import AuthScreen from '../auth/AuthScreen.vue'
 import { generateBanners } from '../../banner-lab/studioGenerate.js'
 import { hf } from '../../providers/higgsfield/client.js'
 import { siteFromText, siteLabel } from '../../banner-lab/siteBrand.js'
+import { persistence, canPersist, loadWorkspace } from '../../banner-lab/projectStore.js'
 import AccountMenu from '../auth/AccountMenu.vue'
 import * as auth from '../../auth/index.js'
 
@@ -68,8 +69,16 @@ async function signOut() {
 }
 const project = computed(() => (projectId.value ? getProject(projectId.value) : null))
 
+// Saved projects (live app, signed in with Clerk): load the team's projects
+// once someone is signed in; new projects are saved from then on.
+watch(user, (u) => { if (u && props.liveGeneration && canPersist() && persistence.status === 'off') loadWorkspace() }, { immediate: true })
+const homeStatus = computed(() => homeNotice.value
+  || (persistence.status === 'loading' ? 'Loading your team’s projects…' : '')
+  || persistence.error)
+
 function create(input) {
   const p = createProject(input)
+  if (persistence.status === 'ready') p._persist = true
   projectId.value = p.id
   runBuild(p, { stepMs: props.stepMs, generate: generator })
 }
@@ -122,7 +131,7 @@ const count = computed(() => studio.projects.length)
       </header>
       <StudioHome
         class="lsa__home" :model-menu-open="modelMenuOpen" :initial-text="homeText" :initial-mode="homeMode"
-        :initial-logo="homeLogo" :initial-references="homeReferences" :busy="lookingUp" :notice="homeNotice" @open="(id) => (projectId = id)" @create="createFromHome"
+        :initial-logo="homeLogo" :initial-references="homeReferences" :busy="lookingUp || persistence.status === 'loading'" :notice="homeStatus" @open="(id) => (projectId = id)" @create="createFromHome"
       />
     </template>
     <StudioWorkspace v-else :key="project.id" :project="project" :preview-open="previewOpen" :export-open="exportOpen" :preview-page="previewPage" :preview-device="previewDevice" :tutorial-open="tutorialOpen" :generate="generator" :user="user" @home="projectId = ''" @sign-out="signOut" />
