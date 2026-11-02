@@ -106,25 +106,26 @@ export function frontendApiOf(publishableKey = '') {
 
 /**
  * Do the server's secret key and the browser's publishable key belong to the
- * same Clerk instance? Compares the key ids each side publishes. A mismatch
- * makes every signed-in request fail with jwk-kid-mismatch.
- * @returns {Promise<boolean|null>} null when it can't tell.
+ * same Clerk instance? Compares the key ids (= instance ids, not secret) each
+ * side publishes. A mismatch makes every signed-in request fail.
+ * @returns {Promise<{match: boolean|null, server?: string[], browser?: string[], why?: string}>}
  */
 export async function clerkKeysMatch(env = process.env, fetchFn = fetch) {
   const host = frontendApiOf(env.VITE_CLERK_PUBLISHABLE_KEY)
-  if (!host || !env.CLERK_SECRET_KEY) return null
-  try {
-    const kids = async (url, headers) => {
+  if (!host) return { match: null, why: 'no publishable key' }
+  if (!env.CLERK_SECRET_KEY) return { match: null, why: 'no secret key' }
+  const kids = async (url, headers) => {
+    try {
       const r = await fetchFn(url, { headers })
-      if (!r.ok) return null
-      return new Set(((await r.json()).keys || []).map((k) => k.kid))
-    }
-    const [server, browser] = await Promise.all([
-      kids('https://api.clerk.com/v1/jwks', { Authorization: `Bearer ${env.CLERK_SECRET_KEY}` }),
-      kids(`https://${host}/.well-known/jwks.json`),
-    ])
-    if (!server) return false // the secret key itself was rejected
-    if (!browser) return null
-    return [...browser].some((k) => server.has(k))
-  } catch { return null }
+      if (!r.ok) return { why: `${new URL(url).host} ${r.status}` }
+      return { kids: ((await r.json()).keys || []).map((k) => k.kid) }
+    } catch (e) { return { why: `${new URL(url).host}: ${String(e?.message || e).slice(0, 80)}` } }
+  }
+  const [server, browser] = await Promise.all([
+    kids('https://api.clerk.com/v1/jwks', { Authorization: `Bearer ${env.CLERK_SECRET_KEY}` }),
+    kids(`https://${host}/.well-known/jwks.json`, { Accept: 'application/json', 'User-Agent': 'banner-lab-health' }),
+  ])
+  if (!server.kids) return { match: server.why?.endsWith(' 401') ? false : null, why: `secret key: ${server.why}` }
+  if (!browser.kids) return { match: null, server: server.kids, why: `publishable key: ${browser.why}` }
+  return { match: browser.kids.some((k) => server.kids.includes(k)), server: server.kids, browser: browser.kids }
 }
