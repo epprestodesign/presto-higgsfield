@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   makeImage, detectBackground, removeBackground, alphaBounds, extractPalette, logoContrastOn, knockout,
   coverCrop, centerZone, zoneStats, gradeZone, scrimNeeded, contentBounds,
-  keyOut, reverseKnockout, dilate, edgeContrast, haloShare,
+  keyOut, reverseKnockout, dilate, edgeContrast, haloShare, lumaKey, dropStrays,
 } from '../banner-lab/pixels.js'
 import { buildPrompt, flareInput, STANDARD_RULES } from '../banner-lab/prompt.js'
 import { vectorize } from '../banner-lab/vectorize.js'
@@ -276,5 +276,79 @@ describe('logo looks for dark banners', () => {
     expect(scene([0, 0, 0], navy).verdict).toBe('low')
     expect(scene([255, 255, 255], navy)).toMatchObject({ verdict: 'good' })
     expect(scene([0, 0, 0], [255, 255, 255]).ratio).toBeGreaterThan(15) // the white box
+  })
+})
+
+describe('busy-background clean-up', () => {
+  it('lifts bright and colourful lettering off a dark, smoky background', () => {
+    // 40×40: dark grey "smoke" (varying 10–60), with a white bar and a blue bar.
+    const img = makeImage(40, 40)
+    for (let y = 0; y < 40; y++) for (let x = 0; x < 40; x++) {
+      const smoke = 10 + ((x * 7 + y * 13) % 50)
+      const c = y >= 12 && y < 18 && x >= 6 && x < 34 ? [255, 255, 255]
+        : y >= 22 && y < 28 && x >= 6 && x < 34 ? [40, 60, 220]
+          : [smoke, smoke, smoke + 4]
+      img.data.set([...c, 255], (y * 40 + x) * 4)
+    }
+    const { img: out, kept } = lumaKey(img, { dark: true })
+    const a = (x, y) => out.data[(y * 40 + x) * 4 + 3]
+    expect(a(2, 2)).toBe(0) // smoke gone
+    expect(a(38, 35)).toBe(0)
+    expect(a(20, 15)).toBe(255) // white lettering kept
+    expect(a(20, 25)).toBe(255) // saturated blue kept, though it's fairly dark
+    expect(kept).toBeGreaterThan(0.15)
+    expect(kept).toBeLessThan(0.4)
+  })
+  it('lifts dark lettering off a light, textured background', () => {
+    const img = makeImage(30, 30)
+    for (let y = 0; y < 30; y++) for (let x = 0; x < 30; x++) {
+      const paper = 225 + ((x * 5 + y * 3) % 25)
+      const ink = x >= 8 && x < 22 && y >= 10 && y < 20
+      img.data.set([...(ink ? [20, 20, 30] : [paper, paper, paper - 6]), 255], (y * 30 + x) * 4)
+    }
+    const { img: out } = lumaKey(img, { dark: false })
+    expect(out.data[(2 * 30 + 2) * 4 + 3]).toBe(0)
+    expect(out.data[(15 * 30 + 15) * 4 + 3]).toBe(255)
+  })
+})
+
+describe('logo projects: colours, names and follow-ups', () => {
+  it('turns a logo palette into brand colours', async () => {
+    const { paletteToColors } = await import('../banner-lab/studioProjects.js')
+    const c = paletteToColors([{ hex: '#0A0A0C', share: 50 }, { hex: '#2B3FD6', share: 20 }, { hex: '#FFFFFF', share: 15 }, { hex: '#D9261C', share: 10 }])
+    expect(c.primary).toBe('#2B3FD6') // most-used real colour, not black or white
+    expect(c.secondary).toBe('#D9261C')
+    expect(c.ink).toBe('#0A0A0C') // darkest
+    expect(c.surface).toBe('#FFFFFF')
+  })
+  it('names a project from its uploaded file', async () => {
+    const { nameFromFile } = await import('../banner-lab/studioProjects.js')
+    expect(nameFromFile('bret-michaels_live-poster.png')).toBe('Bret Michaels Live Poster')
+  })
+  it('"isolate the logo" picks the background-removal clean-up', async () => {
+    const { logoReply } = await import('../banner-lab/studioProjects.js')
+    const project = { messages: [] }
+    const picked = []
+    logoReply(project, 'Can you isolate the logo from the background?', { pick: (w) => (picked.push(w), true), methods: [{ id: 'darkkey' }, { id: 'lightkey' }, { id: 'asis' }] })
+    expect(picked).toEqual([{ method: 'darkkey' }])
+    expect(project.messages.at(-1).text).toMatch(/removed the dark background/)
+  })
+})
+
+describe('stray bits after a background key', () => {
+  it('drops specks far from the logo but keeps small text next to it', () => {
+    const img = makeImage(100, 60)
+    const fill = (x0, y0, x1, y1) => { for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) img.data.set([255, 255, 255, 255], (y * 100 + x) * 4) }
+    fill(30, 20, 70, 36) // the logo
+    fill(40, 39, 46, 42) // small text just under it
+    fill(2, 2, 5, 5) // a floodlight in the corner
+    fill(94, 54, 98, 58) // another in the far corner
+    const { img: out, dropped } = dropStrays(img)
+    const a = (x, y) => out.data[(y * 100 + x) * 4 + 3]
+    expect(a(50, 28)).toBe(255)
+    expect(a(42, 40)).toBe(255)
+    expect(a(3, 3)).toBe(0)
+    expect(a(95, 55)).toBe(0)
+    expect(dropped).toBe(9 + 16)
   })
 })
