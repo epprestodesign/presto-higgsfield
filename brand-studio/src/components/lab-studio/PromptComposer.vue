@@ -14,6 +14,9 @@ const props = defineProps({
   showMode: { type: Boolean, default: true },
   busy: { type: Boolean, default: false },
   placeholder: { type: String, default: '' },
+  // Drag-and-drop / paste of images. Off where the parent doesn't use the
+  // attachments (the canvas composer).
+  droppable: { type: Boolean, default: true },
 })
 const text = defineModel('text', { type: String, default: '' })
 const mode = defineModel('mode', { type: String, default: 'banner' })
@@ -24,17 +27,84 @@ const emit = defineEmits(['submit'])
 
 const logoInput = ref(null)
 const refInput = ref(null)
+const MAX_REFS = 6
+async function setLogo(f) { if (f) logo.value = { src: await readFile(f), name: f.name.replace(/\.[^.]+$/, '') } }
+async function addRefs(files) {
+  for (const f of files.slice(0, MAX_REFS - references.value.length)) references.value = [...references.value, { src: await readFile(f), name: f.name }]
+}
 async function pickLogo(e) {
-  const f = e.target.files?.[0]
-  if (f) logo.value = { src: await readFile(f), name: f.name.replace(/\.[^.]+$/, '') }
+  await setLogo(e.target.files?.[0])
   e.target.value = ''
 }
 async function pickRefs(e) {
-  for (const f of [...(e.target.files || [])].slice(0, 6 - references.value.length)) references.value = [...references.value, { src: await readFile(f), name: f.name }]
+  await addRefs([...(e.target.files || [])])
   e.target.value = ''
 }
 
-const hint = computed(() => props.placeholder || (mode.value === 'logo' ? 'Attach a logo (or a screenshot with it) and tell us anything to fix…' : 'Describe the banner for your event…'))
+// ── Drag and drop / paste ─────────────────────────────────────────────────
+// Dragging an image over the box splits it into two targets, Logo and
+// Reference images, so we never have to guess which one a file is.
+const isImage = (f) => /^image\/(png|jpe?g|webp|gif|svg\+xml)$/.test(f.type)
+const hasFiles = (e) => [...(e.dataTransfer?.types || [])].includes('Files')
+const dragging = ref(false)
+const over = ref('') // 'logo' | 'refs' | ''
+const dropNote = ref('')
+let depth = 0
+let noteTimer = 0
+function note(msg) {
+  dropNote.value = msg
+  clearTimeout(noteTimer)
+  noteTimer = setTimeout(() => { dropNote.value = '' }, 4000)
+}
+function onDragEnter(e) {
+  if (!props.droppable || !hasFiles(e)) return
+  e.preventDefault()
+  depth++
+  dragging.value = true
+}
+function onDragOver(e) {
+  if (!props.droppable || !hasFiles(e)) return
+  e.preventDefault()
+  e.dataTransfer.dropEffect = 'copy'
+}
+function onDragLeave(e) {
+  if (!props.droppable || !hasFiles(e)) return
+  if (--depth <= 0) { depth = 0; dragging.value = false; over.value = '' }
+}
+async function onDrop(e, target = over.value || (mode.value === 'logo' ? 'logo' : 'refs')) {
+  if (!props.droppable || !hasFiles(e)) return
+  e.preventDefault()
+  depth = 0
+  dragging.value = false
+  over.value = ''
+  await take([...(e.dataTransfer.files || [])], target)
+}
+async function take(all, target) {
+  const files = all.filter(isImage)
+  if (!files.length) return note('Drop a PNG, JPG, WebP or SVG image.')
+  if (target === 'logo') {
+    await setLogo(files[0])
+    if (files.length > 1) note('Only one logo per project, so I used the first image.')
+  } else {
+    const room = MAX_REFS - references.value.length
+    if (room <= 0) return note(`You already have ${MAX_REFS} reference images. Remove one to add another.`)
+    await addRefs(files)
+    if (files.length > room) note(`Added ${room}: up to ${MAX_REFS} reference images.`)
+  }
+  focus()
+}
+/** ⌘V an image: the logo in Logo mode, otherwise a reference image. */
+async function onPaste(e) {
+  if (!props.droppable) return
+  const files = [...(e.clipboardData?.files || [])].filter(isImage)
+  if (!files.length) return // plain text pastes as usual
+  e.preventDefault()
+  await take(files, mode.value === 'logo' ? 'logo' : 'refs')
+}
+
+const hint = computed(() => props.placeholder || (mode.value === 'logo'
+  ? 'Drop in a logo (or a screenshot with it) and tell us anything to fix…'
+  : 'Describe the banner for your event, or drop in a logo or reference images…'))
 const canSend = computed(() => !props.busy && (text.value.trim().length > 2 || !!logo.value))
 function send() { if (canSend.value) emit('submit') }
 function onKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }
@@ -69,7 +139,23 @@ defineExpose({ focus })
 </script>
 
 <template>
-  <div class="pc" :class="{ 'pc--compact': compact }">
+  <div
+    class="pc" :class="{ 'pc--compact': compact, 'is-dragging': dragging }"
+    @dragenter="onDragEnter" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop" @paste="onPaste"
+  >
+    <div v-if="dragging" class="pc__drop" aria-hidden="true">
+      <div class="pc__zone" :class="{ 'is-over': over === 'logo' }" @dragenter="over = 'logo'" @dragover.prevent="over = 'logo'" @drop.stop="onDrop($event, 'logo')">
+        <q-icon name="auto_fix_high" size="26px" />
+        <strong>Logo</strong>
+        <small>Clean it up and use it on banners</small>
+      </div>
+      <div class="pc__zone" :class="{ 'is-over': over === 'refs' }" @dragenter="over = 'refs'" @dragover.prevent="over = 'refs'" @drop.stop="onDrop($event, 'refs')">
+        <q-icon name="add_photo_alternate" size="26px" />
+        <strong>Reference images</strong>
+        <small>Venue, mood or past banners · up to {{ MAX_REFS }}</small>
+      </div>
+    </div>
+    <p v-if="dropNote" class="pc__note" role="status">{{ dropNote }}</p>
     <div v-if="logo || references.length" class="pc__attach" aria-label="Attachments">
       <span v-if="logo" class="pc__chip">
         <img :src="logo.src" alt="" class="pc__chip-logo" />
@@ -122,6 +208,15 @@ defineExpose({ focus })
 <style scoped>
 .pc { background: rgb(255 255 255 / 0.72); border: 1px solid var(--bs-line); border-radius: 20px; padding: 14px 14px 10px; box-shadow: var(--bs-shadow-2); backdrop-filter: blur(10px); display: grid; gap: 8px; }
 .pc--compact { border-radius: 18px; padding: 10px 12px 8px; }
+.pc { position: relative; }
+.pc.is-dragging { border-color: var(--bs-accent); }
+.pc__drop { position: absolute; inset: 6px; z-index: 5; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.pc__zone { display: grid; place-content: center; justify-items: center; gap: 4px; text-align: center; padding: 10px; border-radius: 14px; border: 2px dashed var(--bs-line); background: var(--bs-surface, #fff); color: var(--bs-ink-soft); font: 500 0.8125rem var(--bs-font); transition: border-color 0.12s, background 0.12s, color 0.12s; }
+.pc__zone strong { color: var(--bs-ink); font-weight: 600; font-size: 0.9375rem; }
+.pc__zone.is-over { border-color: var(--bs-accent); border-style: solid; background: var(--bs-accent-soft); color: var(--bs-ink); }
+.pc__zone.is-over .q-icon { color: var(--bs-accent); }
+.pc__zone * { pointer-events: none; }
+.pc__note { margin: 0; font: 500 0.8125rem var(--bs-font); color: var(--bs-ink-soft); }
 .pc__attach { display: flex; flex-wrap: wrap; gap: 8px; }
 .pc__chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 6px 6px 8px; border-radius: 12px; background: var(--bs-surface-2); border: 1px solid var(--bs-line); font: 500 0.8125rem var(--bs-font); }
 .pc__chip-logo { width: 34px; height: 34px; object-fit: contain; }

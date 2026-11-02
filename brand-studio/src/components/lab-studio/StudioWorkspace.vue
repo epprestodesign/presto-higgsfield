@@ -397,7 +397,7 @@ function openPreview(withExport, board = null) {
       <div :ref="(el) => (chips.el.value = el)" class="ws__suggest hs" :class="chips.classes.value" @scroll="chips.onScroll" @wheel="chips.onWheel">
         <button v-for="(sg, i) in SUGGEST" :key="sg.label" type="button" class="ws__chip" :class="{ 'is-on': text === sg.prompt }" :disabled="building" @click="useSuggestion(sg)">{{ sg.label }} <span>{{ i + 1 }}</span></button>
       </div>
-      <PromptComposer ref="composer" v-model:text="text" v-model:model="model" compact :show-mode="false" :busy="building" placeholder="What would you like to change or create?" @submit="send()" />
+      <PromptComposer ref="composer" v-model:text="text" v-model:model="model" compact :show-mode="false" :droppable="false" :busy="building" placeholder="What would you like to change or create?" @submit="send()" />
     </div>
 
     <div class="ws__zoom">
