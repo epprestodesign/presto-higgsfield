@@ -56,7 +56,7 @@ export async function uploadReferences(references = [], upload = (d) => hf.uploa
 
 export const REFERENCE_NOTE = 'Use the attached reference images for the venue, mood, light and colour; do not copy any text, logos or people from them.'
 
-export async function generateBanners({ text, previousBrief = '', palette = [], count = 3, references = [], onProgress } = {}) {
+export async function generateBanners({ text, previousBrief = '', palette = [], count = 3, references = [], projectId = '', onProgress } = {}) {
   const brief = composeBrief(text, previousBrief)
   let referenceUrls = []
   if (references.length) {
@@ -72,7 +72,7 @@ export async function generateBanners({ text, previousBrief = '', palette = [], 
   let finished = 0
   const one = async () => {
     try {
-      const sub = await hf.submit(GENERATION.endpoint, input)
+      const sub = await hf.submit(GENERATION.endpoint, input, undefined, { projectId })
       const done = await hf.waitFor(sub.request_id)
       onProgress?.(++finished, count)
       if (done.status !== 'completed') return { error: done.error || `The request ended as “${done.status}”.` }

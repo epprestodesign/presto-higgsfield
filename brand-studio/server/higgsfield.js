@@ -92,8 +92,11 @@ export function imageUrlAllowed(u, pasted) {
  * @param {object} [o.health]     overrides merged into the `_health` answer
  * @param {boolean} [o.streamImages] pipe `_image` bytes instead of buffering (Vercel's response cap)
  * @param {string} [o.firecrawlKey] FIRECRAWL_API_KEY, for `_brand` (a website's logo + colours)
+ * @param {ReturnType<import('./usage.js').usageLog>|null} [o.usage] usage log (Vercel only)
+ * @param {string} [o.userId]     the signed-in Clerk user, for the usage log
  */
-export async function handleHiggsfield(req, res, { route, query, creds, save = null, health = {}, streamImages = false, firecrawlKey = '' }) {
+export async function handleHiggsfield(req, res, { route, query, creds, save = null, health = {}, streamImages = false, firecrawlKey = '', usage = null, userId = '' }) {
+  const projectId = String(req.headers?.['x-project-id'] || '')
   try {
     if (route === '/_health' && req.method === 'GET') {
       return send(res, 200, { proxy: true, configured: !!creds, keyId: creds ? mask(creds.id) : null, ...health })
@@ -134,7 +137,9 @@ export async function handleHiggsfield(req, res, { route, query, creds, save = n
     // so it doesn't need the Higgsfield key.
     if (route === '/_brand' && req.method === 'POST') {
       const { url } = await readJson(req)
-      return send(res, 200, await lookupBrand(url, { apiKey: firecrawlKey }))
+      const brand = await lookupBrand(url, { apiKey: firecrawlKey })
+      await usage?.started({ userId, projectId, provider: 'firecrawl', model: 'branding', credits: brand.credits, prompt: url, status: 'completed' })
+      return send(res, 200, brand)
     }
 
     if (route === '/_save' && !save) return send(res, 404, { detail: 'Saving into the repo is only available on the local dev server.' })
@@ -170,13 +175,21 @@ export async function handleHiggsfield(req, res, { route, query, creds, save = n
       const body = await readJson(req)
       const apiPath = kind === 'estimate' ? `/estimate/${endpoint}` : `/${endpoint}`
       const idem = kind === 'generate' ? { 'Idempotency-Key': String(req.headers['x-idempotency-key'] || crypto.randomUUID()) } : {}
-      const r = await upstream(creds, 'POST', apiPath, body, idem)
+      // With a usage log, ask for the credit cost alongside (free, in parallel).
+      const [r, est] = await Promise.all([
+        upstream(creds, 'POST', apiPath, body, idem),
+        usage && kind === 'generate' ? upstream(creds, 'POST', `/estimate/${endpoint}`, body).catch(() => null) : null,
+      ])
+      if (usage && kind === 'generate' && r.status < 300 && r.json?.request_id) {
+        await usage.started({ userId, projectId, provider: 'higgsfield', model: endpoint, requestId: r.json.request_id, credits: est?.status < 300 ? est.json?.credits : 0, prompt: body.prompt, status: r.json.status })
+      }
       return send(res, r.status, r.json)
     }
 
     const reqm = route.match(/^\/requests\/([^/]+)\/(status|cancel)$/)
     if (reqm && UUID_RE.test(reqm[1])) {
       const r = await upstream(creds, reqm[2] === 'cancel' ? 'POST' : 'GET', `/requests/${reqm[1]}/${reqm[2]}`, reqm[2] === 'cancel' ? {} : undefined)
+      if (usage && r.status < 300) await usage.finished(reqm[1], reqm[2] === 'cancel' ? 'canceled' : r.json?.status, r.json?.error)
       return send(res, r.status, r.json)
     }
 

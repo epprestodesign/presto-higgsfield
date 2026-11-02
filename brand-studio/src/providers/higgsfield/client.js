@@ -61,7 +61,8 @@ export const hf = {
   },
   verify: () => call('POST', '/_verify', {}),
   estimate: (endpoint, input) => call('POST', `/estimate/${endpoint}`, input),
-  submit: (endpoint, input, idempotencyKey = crypto.randomUUID()) => call('POST', `/generate/${endpoint}`, input, { 'x-idempotency-key': idempotencyKey }),
+  /** `projectId` (a saved project) ties the request to it in the usage log. */
+  submit: (endpoint, input, idempotencyKey = crypto.randomUUID(), { projectId } = {}) => call('POST', `/generate/${endpoint}`, input, { 'x-idempotency-key': idempotencyKey, ...(projectId ? { 'x-project-id': projectId } : {}) }),
   status: (requestId) => call('GET', `/requests/${requestId}/status`),
   cancel: (requestId) => call('POST', `/requests/${requestId}/cancel`, {}),
   save: (url, name, meta) => call('POST', '/_save', { url, name, meta }),

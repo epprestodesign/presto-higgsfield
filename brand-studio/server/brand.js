@@ -95,5 +95,6 @@ export async function lookupBrand(url, { apiKey, fetchFn = fetch } = {}) {
     colors: brand.colors,
     typography: brand.typography,
     colorScheme: brand.colorScheme,
+    credits: Number(json.data?.metadata?.creditsUsed) || 1,
   }
 }

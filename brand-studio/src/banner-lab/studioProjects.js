@@ -285,7 +285,7 @@ async function fillSetLive(project, set, text, generate, steps, references = [])
   steps[0].status = 'active'
   set.referenceCount = references.length
   const run = generate({
-    text, previousBrief: lastBrief(project, set), palette: brandPalette(project), references,
+    text, previousBrief: lastBrief(project, set), palette: brandPalette(project), references, projectId: project.dbId || '',
     onProgress: (n, total) => { steps[1].label = `Generating ${total} banners with Higgsfield Flare (${n} of ${total} done)` },
   })
   steps[0].status = 'done'
