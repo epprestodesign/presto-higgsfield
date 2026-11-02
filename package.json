@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@clerk/backend": "^3.26.5",
+    "@clerk/clerk-js": "^6.42.1",
     "@googlemaps/markerclusterer": "^2.6.2",
     "@quasar/extras": "^1.16.12",
     "@supabase/supabase-js": "^2.118.0",

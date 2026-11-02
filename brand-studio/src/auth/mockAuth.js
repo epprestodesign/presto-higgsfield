@@ -1,7 +1,6 @@
-// Banner Lab auth — a mock with the same shape as the Clerk flows we'll use,
-// so the screens can be built and reviewed before Clerk is set up. Swapping in
-// Clerk means replacing this file with an adapter over Clerk's useSignIn /
-// useSignUp (clerk-js); the screens only talk to these functions.
+// Banner Lab auth — a mock with the same shape as the Clerk flows, used in
+// Storybook and whenever VITE_CLERK_PUBLISHABLE_KEY isn't set. The real
+// adapter is ./clerkAuth.js; ./index.js picks one. Screens import ./index.js.
 //
 // Every call resolves after a short delay, or throws an AuthError with a
 // user-facing message. Prototype rules (also in the Storybook docs):
@@ -10,42 +9,19 @@
 //   • Log-in password: "wrongpass" is rejected; anything 8+ characters works.
 //   • Codes: 000000 is wrong; any other 6 digits work.
 
-export class AuthError extends Error {
-  constructor(message, { field = null, code = '' } = {}) {
-    super(message)
-    this.field = field // which input the message belongs to, if any
-    this.code = code
-  }
-}
+import { AuthError, isEmail, checkEmail, nameFromEmail, PASSWORD_RULES, passwordOk } from './authShared.js'
+
+export { AuthError, isEmail, PASSWORD_RULES, passwordOk }
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 let delay = 700
 /** Stories and tests can speed the mock up. */
 export const setMockDelay = (ms) => { delay = ms }
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-export const isEmail = (v) => EMAIL.test(String(v).trim())
-
-function nameFromEmail(email) {
-  const local = email.split('@')[0].replace(/[._-]+/g, ' ')
-  return local.replace(/\b\w/g, (c) => c.toUpperCase())
-}
 const user = ({ email, firstName = '', lastName = '' }) => {
   const name = [firstName, lastName].filter(Boolean).join(' ') || nameFromEmail(email)
   return { id: `user_${Math.abs([...email].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7))}`, email, name }
 }
-
-function checkEmail(email) {
-  if (!isEmail(email)) throw new AuthError('Enter a valid email address.', { field: 'email', code: 'form_param_format_invalid' })
-}
-
-// ── Password rules (shown live while typing; Clerk enforces its own too) ──
-export const PASSWORD_RULES = [
-  { id: 'length', label: 'At least 8 characters', test: (p) => p.length >= 8 },
-  { id: 'number', label: 'A number', test: (p) => /\d/.test(p) },
-  { id: 'case', label: 'Upper and lower case letters', test: (p) => /[a-z]/.test(p) && /[A-Z]/.test(p) },
-]
-export const passwordOk = (p) => PASSWORD_RULES.every((r) => r.test(p))
 
 // ── Sign in ───────────────────────────────────────────────────────────────
 
@@ -66,6 +42,19 @@ export async function signInWithPassword({ email, password }) {
 }
 
 /**
+ * Clerk only: a password log-in from a new device can come back
+ * 'needs_client_trust' (Device Trust), and signInWithPassword then returns
+ * { needsCode: true } instead of a user. The mock never asks; this is here so
+ * both adapters have the same functions.
+ * Clerk: signIn.attemptSecondFactor({ strategy: 'email_code', code }) → setActive({ session })
+ */
+export async function verifySignInCode({ code, email = 'alex.smith@eventpipe.com' }) {
+  await wait(delay)
+  if (code === '000000') throw new AuthError('That code isn’t right. Check the email and try again.', { field: 'code', code: 'form_code_incorrect' })
+  return { user: user({ email }) }
+}
+
+/**
  * Clerk: signIn.create({ identifier: email }) then
  * signIn.createEmailLinkFlow().startEmailLinkFlow({ emailAddressId, redirectUrl })
  */
@@ -80,6 +69,9 @@ export async function completeMagicLink({ email }) {
   await wait(delay)
   return { user: user({ email }) }
 }
+
+/** Stop waiting for a magic link (Clerk: cancelEmailLinkFlow). Nothing to stop in the mock. */
+export function cancelMagicLink() {}
 
 // ── Sign up ───────────────────────────────────────────────────────────────
 
