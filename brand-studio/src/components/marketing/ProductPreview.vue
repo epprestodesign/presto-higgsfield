@@ -28,9 +28,12 @@ const props = defineProps({
   designHeight: { type: Number, default: 860 },
   hotels: { type: Number, default: 3 },
   headline: { type: String, default: '' },
+  // A full Presto project (event, organizer, brand kit) to show instead of the
+  // sample, so the Studio's mockups carry the project's own name.
+  prestoProject: { type: Object, default: null },
 })
 
-const project = computed(() => sampleProject(props.sample))
+const project = computed(() => props.prestoProject || sampleProject(props.sample))
 const kit = computed(() => props.brandKit || project.value.brandKit)
 const event = computed(() => project.value.event)
 

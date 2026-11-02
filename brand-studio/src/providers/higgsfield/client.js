@@ -6,22 +6,29 @@ const BASE = '/hf-api'
 // On Vercel the API needs a signed-in user. The Clerk session cookie already
 // rides along on same-origin requests; the Bearer header is belt and braces.
 // (Mock auth and the dev proxy return no token, so no header is sent.)
-async function authHeader() {
+async function authHeader(opts) {
   try {
     const { getSessionToken } = await import('../../auth/index.js')
-    const token = await getSessionToken()
+    const token = await getSessionToken(opts)
     return token ? { Authorization: `Bearer ${token}` } : {}
   } catch { return {} }
 }
 
 async function call(method, path, body, headers = {}) {
+  const send = async (auth) => fetch(`${BASE}${path}`, {
+    method,
+    headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...auth, ...headers },
+    body: body ? JSON.stringify(body) : undefined,
+  })
   let res
   try {
-    res = await fetch(`${BASE}${path}`, {
-      method,
-      headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(await authHeader()), ...headers },
-      body: body ? JSON.stringify(body) : undefined,
-    })
+    res = await send(await authHeader())
+    // A cached session token can be stale (laptop asleep, clock drift): mint
+    // a fresh one and try once more before calling it a sign-in problem.
+    if (res.status === 401) {
+      const fresh = await authHeader({ fresh: true })
+      if (fresh.Authorization) res = await send(fresh)
+    }
   } catch {
     throw Object.assign(new Error('Could not reach the local dev server.'), { code: 'offline' })
   }
@@ -32,6 +39,7 @@ async function call(method, path, body, headers = {}) {
     const detail = typeof json.detail === 'string' ? json.detail : JSON.stringify(json.detail || json).slice(0, 300)
     const err = new Error(detail || `Higgsfield error (${res.status})`)
     err.status = res.status
+    err.reason = json.reason || ''
     err.code = json.code || (res.status === 401 ? 'unauthorized' : /concurrent/i.test(detail) ? 'concurrency' : 'api_error')
     throw err
   }

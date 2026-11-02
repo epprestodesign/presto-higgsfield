@@ -241,7 +241,7 @@ const model = ref('auto')
 // banner set is, otherwise it's worked out from the words.
 const LOGO_FRAMES = ['cleanup', 'looks', 'kit']
 const editTarget = computed(() => (LOGO_FRAMES.includes(selectedBoard.value) ? 'logo' : selectedBoard.value.startsWith('set:') ? 'banners' : ''))
-const LOGO_WORDS = /\b(logo|isolate|cut ?out|extract|remove (the )?(dark |light )?background|transparent|knock ?out|trace|svg|vector|white version|outline|glow|drop shadow|white box|plate|badge|lettering|wordmark)\b/i
+const LOGO_WORDS = /\b(logo|isolate|cut ?out|extract|remove (the )?(black |dark |light |white )?background|black background|transparent|knock ?out|trace|svg|vector|white version|outline|glow|drop shadow|white box|plate|badge|lettering|wordmark|gradient|add (it |them )?back|remove (more|less))\b/i
 const BANNER_WORDS = /\b(banners?|background|backdrop|hero|scene|photo|set)\b/i
 function routeFor(t) {
   if (editTarget.value === 'logo') return 'logo'
@@ -278,7 +278,7 @@ async function send(t = text.value) {
   if (!t.trim() || building.value) return
   text.value = ''
   const route = routeFor(t)
-  if (route === 'logo') { logoReply(props.project, t, { pick: logoLab.pick, methods: logoLab.state.methods }); return }
+  if (route === 'logo') { await logoReply(props.project, t, { pick: logoLab.pick, methods: logoLab.state.methods, tune: logoLab.tune, current: logoLab.current }); return }
   if (route === 'make') { await makeBanners(props.project, { text: t, modelId: model.value }, { generate: props.generate }); return }
   // A new set: zoom to its frame while it builds, and again when it's done.
   const set = await revise(props.project, { text: t, modelId: model.value }, { generate: props.generate, onSet: (s) => nextTick(() => zoomToBoard(`set:${s.id}`, { max: 1 })) })
@@ -360,15 +360,15 @@ function openPreview(withExport, board = null) {
             <!-- Live page mockups (some are iframes) would swallow clicks; the shield lets the canvas select and zoom them -->
             <div v-if="isMockup(b) && !building" class="ws__shield" />
             <div v-if="pending(b)" class="ws__skel" :class="`ws__skel--${b.id}`"><span /><span /><span /></div>
-            <LogoCleanupBoard v-else-if="b.id === 'cleanup'" :lab="logoLab.state" :selected="project.logoLab?.methodId || ''" @select="logoLab.chooseMethod" />
+            <LogoCleanupBoard v-else-if="b.id === 'cleanup'" :lab="logoLab.state" :selected="project.logoLab?.methodId || ''" @select="logoLab.chooseMethod" @tune="logoLab.tune" />
             <LogoLooksBoard v-else-if="b.id === 'looks'" :lab="logoLab.state" :selected="project.logoLab?.lookId || ''" @select="logoLab.chooseLook" />
             <BrandKitBoard v-else-if="b.id === 'kit'" :project="project" />
             <BannerBoard v-else-if="b.set" :project="project" :set="b.set" @select="(id) => (project.selectedBannerId = id)" />
             <div v-else-if="b.device" class="ws__device" :style="{ height: `${b.h}px` }">
               <DevicePreview :project="presto" page="details" :device="b.device" :padding="0" />
             </div>
-            <ProductPreview v-else-if="b.id === 'desktop'" :key="`d-${project.selectedBannerId}`" :sample="project.key" :brand-kit="kit" :concept="concept" variant="desktop" :design-height="860" />
-            <ProductPreview v-else :key="`m-${project.selectedBannerId}`" :sample="project.key" :brand-kit="kit" :concept="concept" variant="mobile" :design-height="700" />
+            <ProductPreview v-else-if="b.id === 'desktop'" :key="`d-${project.selectedBannerId}`" :sample="project.key" :presto-project="presto" :brand-kit="kit" :concept="concept" variant="desktop" :design-height="860" />
+            <ProductPreview v-else :key="`m-${project.selectedBannerId}`" :sample="project.key" :presto-project="presto" :brand-kit="kit" :concept="concept" variant="mobile" :design-height="700" />
           </div>
         </section>
       </div>
@@ -387,6 +387,9 @@ function openPreview(withExport, board = null) {
       <p v-if="editTarget" class="ws__ctx">
         <q-icon :name="editTarget === 'logo' ? 'auto_fix_high' : 'wallpaper'" size="16px" />
         Editing: <strong>{{ editTarget === 'logo' ? 'Logo' : BOARDS.find((b) => b.id === selectedBoard)?.label.split(' · ')[0] || 'Banners' }}</strong>
+        <span v-if="editTarget === 'logo' && logoLab.current()" class="ws__ctx-what">
+          <img :src="logoLab.current().url" alt="" /> {{ logoLab.current().label }}
+        </span>
         <button type="button" aria-label="Stop editing this frame" @click="selectedBoard = ''"><q-icon name="close" size="14px" /></button>
       </p>
       <div :ref="(el) => (chips.el.value = el)" class="ws__suggest hs" :class="chips.classes.value" @scroll="chips.onScroll" @wheel="chips.onWheel">
@@ -464,6 +467,8 @@ function openPreview(withExport, board = null) {
 .ws__suggest { display: flex; gap: 8px; }
 .ws__ctx { margin: 0; justify-self: start; display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-radius: 999px; background: var(--bs-accent-soft); color: var(--bs-accent); font: 500 0.75rem var(--bs-font); }
 .ws__ctx strong { font-weight: 700; }
+.ws__ctx-what { display: inline-flex; align-items: center; gap: 5px; padding-left: 6px; margin-left: 2px; border-left: 1px solid rgb(124 58 237 / 0.25); color: var(--bs-ink); }
+.ws__ctx-what img { width: 28px; height: 18px; object-fit: contain; border-radius: 3px; background: repeating-conic-gradient(#e8ebf0 0% 25%, #fff 0% 50%) 50% / 6px 6px; }
 .ws__ctx button { display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
 .ws__ctx button:hover { background: rgb(124 58 237 / 0.12); }
 .ws__chip { flex: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--bs-line); background: rgb(255 255 255 / 0.85); border-radius: 999px; padding: 5px 6px 5px 12px; font: 500 0.75rem var(--bs-font); color: var(--bs-ink); cursor: pointer; }

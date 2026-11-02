@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
   makeImage, detectBackground, removeBackground, alphaBounds, extractPalette, logoContrastOn, knockout,
   coverCrop, centerZone, zoneStats, gradeZone, scrimNeeded, contentBounds,
@@ -324,12 +324,23 @@ describe('logo projects: colours, names and follow-ups', () => {
   it('names a project from its uploaded file', async () => {
     const { nameFromFile } = await import('../banner-lab/studioProjects.js')
     expect(nameFromFile('bret-michaels_live-poster.png')).toBe('Bret Michaels Live Poster')
+    expect(nameFromFile('ESPN Logo 700x394.png')).toBe('ESPN')
+    expect(nameFromFile('acme_logo_white (1).png')).toBe('Acme')
+    expect(nameFromFile('logo.png')).toBe('Logo')
+  })
+  it('a banner project with an uploaded logo gets the logo tools', async () => {
+    const { createProject } = await import('../banner-lab/studioProjects.js')
+    const p = createProject({ prompt: 'ESPN banners', mode: 'banner', logo: { src: 'data:image/png;base64,AAAA', name: 'ESPN Logo 700x394.png' } })
+    expect(p.logoLab).toBeTruthy()
+    expect(p.colorsFromLogo).toBe(true)
+    expect(p.name).toBe('ESPN')
+    expect(createProject({ prompt: 'Gala banners', mode: 'banner' }).logoLab).toBeNull()
   })
   it('"isolate the logo" picks the background-removal clean-up', async () => {
     const { logoReply } = await import('../banner-lab/studioProjects.js')
     const project = { messages: [] }
     const picked = []
-    logoReply(project, 'Can you isolate the logo from the background?', { pick: (w) => (picked.push(w), true), methods: [{ id: 'darkkey' }, { id: 'lightkey' }, { id: 'asis' }] })
+    await logoReply(project, 'Can you isolate the logo from the background?', { pick: (w) => (picked.push(w), true), methods: [{ id: 'darkkey' }, { id: 'lightkey' }, { id: 'asis' }] })
     expect(picked).toEqual([{ method: 'darkkey' }])
     expect(project.messages.at(-1).text).toMatch(/removed the dark background/)
   })
@@ -380,5 +391,88 @@ describe('real banner generation (Studio)', () => {
     const set2 = await revise(project, { text: 'something else' }, { generate: failing })
     expect(set2).toMatchObject({ status: 'failed', error: 'You need to be logged in to generate banners.' })
     expect(project.messages.at(-1).text).toMatch(/failed/)
+  })
+})
+
+describe('busy-background key on a poster-like logo', () => {
+  // Grey smoke (with bright wisps at the border), a navy→blue gradient word,
+  // red script and silver text — like a gig poster logo.
+  function poster() {
+    const img = makeImage(120, 70)
+    for (let y = 0; y < 70; y++) for (let x = 0; x < 120; x++) {
+      const smoke = 8 + ((x * 11 + y * 7) % 70) + (y < 3 || x < 3 ? 40 : 0) // bright wisps at the edge
+      let c = [smoke, smoke, smoke + 3]
+      if (y >= 10 && y < 26 && x >= 15 && x < 105) c = [20 + x, 30 + x, 120 + Math.round(x * 0.9)] // blue gradient letters
+      if (y >= 30 && y < 36 && x >= 30 && x < 90) c = [190, 192, 196] // silver text
+      if (y >= 42 && y < 58 && x >= 25 && x < 95) c = [205, 28, 30] // red script
+      img.data.set([...c.map((v) => Math.min(255, v)), 255], (y * 120 + x) * 4)
+    }
+    return img
+  }
+  const alphaAt = (img, x, y) => img.data[(y * 120 + x) * 4 + 3]
+  it('keeps the blue gradient, the silver and the red, and drops the smoke', () => {
+    const { img } = lumaKey(poster(), { dark: true })
+    expect(alphaAt(img, 20, 18)).toBe(255) // dark end of the blue gradient
+    expect(alphaAt(img, 100, 18)).toBe(255) // bright end
+    expect(alphaAt(img, 60, 33)).toBe(255) // silver
+    expect(alphaAt(img, 60, 50)).toBe(255) // red script
+    expect(alphaAt(img, 8, 64)).toBe(0) // smoke
+    expect(alphaAt(img, 110, 5)).toBe(0)
+  })
+  it('strength trades how much is kept', () => {
+    const loose = lumaKey(poster(), { dark: true, strength: 0 }).kept
+    const strict = lumaKey(poster(), { dark: true, strength: 1 }).kept
+    expect(loose).toBeGreaterThan(strict)
+  })
+})
+
+describe('logo tweaks in chat (the user\'s own words)', () => {
+  const methods = [{ id: 'darkkey', strength: 0.35 }, { id: 'asis' }, { id: 'vector' }]
+  it('"remove the black background" picks the dark-background removal', async () => {
+    const { logoReply } = await import('../banner-lab/studioProjects.js')
+    const project = { messages: [] }
+    const picked = []
+    await logoReply(project, 'can you remove the black background this ?', { pick: (w) => (picked.push(w), true), methods, current: () => methods[1] })
+    expect(picked).toEqual([{ method: 'darkkey' }])
+  })
+  it('"add back the blue gradient… the red logo" removes less of the background', async () => {
+    const { logoReply } = await import('../banner-lab/studioProjects.js')
+    const project = { messages: [] }
+    const tuned = []
+    await logoReply(project, 'can you add back in the blue gradient the logo had from before? add in the buck cherry or red logo we had before ?', {
+      pick: () => true, methods, current: () => methods[0], tune: async (id, s) => { tuned.push([id, s]); return true },
+    })
+    expect(tuned).toEqual([['darkkey', 0.15]])
+    expect(project.messages.at(-1).text).toMatch(/removed less of the background/)
+  })
+  it('"still some smoke" removes more', async () => {
+    const { logoReply } = await import('../banner-lab/studioProjects.js')
+    const project = { messages: [] }
+    const tuned = []
+    await logoReply(project, 'there is still some smoke around it', { pick: () => true, methods, current: () => methods[0], tune: async (id, s) => { tuned.push([id, s]); return true } })
+    expect(tuned[0][0]).toBe('darkkey')
+    expect(tuned[0][1]).toBeCloseTo(0.55)
+  })
+})
+
+describe('real generation prompt', () => {
+  it('sends an already-structured brief as is (no double "Scene:")', async () => {
+    vi.resetModules()
+    const sent = []
+    vi.doMock('../providers/higgsfield/client.js', () => ({
+      hf: {
+        submit: async (_ep, input) => (sent.push(input), { request_id: 'r' }),
+        waitFor: async () => ({ status: 'completed', images: [{ url: 'https://x/1.png' }] }),
+      },
+    }))
+    const { generateBanners } = await import('../banner-lab/studioGenerate.js')
+    const structured = 'Scene: a dark church interior, candles.\nStyle: cinematic.'
+    const r = await generateBanners({ text: structured, count: 1 })
+    expect(r.prompt).toBe(structured)
+    expect(r.prompt.match(/Scene:/g)).toHaveLength(1)
+    const plain = await generateBanners({ text: 'church dark background', count: 1 })
+    expect(plain.prompt.match(/Scene:/g)?.length || 0).toBeLessThanOrEqual(1)
+    expect(plain.prompt).toMatch(/church/i)
+    vi.doUnmock('../providers/higgsfield/client.js')
   })
 })

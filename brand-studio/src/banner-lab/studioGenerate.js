@@ -20,7 +20,13 @@ export function composeBrief(text, previousBrief = '') {
 }
 
 const friendly = (e) => {
-  if (e?.status === 401 || e?.code === 'unauthorized') return 'You need to be logged in to generate banners.'
+  if (e?.status === 401 || e?.code === 'unauthorized') {
+    // The server says why (no-token, token-expired, jwk-kid-mismatch…): show it
+    // so "but I'm logged in" can be traced.
+    return e?.reason && e.reason !== 'no-token'
+      ? `We couldn’t verify your session (${e.reason}). Try signing out and back in.`
+      : 'You need to be logged in to generate banners.'
+  }
   if (e?.code === 'auth_not_configured' || e?.status === 503) return 'Generation isn’t set up on this site yet.'
   if (e?.code === 'concurrency') return 'Higgsfield is busy with other requests. Wait a moment and try again.'
   if (e?.code === 'offline') return 'Couldn’t reach the generation service. Check your connection.'
@@ -32,7 +38,9 @@ const friendly = (e) => {
  */
 export async function generateBanners({ text, previousBrief = '', palette = [], count = 3, onProgress } = {}) {
   const brief = composeBrief(text, previousBrief)
-  const { prompt } = optimizePrompt({ description: brief, palette, usePalette: palette.length > 0 })
+  // A brief that's already structured (the composer's ✨ optimize ran, or a
+  // tweak on one) is sent as is; optimizing it again doubled "Scene:".
+  const prompt = /^\s*Scene:/m.test(brief) ? brief : optimizePrompt({ description: brief, palette, usePalette: palette.length > 0 }).prompt
   const input = flareInput(prompt, [], GENERATION)
   let finished = 0
   const one = async () => {
