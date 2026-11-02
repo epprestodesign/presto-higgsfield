@@ -1,7 +1,8 @@
 // Presto Banner Lab — standalone prototype entry. Same Quasar + Presto setup
 // as the Brand Studio prototype (brand-studio/app/main.js). One bundle, three
 // modes:
-//   ./                → Banner Lab (the logo and background steppers)
+//   ./                → Banner Lab (the logo and background steppers);
+//                       the Studio when built with VITE_DEFAULT_ROUTE=studio (Vercel)
 //   ./#/studio        → Banner Lab Studio, starting at the log-in
 //   ./?bsPreview=1    → the preview host the Studio's page mockups load in an iframe
 import { createApp } from 'vue'
@@ -18,6 +19,11 @@ import LabStudioApp from '@bs/components/lab-studio/LabStudioApp.vue'
 import PreviewHost from '@bs/components/preview/PreviewHost.vue'
 
 const isPreview = new URLSearchParams(window.location.search).get('bsPreview') === '1'
+// A build can open somewhere other than Banner Lab when there's no hash: the
+// Vercel deploy sets VITE_DEFAULT_ROUTE=studio (GitHub Pages leaves it unset).
+if (!isPreview && !window.location.hash && import.meta.env.VITE_DEFAULT_ROUTE === 'studio') {
+  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/studio`)
+}
 const isStudio = !isPreview && window.location.hash.startsWith('#/studio')
 
 // The Studio's phone and hotel-details mockups are this same app in preview mode.

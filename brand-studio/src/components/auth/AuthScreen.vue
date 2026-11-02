@@ -3,15 +3,16 @@
 // project (so it's clear what's behind the door). One card, several steps:
 //
 //   sign-in      Google · magic link · email + password
+//                (→ sign-in-code when Clerk asks for a code on a new device)
 //   magic-email  → magic-sent (check your email; prototype can "open" it)
 //   sign-up      Google · name, email, password (live rules) → verify (6-digit code)
 //   forgot       email → forgot-code → forgot-new → done
 //   done         "You're in", then hands the user to the app
 //
-// All auth calls go through ../../auth/mockAuth.js, shaped like Clerk's flows,
-// so wiring Clerk later doesn't touch this screen.
+// All auth calls go through ../../auth/index.js: real Clerk when
+// VITE_CLERK_PUBLISHABLE_KEY is set (outside Storybook), else the mock.
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import * as auth from '../../auth/mockAuth.js'
+import * as auth from '../../auth/index.js'
 import AuthField from './AuthField.vue'
 import CodeInput from './CodeInput.vue'
 import PasswordRules from './PasswordRules.vue'
@@ -48,9 +49,14 @@ const user = ref(props.initialStep === 'done' ? { name: [props.initialFirstName 
 const doneKind = ref(props.initialDoneKind) // 'welcome' | 'reset'
 
 const busy = ref('') // which action is running: 'google' | 'password' | 'magic' | 'signup' | 'code' | 'reset' | 'resend'
-const error = ref(props.initialError)
+const error = ref(props.initialError || auth.takeRedirectError())
+const isMock = auth.authMode() === 'mock'
 const errFor = (field) => (error.value && (error.value.field === field || (!error.value.field && field === 'form')) ? error.value.message : '')
-watch(step, () => { error.value = null; code.value = '' })
+watch(step, (s, prev) => {
+  error.value = null
+  code.value = ''
+  if (prev === 'magic-sent') auth.cancelMagicLink()
+})
 
 // Resend cooldown for code / link steps.
 const cooldown = ref(0)
@@ -60,8 +66,8 @@ function startCooldown(s = 30) {
   clearInterval(timer)
   timer = setInterval(() => { cooldown.value -= 1; if (cooldown.value <= 0) clearInterval(timer) }, 1000)
 }
-if (['magic-sent', 'verify', 'forgot-code'].includes(props.initialStep)) startCooldown()
-onBeforeUnmount(() => clearInterval(timer))
+if (['magic-sent', 'verify', 'forgot-code', 'sign-in-code'].includes(props.initialStep)) startCooldown()
+onBeforeUnmount(() => { clearInterval(timer); auth.cancelMagicLink() })
 const cooldownLabel = computed(() => `0:${String(cooldown.value).padStart(2, '0')}`)
 
 async function run(kind, fn) {
@@ -81,13 +87,30 @@ watch(step, (s) => {
   clearTimeout(leaving)
   if (s === 'done' && props.autoContinue && user.value) leaving = setTimeout(() => emit('signed-in', user.value), 1400)
 })
+// Clerk can ask for an emailed code after a password log-in on a new device.
+function signedIn(r, kind = 'welcome') {
+  if (r?.needsCode) { step.value = 'sign-in-code'; startCooldown(); return }
+  finish(r.user, kind)
+}
 const continueNow = () => { clearTimeout(leaving); emit('signed-in', user.value || { name: 'Alex Smith', email: email.value || 'alex@example.com' }) }
 
 // ── Actions ───────────────────────────────────────────────────────────────
 const google = () => run('google', async () => finish((await auth.signInWithGoogle()).user))
-const logIn = () => run('password', async () => finish((await auth.signInWithPassword({ email: email.value, password: password.value })).user))
-const sendLink = () => run('magic', async () => { await auth.sendMagicLink({ email: email.value }); step.value = 'magic-sent'; startCooldown() })
+const logIn = () => run('password', async () => signedIn(await auth.signInWithPassword({ email: email.value, password: password.value })))
+const sendLink = () => run('magic', async () => {
+  await auth.sendMagicLink({ email: email.value })
+  step.value = 'magic-sent'
+  startCooldown()
+  if (!isMock) waitForLink()
+})
+// Mock: the prototype button "opens" the link.
 const openLink = () => run('magic', async () => finish((await auth.completeMagicLink({ email: email.value })).user))
+// Clerk: wait (in the background) for the link to be opened in this browser.
+function waitForLink() {
+  auth.completeMagicLink({ email: email.value })
+    .then((r) => { if (step.value === 'magic-sent') signedIn(r) })
+    .catch((e) => { if (step.value === 'magic-sent') error.value = { field: e.field || null, message: e.message, code: e.code } })
+}
 const createAccount = () => run('signup', async () => {
   if (!agree.value) throw new auth.AuthError('Please agree to the Terms and Privacy Policy.', { field: 'agree' })
   const r = await auth.signUp({ firstName: firstName.value, lastName: lastName.value, email: email.value, password: password.value })
@@ -106,8 +129,20 @@ const verifyReset = () => run('code', async () => {
   step.value = 'forgot-new'
   password.value = ''
 })
-const saveNewPassword = () => run('reset', async () => finish((await auth.resetPassword({ email: email.value, password: password.value, confirm: confirm.value })).user, 'reset'))
-const resend = () => run('resend', async () => { await auth.resend(); startCooldown() })
+const saveNewPassword = () => run('reset', async () => signedIn(await auth.resetPassword({ email: email.value, password: password.value, confirm: confirm.value, signOutOfOtherSessions: signOutOthers.value }), 'reset'))
+const verifySignIn = () => run('code', async () => {
+  if (code.value.length < 6) throw new auth.AuthError('Enter all 6 digits.', { field: 'code' })
+  signedIn(await auth.verifySignInCode({ code: code.value, email: email.value }))
+})
+const resend = () => run('resend', async () => {
+  await auth.resend()
+  startCooldown()
+  if (step.value === 'magic-sent' && !isMock) { error.value = null; waitForLink() }
+})
+
+const submitCode = () => (step.value === 'verify' ? verify() : step.value === 'sign-in-code' ? verifySignIn() : verifyReset())
+const codeBack = computed(() => ({ verify: 'sign-up', 'forgot-code': 'forgot', 'sign-in-code': 'sign-in' })[step.value] || 'sign-in')
+const codeTitle = computed(() => ({ verify: 'Verify your email', 'forgot-code': 'Enter your reset code', 'sign-in-code': 'Check your email' })[step.value] || '')
 
 function go(s) {
   step.value = s
@@ -125,6 +160,8 @@ const firstLetter = computed(() => (user.value?.name || '?').split(' ')[0])
       <section class="auth__card" :aria-labelledby="`auth-title-${step}`">
         <q-btn v-if="dismissible" round flat dense icon="close" class="auth__close" aria-label="Close" @click="emit('close')" />
         <p class="auth__brand">Banner Lab <span>BETA</span></p>
+        <!-- Errors that aren't about one field (rate limits, a failed Google or magic-link return). -->
+        <p v-if="errFor('form')" class="auth__err auth__formerr" role="alert"><q-icon name="error" size="16px" /> {{ errFor('form') }}</p>
 
         <Transition name="auth-step" mode="out-in">
           <!-- ── Log in ─────────────────────────────────────────────── -->
@@ -177,7 +214,8 @@ const firstLetter = computed(() => (user.value?.name || '?').split(' ')[0])
               <a class="auth__provider" href="https://mail.google.com/mail/u/0/#search/from%3Abannerlab" target="_blank" rel="noopener"><q-icon name="mail" size="18px" /> Open Gmail</a>
               <a class="auth__provider" href="https://outlook.live.com/mail/0/" target="_blank" rel="noopener"><q-icon name="mail_outline" size="18px" /> Open Outlook</a>
             </div>
-            <button type="button" class="auth__proto" :disabled="!!busy" @click="openLink">
+            <p v-if="!isMock && !error" class="auth__hint auth__center auth__waiting"><q-spinner size="14px" /> Waiting for you to open the link…</p>
+            <button v-if="isMock" type="button" class="auth__proto" :disabled="!!busy" @click="openLink">
               <q-spinner v-if="busy === 'magic'" size="16px" /><q-icon v-else name="science" size="16px" /> Prototype: open the link from the email
             </button>
             <p class="auth__foot">
@@ -220,12 +258,13 @@ const firstLetter = computed(() => (user.value?.name || '?').split(' ')[0])
           </form>
 
           <!-- ── Verify email (sign-up) / reset code ───────────────── -->
-          <form v-else-if="step === 'verify' || step === 'forgot-code'" :key="step" class="auth__step" novalidate @submit.prevent="step === 'verify' ? verify() : verifyReset()">
-            <button type="button" class="auth__back" @click="go(step === 'verify' ? 'sign-up' : 'forgot')"><q-icon name="arrow_back" size="18px" /> Change email</button>
+          <form v-else-if="step === 'verify' || step === 'forgot-code' || step === 'sign-in-code'" :key="step" class="auth__step" novalidate @submit.prevent="submitCode">
+            <button type="button" class="auth__back" @click="go(codeBack)"><q-icon name="arrow_back" size="18px" /> {{ step === 'sign-in-code' ? 'Back to log in' : 'Change email' }}</button>
             <span class="auth__icon auth__icon--mail"><q-icon name="pin" size="26px" /></span>
-            <h1 :id="`auth-title-${step}`" class="auth__title">{{ step === 'verify' ? 'Verify your email' : 'Enter your reset code' }}</h1>
-            <p class="auth__sub">We sent a 6-digit code to <strong>{{ email || 'your email' }}</strong>. It expires in 10 minutes.</p>
-            <CodeInput v-model="code" :error="errFor('code')" :disabled="busy === 'code'" @complete="step === 'verify' ? verify() : verifyReset()" />
+            <h1 :id="`auth-title-${step}`" class="auth__title">{{ codeTitle }}</h1>
+            <p v-if="step === 'sign-in-code'" class="auth__sub">You’re logging in on a new device, so we sent a 6-digit code to <strong>{{ email || 'your email' }}</strong>.</p>
+            <p v-else class="auth__sub">We sent a 6-digit code to <strong>{{ email || 'your email' }}</strong>. It expires in 10 minutes.</p>
+            <CodeInput v-model="code" :error="errFor('code')" :disabled="busy === 'code'" @complete="submitCode" />
             <button type="submit" class="auth__primary" :disabled="!!busy || code.length < 6">
               <q-spinner v-if="busy === 'code'" size="18px" /> {{ busy === 'code' ? 'Checking…' : step === 'verify' ? 'Verify and continue' : 'Continue' }}
             </button>
@@ -308,6 +347,8 @@ const firstLetter = computed(() => (user.value?.name || '?').split(' ')[0])
 .auth__agree a { color: var(--bs-accent); font-weight: 600; }
 .auth__agree.has-error :deep(.q-checkbox__bg) { border-color: var(--bs-danger); }
 .auth__err { margin: -8px 0 0; display: flex; align-items: center; gap: 6px; font: 500 0.8125rem var(--bs-font); color: var(--bs-danger); }
+.auth__formerr { margin: 0 0 14px; justify-content: center; text-align: center; }
+.auth__waiting { display: flex; align-items: center; gap: 8px; }
 .auth__primary { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 54px; margin-top: 2px; border: 0; border-radius: 999px; background: var(--bs-ink); color: #fff; font: 600 1.0625rem var(--bs-font); cursor: pointer; transition: background-color 0.15s, opacity 0.15s; }
 .auth__primary:hover:not(:disabled) { background: #1e293b; }
 .auth__primary:disabled { opacity: 0.55; cursor: default; }

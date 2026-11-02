@@ -5,16 +5,18 @@
 //                             → ▶ Presto preview modal → export
 // Concept data (studioProjects.js): seeded from the Brand Studio examples and
 // kept in memory; "building" is a mock agent walking its steps.
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { studio, getProject, createProject, runBuild } from '../../banner-lab/studioProjects.js'
 import StudioHome from './StudioHome.vue'
 import StudioWorkspace from './StudioWorkspace.vue'
 import AuthScreen from '../auth/AuthScreen.vue'
 import AccountMenu from '../auth/AccountMenu.vue'
+import * as auth from '../../auth/index.js'
 
 const props = defineProps({
   initialProjectId: { type: String, default: '' },
-  // Start at the log-in (Banner Lab auth, mock Clerk) instead of signed in.
+  // Start at the log-in instead of signed in. With Clerk configured
+  // (VITE_CLERK_PUBLISHABLE_KEY), an existing Clerk session skips it.
   requireAuth: { type: Boolean, default: false },
   // Story hooks
   modelMenuOpen: { type: Boolean, default: false },
@@ -33,7 +35,30 @@ const props = defineProps({
 
 const projectId = ref(props.initialProjectId)
 const user = ref(props.requireAuth ? null : { name: 'Justin Girard', email: 'justin@eventpipe.com' })
-function signOut() { user.value = null; projectId.value = '' }
+// Clerk only: hold the log-in until we know whether there's already a session.
+const checkingSession = ref(props.requireAuth && auth.authMode() === 'clerk')
+let stopListening = () => {}
+if (checkingSession.value) {
+  auth.loadAuth()
+    .then(() => {
+      user.value = auth.currentUser()
+      // Once in, keep in step with Clerk: sign-out in another tab, org switches.
+      // (Signing in goes through AuthScreen's "You're in" step instead.)
+      stopListening = auth.onAuthChange((u) => {
+        if (!user.value) return
+        user.value = u
+        if (!u) projectId.value = ''
+      })
+    })
+    .catch((e) => console.error('[auth] Clerk failed to load', e))
+    .finally(() => { checkingSession.value = false })
+}
+onBeforeUnmount(() => stopListening())
+async function signOut() {
+  try { await auth.signOut() } catch (e) { console.error('[auth] sign-out failed', e) }
+  user.value = null
+  projectId.value = ''
+}
 const project = computed(() => (projectId.value ? getProject(projectId.value) : null))
 
 function create(input) {
@@ -47,7 +72,8 @@ const count = computed(() => studio.projects.length)
 
 <template>
   <div class="lsa">
-    <AuthScreen v-if="!user" class="lsa__auth" @signed-in="(u) => (user = u)" />
+    <div v-if="checkingSession" class="lsa__checking" role="status" aria-label="Checking your session"><q-spinner size="32px" /></div>
+    <AuthScreen v-else-if="!user" class="lsa__auth" @signed-in="(u) => (user = u)" />
     <template v-else-if="!project">
       <header class="lsa__top">
         <span class="lsa__brand">Banner Lab <span class="lsa__beta">BETA</span></span>
@@ -76,6 +102,7 @@ const count = computed(() => studio.projects.length)
 .lsa__link { display: inline-flex; align-items: center; gap: 4px; font: 500 0.8125rem var(--bs-font); color: var(--bs-ink); text-decoration: none; }
 .lsa__home { flex: 1; min-height: 0; }
 .lsa__auth { flex: 1; }
+.lsa__checking { flex: 1; display: grid; place-items: center; color: var(--bs-ink-soft); }
 @media (max-width: 600px) { .lsa__top { gap: 4px; padding: 10px 12px; } .lsa__count, .lsa__link { display: none; } }
 .lsa > .ws, .lsa > :deep(.ws) { flex: 1; }
 </style>

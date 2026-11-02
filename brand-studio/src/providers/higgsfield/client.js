@@ -3,12 +3,23 @@
 // (GitHub Pages) the proxy doesn't exist and health() reports that.
 const BASE = '/hf-api'
 
+// On Vercel the API needs a signed-in user. The Clerk session cookie already
+// rides along on same-origin requests; the Bearer header is belt and braces.
+// (Mock auth and the dev proxy return no token, so no header is sent.)
+async function authHeader() {
+  try {
+    const { getSessionToken } = await import('../../auth/index.js')
+    const token = await getSessionToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  } catch { return {} }
+}
+
 async function call(method, path, body, headers = {}) {
   let res
   try {
     res = await fetch(`${BASE}${path}`, {
       method,
-      headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...headers },
+      headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(await authHeader()), ...headers },
       body: body ? JSON.stringify(body) : undefined,
     })
   } catch {
@@ -33,7 +44,7 @@ export const hf = {
   /** { proxy, configured, keyId } — or { proxy:false } on static hosting. */
   async health() {
     try {
-      const res = await fetch(`${BASE}/_health`, { headers: { Accept: 'application/json' } })
+      const res = await fetch(`${BASE}/_health`, { headers: { Accept: 'application/json', ...(await authHeader()) } })
       if (!res.ok || !(res.headers.get('content-type') || '').includes('json')) return { proxy: false, configured: false }
       return await res.json()
     } catch {
