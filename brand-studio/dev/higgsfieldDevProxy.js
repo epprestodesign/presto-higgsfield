@@ -8,26 +8,19 @@
 //   • only loopback clients are served (the prototype dev server listens on the
 //     LAN — nobody else on the network can spend your credits);
 //   • only an allowlist of image endpoints can be called.
-// Static builds (GitHub Pages) don't include this, so live generation is local-only.
-// Production uses a real backend with auth + quotas (docs/BRAND_STUDIO_AUDIT.md).
+// Static builds (GitHub Pages) don't include this, so live generation there is
+// off. On Vercel the same routes are served by api/hf.js behind Clerk auth.
 import fs from 'node:fs'
 import path from 'node:path'
-import crypto from 'node:crypto'
+import { send } from '../server/http.js'
+import { handleHiggsfield, credentialsFrom, CREDENTIAL_KEYS, ALLOWED_ENDPOINTS } from '../server/higgsfield.js'
 
-const API = 'https://api.higgsfield.ai'
+// The request logic lives in ../server/higgsfield.js (shared with the Vercel
+// function in api/hf.js); this file adds the dev-only parts: loopback check,
+// .env re-reading and `_save` into the repo.
+export { ALLOWED_ENDPOINTS }
+
 const PREFIX = '/hf-api'
-
-// Image workflows Brand Studio is allowed to call (endpoint IDs from docs.higgsfield.ai).
-export const ALLOWED_ENDPOINTS = new Set([
-  'marketing-studio/image/flare',
-  'recraft/v4.1/text-to-image',
-  'recraft/v4.1-pro/text-to-image',
-  'ideogram/v4.0',
-  'higgsfield-ai/soul/standard',
-])
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const MAX_BODY = 12 * 1024 * 1024 // logo uploads arrive base64-encoded
 
 // Shell env as it was when the dev server started (a key exported in the shell
 // still works). Everything else comes from re-reading .env / .env.local on each
@@ -48,69 +41,13 @@ function readEnvFile(file) {
 }
 
 function credentials(root) {
-  const pick = ({ HIGGSFIELD_API_KEY_ID, HIGGSFIELD_API_KEY_SECRET, HIGGSFIELD_CREDENTIALS, HF_API_KEY_ID, HF_API_KEY_SECRET, HF_CREDENTIALS }) =>
-    ({ HIGGSFIELD_API_KEY_ID, HIGGSFIELD_API_KEY_SECRET, HIGGSFIELD_CREDENTIALS, HF_API_KEY_ID, HF_API_KEY_SECRET, HF_CREDENTIALS })
-  const strip = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v))
-  const env = { ...strip(pick(START_ENV)), ...strip(pick(readEnvFile(path.join(root, '.env')))), ...strip(pick(readEnvFile(path.join(root, '.env.local')))) }
-  // A combined "keyId:secret" credential pasted into the SECRET field also works
-  // (that's how some key screens present it); it then wins over the ID field.
-  const pastedSecret = (env.HIGGSFIELD_API_KEY_SECRET || env.HF_API_KEY_SECRET || '').trim()
-  if (pastedSecret.includes(':')) {
-    const [id, ...rest] = pastedSecret.split(':')
-    if (id && rest.join(':')) return { id: id.trim(), secret: rest.join(':').trim() }
-  }
-  const combined = env.HIGGSFIELD_CREDENTIALS || env.HF_CREDENTIALS || ''
-  const [cid, csecret] = combined.includes(':') ? combined.split(':') : []
-  const id = (env.HIGGSFIELD_API_KEY_ID || env.HF_API_KEY_ID || cid || '').trim()
-  const secret = (env.HIGGSFIELD_API_KEY_SECRET || env.HF_API_KEY_SECRET || csecret || '').trim()
-  return id && secret ? { id, secret } : null
+  const pick = (o) => Object.fromEntries(CREDENTIAL_KEYS.filter((k) => o[k]).map((k) => [k, o[k]]))
+  return credentialsFrom({ ...pick(START_ENV), ...pick(readEnvFile(path.join(root, '.env'))), ...pick(readEnvFile(path.join(root, '.env.local'))) })
 }
-
-const mask = (id) => (id.length > 8 ? `${id.slice(0, 4)}…${id.slice(-4)}` : '••••')
 
 function isLoopback(req) {
   const a = req.socket?.remoteAddress || ''
   return a === '127.0.0.1' || a === '::1' || a === '::ffff:127.0.0.1'
-}
-
-function readJson(req) {
-  return new Promise((resolve, reject) => {
-    let size = 0
-    const chunks = []
-    req.on('data', (c) => {
-      size += c.length
-      if (size > MAX_BODY) { reject(Object.assign(new Error('Request too large'), { status: 413 })); req.destroy() }
-      else chunks.push(c)
-    })
-    req.on('end', () => {
-      if (!chunks.length) return resolve({})
-      try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))) } catch { reject(Object.assign(new Error('Invalid JSON'), { status: 400 })) }
-    })
-    req.on('error', reject)
-  })
-}
-
-function send(res, status, body) {
-  res.statusCode = status
-  res.setHeader('Content-Type', 'application/json')
-  res.setHeader('Cache-Control', 'no-store')
-  res.end(JSON.stringify(body))
-}
-
-async function upstream(creds, method, apiPath, body, extraHeaders = {}) {
-  const r = await fetch(`${API}${apiPath}`, {
-    method,
-    headers: {
-      Authorization: `Key ${creds.id}:${creds.secret}`,
-      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-      ...extraHeaders,
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  })
-  const text = await r.text()
-  let json
-  try { json = text ? JSON.parse(text) : {} } catch { json = { detail: text.slice(0, 500) } }
-  return { status: r.status, json }
 }
 
 /** Download a generated image into the repo so it outlives Higgsfield's 7-day retention. */
@@ -142,79 +79,12 @@ export function higgsfieldDevProxy({ root = process.cwd() } = {}) {
         if (!req.url?.startsWith(PREFIX)) return next()
         if (!isLoopback(req)) return send(res, 403, { detail: 'The Higgsfield dev proxy only serves this machine.' })
         const url = new URL(req.url, 'http://local')
-        const route = url.pathname.slice(PREFIX.length)
-        const creds = credentials(root)
-        try {
-          if (route === '/_health' && req.method === 'GET') {
-            return send(res, 200, { proxy: true, configured: !!creds, keyId: creds ? mask(creds.id) : null })
-          }
-          // Same-origin copy of a generated image, so the browser can crop and
-          // export it from a canvas (Higgsfield's CDN sends no CORS headers).
-          // No credentials involved; only Higgsfield/CloudFront image URLs.
-          if (route === '/_image' && req.method === 'GET') {
-            let u
-            try { u = new URL(url.searchParams.get('url') || '') } catch { return send(res, 400, { detail: 'Bad image URL' }) }
-            // ?any=1: an image URL the user pasted (Banner Lab). Public https hosts only.
-            const pasted = url.searchParams.get('any') === '1'
-            const publicHost = !/^(localhost|.*\.local|.*\.internal|\d+\.\d+\.\d+\.\d+|\[.*\])$/i.test(u.hostname)
-            const allowed = pasted ? publicHost : /(^|\.)(cloudfront\.net|higgsfield\.ai)$/.test(u.hostname)
-            if (u.protocol !== 'https:' || !allowed) return send(res, 400, { detail: pasted ? 'Paste a public https image URL' : 'Only Higgsfield image URLs can be fetched' })
-            const r = await fetch(u)
-            const type = r.headers.get('content-type') || ''
-            if (!r.ok || !type.startsWith('image/')) return send(res, 502, { detail: `Image fetch failed (${r.status})` })
-            const buf = Buffer.from(await r.arrayBuffer())
-            if (buf.length > 30 * 1024 * 1024) return send(res, 413, { detail: 'Image too large' })
-            res.statusCode = 200
-            res.setHeader('Content-Type', type)
-            res.setHeader('Cache-Control', 'private, max-age=86400')
-            return res.end(buf)
-          }
-
-          if (!creds) return send(res, 412, { detail: 'No Higgsfield API key found. Add HIGGSFIELD_API_KEY_ID and HIGGSFIELD_API_KEY_SECRET to .env.', code: 'not_configured' })
-
-          // Verify credentials without spending credits: look up a request that can't exist.
-          if (route === '/_verify' && req.method === 'POST') {
-            const r = await upstream(creds, 'GET', '/requests/00000000-0000-4000-8000-000000000000/status')
-            if (r.status === 401 || r.status === 403) return send(res, 200, { ok: false, status: r.status, detail: r.json.detail || 'Key rejected' })
-            return send(res, 200, { ok: true, status: r.status })
-          }
-
-          if (route === '/_save' && req.method === 'POST') {
-            return send(res, 200, await saveToRepo(root, await readJson(req)))
-          }
-
-          // Logo / reference upload: presign, then PUT the bytes (server-side, so no CORS).
-          if (route === '/upload' && req.method === 'POST') {
-            const { content_type: contentType, data_base64: data } = await readJson(req)
-            if (!/^image\/(jpeg|jpg|png|webp)$/.test(contentType || '')) return send(res, 400, { detail: 'Upload a JPEG, PNG or WebP image.' })
-            const pre = await upstream(creds, 'POST', '/files/generate-upload-url', { content_type: contentType })
-            if (pre.status >= 300) return send(res, pre.status, pre.json)
-            const put = await fetch(pre.json.upload_url, { method: 'PUT', headers: pre.json.upload_headers || { 'Content-Type': contentType }, body: Buffer.from(data, 'base64') })
-            if (!put.ok) return send(res, 502, { detail: `Upload failed (${put.status})` })
-            return send(res, 200, { public_url: pre.json.public_url })
-          }
-
-          const gen = route.match(/^\/(generate|estimate)\/(.+)$/)
-          if (gen && req.method === 'POST') {
-            const [, kind, endpoint] = gen
-            if (!ALLOWED_ENDPOINTS.has(endpoint)) return send(res, 400, { detail: `Endpoint not allowed: ${endpoint}` })
-            const body = await readJson(req)
-            const apiPath = kind === 'estimate' ? `/estimate/${endpoint}` : `/${endpoint}`
-            const idem = kind === 'generate' ? { 'Idempotency-Key': String(req.headers['x-idempotency-key'] || crypto.randomUUID()) } : {}
-            const r = await upstream(creds, 'POST', apiPath, body, idem)
-            return send(res, r.status, r.json)
-          }
-
-          const reqm = route.match(/^\/requests\/([^/]+)\/(status|cancel)$/)
-          if (reqm && UUID_RE.test(reqm[1])) {
-            const r = await upstream(creds, reqm[2] === 'cancel' ? 'POST' : 'GET', `/requests/${reqm[1]}/${reqm[2]}`, reqm[2] === 'cancel' ? {} : undefined)
-            return send(res, r.status, r.json)
-          }
-
-          return send(res, 404, { detail: 'Unknown Higgsfield proxy route' })
-        } catch (e) {
-          return send(res, e.status || 500, { detail: e.message })
-        }
+        return handleHiggsfield(req, res, {
+          route: url.pathname.slice(PREFIX.length),
+          query: url.searchParams,
+          creds: credentials(root),
+          save: (body) => saveToRepo(root, body),
+        })
       })
     },
   }
