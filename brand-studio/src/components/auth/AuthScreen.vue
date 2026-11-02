@@ -273,7 +273,7 @@ const firstLetter = computed(() => (user.value?.name || '?').split(' ')[0])
           </div>
         </Transition>
       </section>
-      <p class="auth__legal">Protected by Clerk · <a href="#" @click.prevent>Terms</a> · <a href="#" @click.prevent>Privacy</a></p>
+      <p class="auth__legal"><a href="#" @click.prevent>Terms</a> · <a href="#" @click.prevent>Privacy</a></p>
     </main>
   </div>
 </template>
