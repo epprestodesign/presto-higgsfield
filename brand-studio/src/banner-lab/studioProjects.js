@@ -268,6 +268,8 @@ export function createProject({ prompt = '', mode = 'banner', modelId = 'auto', 
 }
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
+// Lower-case a label for a sentence, but keep acronyms (AI, SVG).
+const lower = (s = '') => s.replace(/\b([A-Z][a-z]+)\b/g, (w) => w.toLowerCase())
 const refsLabel = (refs = []) => (refs.length ? [`${refs.length} reference${refs.length > 1 ? 's' : ''}`] : [])
 
 /**
@@ -392,7 +394,7 @@ export function applyLogoLook(project, { method, look, recommended = false }) {
     kind: 'look',
     text: recommended
       ? `Recommended: ${method.label.toLowerCase()} + ${look.label.toLowerCase()} (${score}). Pick any other look on the canvas, or move on to banners.`
-      : `Logo look set: ${method.label.toLowerCase()} + ${look.label.toLowerCase()} (${score}). Ready to make banners with it?`,
+      : `Logo look set: ${lower(method.label)} + ${lower(look.label)} (${score}). Ready to make banners with it?`,
     action: { id: 'make-banners', label: 'Make banners with this logo', icon: 'wallpaper' },
   }
   const last = project.messages[project.messages.length - 1]
@@ -447,7 +449,9 @@ const pctText = (s) => `${Math.round(s * 100)}%`
  * right one) — remove the background, keep more / remove more of it, go back
  * to the original, or switch look / SVG.
  */
-export async function logoReply(project, text, { pick, methods = [], tune, current } = {}) {
+const AI_CUT = /\b(ai|a\.i\.|photoroom|smart(er)?|magic)\b.*\b(cut|remove|removal|isolate|background|bg|extract)|\b(cut|remove|isolate|extract)\b.*\b(with|using) (ai|photoroom)\b/
+
+export async function logoReply(project, text, { pick, methods = [], tune, current, ai } = {}) {
   project.messages.push({ role: 'user', text })
   const t = text.toLowerCase()
   const say = (msg) => project.messages.push({ role: 'agent', text: msg })
@@ -471,6 +475,13 @@ export async function logoReply(project, text, { pick, methods = [], tune, curre
     const to = Math.round(Math.min(1, from + 0.2) * 100) / 100
     await tune(key, to)
     return say(`I removed more of the background (strength ${pctText(from)} → ${pctText(to)}). If parts of the logo went with it, ask me to add them back, or drag the slider.`)
+  }
+  // "Use AI to remove the background": the Photoroom cut-out (paid per image).
+  if (ai && AI_CUT.test(t)) {
+    say('Running the AI cut-out (Photoroom) on your logo. It takes a few seconds.')
+    return (await ai())
+      ? say('Done: the AI cut-out is the selected clean-up now, and the looks and brand kit are updating. Pick another clean-up on the canvas any time to compare.')
+      : say('The AI cut-out didn’t work this time. The reason is on the clean-up board, where you can try again.')
   }
   // "Remove the black background", "isolate the logo", "cut it out".
   if (REMOVE_BG.test(t)) {

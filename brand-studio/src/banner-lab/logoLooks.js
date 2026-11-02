@@ -138,6 +138,32 @@ export async function cleanupMethods(src) {
   return { before: png(scaled(base, 600)), background, methods, recommended: pick.id, rekey }
 }
 
+/**
+ * The logo as a JPEG to send for an AI cut-out: at most 1600px on the long
+ * edge, flattened on white (the background is what gets removed anyway).
+ */
+export async function cutoutInput(src) {
+  const img = await loadImage(src)
+  const c = scaled(img, 1600)
+  const flat = canvasOf(c.width, c.height)
+  const ctx = flat.getContext('2d')
+  ctx.fillStyle = '#fff'
+  ctx.fillRect(0, 0, flat.width, flat.height)
+  ctx.drawImage(c, 0, 0)
+  return flat.toDataURL('image/jpeg', 0.92)
+}
+
+/** The AI cut-out (Photoroom) as a clean-up method. */
+export async function aiMethod(cutoutSrc) {
+  const img = await loadImage(cutoutSrc)
+  const canvas = trimmed(pixelsOf(scaled(img, WORK_EDGE)))
+  return {
+    id: 'ai', label: 'AI cut-out',
+    hint: 'Photoroom’s AI finds the logo and cuts it out of the photo, smoke or gradient. Best for busy backgrounds.',
+    canvas, url: png(canvas), stats: [{ label: 'AI · Photoroom', tone: 'ok' }],
+  }
+}
+
 /** The SVG-trace method, built from another method's result (slower, so separate). */
 export async function vectorMethod(from) {
   const palette = extractPalette(pixelsOf(from.canvas), 8)

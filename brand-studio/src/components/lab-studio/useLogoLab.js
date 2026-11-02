@@ -3,7 +3,8 @@
 // canvases. Results are cached per project + source, so reopening a project
 // or switching back to a method is instant.
 import { markRaw, reactive, watch } from 'vue'
-import { cleanupMethods, vectorMethod, darkLooks } from '../../banner-lab/logoLooks.js'
+import { cleanupMethods, vectorMethod, darkLooks, cutoutInput, aiMethod } from '../../banner-lab/logoLooks.js'
+import { hf } from '../../providers/higgsfield/client.js'
 import { applyLogoLook, paletteToColors } from '../../banner-lab/studioProjects.js'
 
 const cache = new Map() // `${id}|${source}` → { methods: Promise, looks: Map(methodId → Promise) }
@@ -13,6 +14,7 @@ export function useLogoLab(getProject, getPhoto) {
     loading: false, error: '',
     before: '', background: null, methods: [], recommendedMethod: '',
     looksLoading: false, looks: [], recommendedLook: '', vectorLoading: false,
+    ai: '', aiError: '', // AI cut-out: '' | 'running'
   })
   let entry = null
   let token = 0
@@ -118,6 +120,35 @@ export function useLogoLab(getProject, getPhoto) {
     await loadLooks(id, true)
     return true
   }
+  /**
+   * AI cut-out (Photoroom, paid per image): run on request, then use it.
+   * Kept with the project's cached clean-ups, so it isn't paid for twice.
+   */
+  async function aiCutout() {
+    const project = getProject()
+    const lab = project?.logoLab
+    if (!lab?.source || !entry || state.ai === 'running') return false
+    state.ai = 'running'
+    state.aiError = ''
+    try {
+      entry.ai ||= cutoutInput(lab.source)
+        .then((input) => hf.cutout(input, { projectId: project.dbId || '' }))
+        .then((r) => aiMethod(r.src))
+      entry.ai.catch(() => { entry.ai = null }) // a failure can be retried
+      const m = markRaw(await entry.ai)
+      state.methods = [...state.methods.filter((x) => x.id !== 'ai'), m]
+      entry.looks.delete('ai')
+      lab.methodId = 'ai'
+      state.ai = ''
+      await loadLooks('ai', true)
+      return true
+    } catch (e) {
+      state.ai = ''
+      state.aiError = e?.message || 'The AI cut-out didn’t work.'
+      return false
+    }
+  }
+
   const current = () => state.methods.find((m) => m.id === getProject().logoLab?.methodId) || null
 
   /** For follow-ups like "trace it to SVG" or "use the white version". */
@@ -132,5 +163,5 @@ export function useLogoLab(getProject, getPhoto) {
     return [p?.id, p?.logoLab?.source, p?.status]
   }, run, { immediate: true })
 
-  return { state, chooseMethod, chooseLook, pick, tune, current }
+  return { state, chooseMethod, chooseLook, pick, tune, current, aiCutout }
 }

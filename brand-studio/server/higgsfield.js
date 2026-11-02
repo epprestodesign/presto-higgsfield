@@ -18,6 +18,7 @@ import crypto from 'node:crypto'
 import { Readable } from 'node:stream'
 import { send, readJson } from './http.js'
 import { lookupBrand } from './brand.js'
+import { cutout } from './cutout.js'
 
 export const API = 'https://api.higgsfield.ai'
 
@@ -92,10 +93,11 @@ export function imageUrlAllowed(u, pasted) {
  * @param {object} [o.health]     overrides merged into the `_health` answer
  * @param {boolean} [o.streamImages] pipe `_image` bytes instead of buffering (Vercel's response cap)
  * @param {string} [o.firecrawlKey] FIRECRAWL_API_KEY, for `_brand` (a website's logo + colours)
+ * @param {string} [o.photoroomKey] PHOTOROOM_API_KEY, for `_cutout` (AI background removal)
  * @param {ReturnType<import('./usage.js').usageLog>|null} [o.usage] usage log (Vercel only)
  * @param {string} [o.userId]     the signed-in Clerk user, for the usage log
  */
-export async function handleHiggsfield(req, res, { route, query, creds, save = null, health = {}, streamImages = false, firecrawlKey = '', usage = null, userId = '' }) {
+export async function handleHiggsfield(req, res, { route, query, creds, save = null, health = {}, streamImages = false, firecrawlKey = '', photoroomKey = '', usage = null, userId = '' }) {
   const projectId = String(req.headers?.['x-project-id'] || '')
   try {
     if (route === '/_health' && req.method === 'GET') {
@@ -140,6 +142,14 @@ export async function handleHiggsfield(req, res, { route, query, creds, save = n
       const brand = await lookupBrand(url, { apiKey: firecrawlKey })
       await usage?.started({ userId, projectId, provider: 'firecrawl', model: 'branding', credits: brand.credits, prompt: url, status: 'completed' })
       return send(res, 200, brand)
+    }
+
+    // AI background removal for a logo (Photoroom).
+    if (route === '/_cutout' && req.method === 'POST') {
+      const { data_url: dataUrl } = await readJson(req, { limit: 12 * 1024 * 1024 })
+      const out = await cutout(dataUrl, { apiKey: photoroomKey })
+      await usage?.started({ userId, projectId, provider: 'photoroom', model: 'segment', credits: out.credits, status: 'completed' })
+      return send(res, 200, out)
     }
 
     if (route === '/_save' && !save) return send(res, 404, { detail: 'Saving into the repo is only available on the local dev server.' })

@@ -68,6 +68,8 @@ export const hf = {
   save: (url, name, meta) => call('POST', '/_save', { url, name, meta }),
   /** A website's logo (as a data: URL), colours and fonts, via Firecrawl on the server. */
   brand: (url) => call('POST', '/_brand', { url }),
+  /** AI background removal (Photoroom, on the server): a PNG data: URL. */
+  cutout: (dataUrl, { projectId } = {}) => call('POST', '/_cutout', { data_url: dataUrl }, projectId ? { 'x-project-id': projectId } : {}),
 
   /** Upload a data: URL (logo / photo) and get a public URL Higgsfield can read. */
   async uploadDataUrl(dataUrl) {
