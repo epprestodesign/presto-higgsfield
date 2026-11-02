@@ -9,6 +9,7 @@ import { sampleProject, getSampleEvent } from '../data/sampleEvents.js'
 import { IMAGERY, getImage } from '../assets/imagery/index.js'
 import { getModel, resolveModel } from './studioModels.js'
 import { uid } from '../models/ids.js'
+import { applyCopy } from './pageCopy.js'
 
 // The uploads as they came in (logos on their original boxes), for clean-up.
 // 800px copies of the generated originals, which stay out of git at full size.
@@ -556,7 +557,7 @@ export function toPrestoProject(lab, bannerId = lab.selectedBannerId) {
     kit.bannerImageId = asset.id
     kit.heroImageId = asset.id
   }
-  return p
+  return applyCopy(p, lab.copy)
 }
 
 export const sampleName = (key) => getSampleEvent(key)?.event?.name || ''

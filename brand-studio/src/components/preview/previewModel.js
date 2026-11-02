@@ -30,6 +30,10 @@ export function heroProps(project, { size = 'landing' } = {}) {
     location: locationLabel(project?.event),
     showLogo: hero.showLogo !== false,
     showDates: hero.showDates !== false,
+    meta: hero.meta || '',
+    showHeadline: hero.showHeadline !== false,
+    showMeta: hero.showMeta !== false,
+    showTagline: hero.showTagline !== false,
     size,
     headingLevel: size === 'landing' ? 1 : 2,
   }

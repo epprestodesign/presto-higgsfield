@@ -19,6 +19,7 @@ import { createClient } from '@supabase/supabase-js'
 import { authMode, getSessionToken } from '../auth/index.js'
 import { studio } from './studioProjects.js'
 import { sameOrigin } from './canvas.js'
+import { isDefaultCopy, normalizeCopy } from './pageCopy.js'
 
 const SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL || ''
 const SUPABASE_KEY = import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY || ''
@@ -68,6 +69,7 @@ export function projectRow(p, workspaceId) {
     typography: p.typography || null,
     site: p.site || null,
     logo_lab: p.logoLab ? { methodId: p.logoLab.methodId || '', lookId: p.logoLab.lookId || '', strength: p.logoLab.strength || null } : null,
+    page_copy: p.copy && !isDefaultCopy(p.copy) ? normalizeCopy(p.copy) : null,
     status: p.status === 'building' ? 'building' : 'ready',
   }
 }
@@ -128,6 +130,7 @@ export function toStudioProject(row, links = {}) {
     id: row.id, dbId: row.id, key: row.event_key || 'heartland', name: row.name, kind: row.kind,
     createdAt: new Date(row.created_at), shared: true, prompt: row.prompt || '', modelId: row.model_id || 'auto', autoReason: '',
     logo, colors: row.colors || {}, typography: row.typography || {}, colorsFromLogo: false, site: row.site || '',
+    ...(row.page_copy ? { copy: normalizeCopy(row.page_copy) } : {}),
     banners, sets, selectedBannerId: selected,
     logoLab: logo ? { source: logo.src, methodId: row.logo_lab?.methodId || '', lookId: row.logo_lab?.lookId || '', recommendedLook: '', announced: true, ...(row.logo_lab?.strength ? { strength: row.logo_lab.strength } : {}) } : null,
     status: 'ready', steps: [], messages: messages.length ? messages : [{ role: 'user', text: row.prompt || row.name }],
@@ -294,7 +297,7 @@ export function queueSave(p) {
 
 /** What, if it changes, means a project needs saving. */
 export const fingerprint = (p) => JSON.stringify([
-  p.name, p.kind, p.status, p.prompt, p.colors, p.typography, p.site,
+  p.name, p.kind, p.status, p.prompt, p.colors, p.typography, p.site, p.copy || null,
   p.logo?.src?.length || 0, p.logo?.src?.slice(-48) || '',
   p.logoLab?.methodId, p.logoLab?.lookId, p.logoLab?.strength,
   p.selectedBannerId, p.messages.length, p.banners.length,
