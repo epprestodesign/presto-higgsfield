@@ -210,7 +210,7 @@ async function copyBanner(p, b, ws) {
 /** Save whatever changed since the last save. */
 export async function saveProject(p) {
   const ws = persistence.workspace?.id
-  if (!ws || !p._persist) return
+  if (!ws || !p._persist || p._deleted) return
   const sb = client()
   p.dbId ||= crypto.randomUUID()
   ok(await sb.from('projects').upsert(projectRow(p, ws)), 'Save project')
@@ -255,6 +255,27 @@ export async function saveProject(p) {
     p._savedMsgs = p.messages.length
   }
   persistence.lastSavedAt = new Date()
+}
+
+/**
+ * Delete a saved project: its stored files, then the project row (sets,
+ * banners, chat and logo records go with it; usage history is kept by a
+ * database trigger). Waits for any save in flight first.
+ */
+export async function deleteSaved(p) {
+  p._deleted = true
+  await (p._queue || Promise.resolve()).catch(() => {})
+  const ws = persistence.workspace?.id
+  if (!ws || !p.dbId) return
+  const sb = client()
+  const paths = []
+  for (const folder of ['logos', 'banners']) {
+    const dir = `${ws}/${p.dbId}/${folder}`
+    const files = ok(await sb.storage.from(BUCKET).list(dir, { limit: 1000 }), 'List files')
+    paths.push(...files.filter((f) => f.id).map((f) => `${dir}/${f.name}`))
+  }
+  if (paths.length) ok(await sb.storage.from(BUCKET).remove(paths), 'Delete files')
+  ok(await sb.from('projects').delete().eq('id', p.dbId), 'Delete project')
 }
 
 /** Queue a save; saves of one project never overlap. */

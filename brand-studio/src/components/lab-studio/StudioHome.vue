@@ -3,6 +3,7 @@
 // left (logo extractions and Presto banners, searchable and filterable), and a
 // big composer in the middle to start a new one.
 import { computed, nextTick, ref, watch } from 'vue'
+import { useQuasar } from 'quasar'
 import { studio, KIND_LABEL, KIND_ICON, relativeDate } from '../../banner-lab/studioProjects.js'
 import PromptComposer from './PromptComposer.vue'
 import { useHScroll } from './useHScroll.js'
@@ -19,7 +20,27 @@ const props = defineProps({
   busy: { type: Boolean, default: false },
   notice: { type: String, default: '' },
 })
-const emit = defineEmits(['open', 'create'])
+const emit = defineEmits(['open', 'create', 'rename', 'delete'])
+
+// ⋯ menu on each project: Rename, Delete (with a confirm step).
+const $q = useQuasar()
+function rename(p) {
+  $q.dialog({
+    title: 'Rename project',
+    prompt: { model: p.name, type: 'text', isValid: (v) => !!v.trim(), attrs: { maxlength: 80, 'aria-label': 'Project name' } },
+    cancel: { flat: true, noCaps: true, label: 'Cancel' },
+    ok: { unelevated: true, noCaps: true, label: 'Rename', color: 'dark' },
+  }).onOk((name) => emit('rename', p.id, name))
+}
+function remove(p) {
+  $q.dialog({
+    title: `Delete “${p.name}”?`,
+    message: 'This removes its banners, banner sets, chat and saved images for everyone on the team. It can’t be undone.',
+    cancel: { flat: true, noCaps: true, label: 'Cancel' },
+    ok: { unelevated: true, noCaps: true, label: 'Delete project', color: 'negative' },
+    focus: 'cancel',
+  }).onOk(() => emit('delete', p.id))
+}
 
 const query = ref('')
 const kindFilter = ref('all')
@@ -75,7 +96,7 @@ const thumb = (p) => p.banners.find((b) => b.id === p.selectedBannerId)?.src || 
       </div>
       <p class="sh__label">Recent</p>
       <ul class="sh__list">
-        <li v-for="p in list" :key="p.id">
+        <li v-for="p in list" :key="p.id" class="sh__row">
           <button type="button" class="sh__item bs-focusable" @click="emit('open', p.id)">
             <span class="sh__thumb" :class="{ 'sh__thumb--logo': !thumb(p) }">
               <img v-if="thumb(p)" :src="thumb(p)" alt="" class="sh__thumb-bg" />
@@ -86,6 +107,20 @@ const thumb = (p) => p.banners.find((b) => b.id === p.selectedBannerId)?.src || 
               <small><q-icon :name="KIND_ICON[p.kind]" size="13px" /> {{ KIND_LABEL[p.kind] }}<template v-if="p.banners.length"> · {{ p.banners.length }}</template> · {{ p.status === 'building' ? 'Building…' : relativeDate(p.createdAt) }}</small>
             </span>
           </button>
+          <q-btn round flat dense size="sm" icon="more_horiz" class="sh__more" :aria-label="`More actions for ${p.name}`" @click.stop>
+            <q-menu anchor="bottom right" self="top right" :offset="[0, 4]">
+              <q-list dense style="min-width: 168px">
+                <q-item v-close-popup clickable @click="rename(p)">
+                  <q-item-section avatar><q-icon name="edit" size="18px" /></q-item-section>
+                  <q-item-section>Rename</q-item-section>
+                </q-item>
+                <q-item v-close-popup clickable class="text-negative" @click="remove(p)">
+                  <q-item-section avatar><q-icon name="delete_outline" size="18px" /></q-item-section>
+                  <q-item-section>Delete</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
         </li>
         <li v-if="!list.length" class="sh__empty">{{ studio.projects.length ? 'No projects match.' : 'No projects yet. Start one with the prompt.' }}</li>
       </ul>
@@ -126,7 +161,11 @@ const thumb = (p) => p.banners.find((b) => b.id === p.selectedBannerId)?.src || 
 .sh__filters button.is-on { background: var(--bs-ink); color: #fff; border-color: var(--bs-ink); }
 .sh__label { margin: 4px 4px 0; font: 600 0.8125rem var(--bs-font); color: var(--bs-ink-soft); }
 .sh__list { list-style: none; margin: 0; padding: 0; overflow-y: auto; display: grid; gap: 2px; }
-.sh__item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px; border: 0; background: transparent; border-radius: 10px; text-align: left; cursor: pointer; font-family: var(--bs-font); }
+.sh__row { position: relative; }
+.sh__more { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: var(--bs-ink-soft); background: var(--bs-surface); opacity: 0; transition: opacity 0.12s; }
+.sh__row:hover .sh__more, .sh__row:focus-within .sh__more, .sh__more[aria-expanded="true"] { opacity: 1; }
+@media (hover: none) { .sh__more { opacity: 1; } }
+.sh__item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 34px 6px 6px; border: 0; background: transparent; border-radius: 10px; text-align: left; cursor: pointer; font-family: var(--bs-font); }
 .sh__item:hover { background: rgb(255 255 255 / 0.7); }
 .sh__thumb { position: relative; flex: none; width: 64px; height: 40px; border-radius: 6px; overflow: hidden; background: #0b1736; display: grid; place-items: center; }
 .sh__thumb--logo { background: #fff; border: 1px solid var(--bs-line); }

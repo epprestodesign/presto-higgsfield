@@ -6,14 +6,14 @@
 // Concept data (studioProjects.js): seeded from the Brand Studio examples and
 // kept in memory; "building" is a mock agent walking its steps.
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { studio, getProject, createProject, runBuild } from '../../banner-lab/studioProjects.js'
+import { studio, getProject, createProject, runBuild, renameProject, removeProject } from '../../banner-lab/studioProjects.js'
 import StudioHome from './StudioHome.vue'
 import StudioWorkspace from './StudioWorkspace.vue'
 import AuthScreen from '../auth/AuthScreen.vue'
 import { generateBanners } from '../../banner-lab/studioGenerate.js'
 import { hf } from '../../providers/higgsfield/client.js'
 import { siteFromText, siteLabel } from '../../banner-lab/siteBrand.js'
-import { persistence, canPersist, loadWorkspace } from '../../banner-lab/projectStore.js'
+import { persistence, canPersist, loadWorkspace, deleteSaved } from '../../banner-lab/projectStore.js'
 import AccountMenu from '../auth/AccountMenu.vue'
 import * as auth from '../../auth/index.js'
 
@@ -115,6 +115,21 @@ async function createFromHome(input) {
   }
   create(input)
 }
+// Home ⋯ menu. Renames save like any other change; a delete leaves the list
+// at once and comes back if the database says no.
+function rename(id, name) { renameProject(id, name) }
+async function deleteProject(id) {
+  const removed = removeProject(id)
+  if (!removed) return
+  try {
+    if (removed.project._persist) await deleteSaved(removed.project)
+  } catch (e) {
+    console.error('[projects] delete failed', e)
+    removed.project._deleted = false
+    studio.projects.splice(removed.index, 0, removed.project)
+    persistence.error = `Couldn’t delete “${removed.project.name}”: ${e.message}`
+  }
+}
 if (props.buildDemo) create({ modelId: 'auto', references: [], logo: null, ...props.buildDemo })
 const count = computed(() => studio.projects.length)
 </script>
@@ -135,7 +150,7 @@ const count = computed(() => studio.projects.length)
       </header>
       <StudioHome
         class="lsa__home" :model-menu-open="modelMenuOpen" :initial-text="homeText" :initial-mode="homeMode"
-        :initial-logo="homeLogo" :initial-references="homeReferences" :busy="lookingUp || persistence.status === 'loading'" :notice="homeStatus" @open="(id) => (projectId = id)" @create="createFromHome"
+        :initial-logo="homeLogo" :initial-references="homeReferences" :busy="lookingUp || persistence.status === 'loading'" :notice="homeStatus" @open="(id) => (projectId = id)" @create="createFromHome" @rename="rename" @delete="deleteProject"
       />
     </template>
     <StudioWorkspace v-else :key="project.id" :project="project" :preview-open="previewOpen" :export-open="exportOpen" :preview-page="previewPage" :preview-device="previewDevice" :tutorial-open="tutorialOpen" :generate="generator" :user="user" @home="projectId = ''" @sign-out="signOut" />
