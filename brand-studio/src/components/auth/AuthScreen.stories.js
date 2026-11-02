@@ -10,7 +10,7 @@ export default {
         component: [
           'Banner Lab’s log-in, over a blurred, static picture of a project. Three ways in: **Continue with Google**, **Continue with magic link**, or **email and password**. Plus the flows to **create an account** (with a 6-digit email code) and **reset a forgotten password**.',
           '',
-          'Authentication will be **Clerk**. Nothing is wired to Clerk yet: every step calls `brand-studio/src/auth/mockAuth.js`, which has the same shape as the Clerk calls it stands in for (each function names its Clerk call), so wiring Clerk replaces that one file.',
+          'Authentication is **Clerk** (`@clerk/clerk-js`, our own UI). The screen calls `brand-studio/src/auth/index.js`, which uses the real adapter (`clerkAuth.js`) when `VITE_CLERK_PUBLISHABLE_KEY` is set in the Banner Lab app, and the mock (`mockAuth.js`, same functions, each naming its Clerk call) otherwise. **Storybook always uses the mock**, so these stories never touch the network.',
           '',
           '**Prototype rules:** any email works; `taken@…` is already registered (sign-up fails) and `nobody@…` has no account (log-in fails). Log-in password `wrongpass` is rejected; anything 8+ characters works. Code `000000` is wrong; any other 6 digits work.',
         ].join('\n'),

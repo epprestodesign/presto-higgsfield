@@ -18,6 +18,7 @@
     "build-banner-lab": "vite build --config brand-studio/banner-lab/vite.config.js"
   },
   "dependencies": {
+    "@clerk/clerk-js": "^6.42.1",
     "@googlemaps/markerclusterer": "^2.6.2",
     "@quasar/extras": "^1.16.12",
     "imagetracerjs": "1.2.6",

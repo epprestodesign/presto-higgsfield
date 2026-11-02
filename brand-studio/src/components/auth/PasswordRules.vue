@@ -1,6 +1,6 @@
 <script setup>
 // PasswordRules — the password requirements, ticked off live as you type.
-import { PASSWORD_RULES } from '../../auth/mockAuth.js'
+import { PASSWORD_RULES } from '../../auth/index.js'
 
 defineProps({ password: { type: String, default: '' } })
 </script>
