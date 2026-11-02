@@ -148,6 +148,28 @@ export function higgsfieldDevProxy({ root = process.cwd() } = {}) {
           if (route === '/_health' && req.method === 'GET') {
             return send(res, 200, { proxy: true, configured: !!creds, keyId: creds ? mask(creds.id) : null })
           }
+          // Same-origin copy of a generated image, so the browser can crop and
+          // export it from a canvas (Higgsfield's CDN sends no CORS headers).
+          // No credentials involved; only Higgsfield/CloudFront image URLs.
+          if (route === '/_image' && req.method === 'GET') {
+            let u
+            try { u = new URL(url.searchParams.get('url') || '') } catch { return send(res, 400, { detail: 'Bad image URL' }) }
+            // ?any=1: an image URL the user pasted (Banner Lab). Public https hosts only.
+            const pasted = url.searchParams.get('any') === '1'
+            const publicHost = !/^(localhost|.*\.local|.*\.internal|\d+\.\d+\.\d+\.\d+|\[.*\])$/i.test(u.hostname)
+            const allowed = pasted ? publicHost : /(^|\.)(cloudfront\.net|higgsfield\.ai)$/.test(u.hostname)
+            if (u.protocol !== 'https:' || !allowed) return send(res, 400, { detail: pasted ? 'Paste a public https image URL' : 'Only Higgsfield image URLs can be fetched' })
+            const r = await fetch(u)
+            const type = r.headers.get('content-type') || ''
+            if (!r.ok || !type.startsWith('image/')) return send(res, 502, { detail: `Image fetch failed (${r.status})` })
+            const buf = Buffer.from(await r.arrayBuffer())
+            if (buf.length > 30 * 1024 * 1024) return send(res, 413, { detail: 'Image too large' })
+            res.statusCode = 200
+            res.setHeader('Content-Type', type)
+            res.setHeader('Cache-Control', 'private, max-age=86400')
+            return res.end(buf)
+          }
+
           if (!creds) return send(res, 412, { detail: 'No Higgsfield API key found. Add HIGGSFIELD_API_KEY_ID and HIGGSFIELD_API_KEY_SECRET to .env.', code: 'not_configured' })
 
           // Verify credentials without spending credits: look up a request that can't exist.

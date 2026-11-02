@@ -49,8 +49,14 @@ jobs:
         env:
           VITE_IMAGERY_URL: "https://epprestodesign.github.io/presto-ds-imagery"
 
-      - name: Nest prototype under Storybook
-        run: cp -r brand-studio/app/dist storybook-static/prototype
+      # Banner Lab runs in sample mode on Pages (no dev proxy, no API key).
+      - name: Build Banner Lab prototype
+        run: pnpm build-banner-lab
+
+      - name: Nest prototypes under Storybook
+        run: |
+          cp -r brand-studio/app/dist storybook-static/prototype
+          cp -r brand-studio/banner-lab/dist storybook-static/banner-lab
 
       - uses: actions/upload-pages-artifact@v3
         with:
