@@ -209,9 +209,9 @@ export async function signOut() {
 }
 
 /** A fresh Clerk session JWT for Supabase (third-party auth) / API calls, or null. */
-export async function getSessionToken() {
+export async function getSessionToken({ fresh = false } = {}) {
   const c = await loadAuth()
-  return c.session ? c.session.getToken() : null
+  return c.session ? c.session.getToken(fresh ? { skipCache: true } : undefined) : null
 }
 
 async function activate(c, sessionId) {

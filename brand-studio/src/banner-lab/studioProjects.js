@@ -61,7 +61,17 @@ export function paletteToColors(palette = [], fallback = {}) {
 }
 
 // A file name made readable: "bret-michaels_poster" → "Bret Michaels Poster".
-export const nameFromFile = (n = '') => n.replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/\b\w/g, (c) => c.toUpperCase())
+export const nameFromFile = (n = '') => {
+  const words = n.replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ')
+    // Sizes, copy counts and file-ish words aren't part of the name:
+    // "ESPN Logo 700x394" → "ESPN", "acme_logo_white (1)" → "Acme".
+    .replace(/\b\d{2,5}\s*[x×]\s*\d{2,5}\b/gi, ' ')
+    .replace(/\(\d+\)/g, ' ')
+    .replace(/\b(logo|logos|logotype|final|copy|v\d+|hi ?res|transparent|white|black|rgb|cmyk|png|jpe?g|svg)\b/gi, ' ')
+    .replace(/\s+/g, ' ').trim()
+  const tidy = words || n.replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ').trim()
+  return tidy.replace(/\b\w/g, (c) => c.toUpperCase())
+}
 
 // ── Banner sets ───────────────────────────────────────────────────────────
 // Every prompt makes a new set of banners; the project keeps them all (its
@@ -225,7 +235,9 @@ export function createProject({ prompt = '', mode = 'banner', modelId = 'auto', 
     banners: [],
     sets: [],
     selectedBannerId: null,
-    logoLab: mode === 'logo' ? newLogoLab(logo?.src || rawLogo(key) || p.brandKit.logo?.src || '') : null,
+    // Any uploaded logo gets the logo tools (clean-up, white / glow / box looks),
+    // so "make the logo white" works in a banner project too.
+    logoLab: mode === 'logo' ? newLogoLab(logo?.src || rawLogo(key) || p.brandKit.logo?.src || '') : logo?.src ? newLogoLab(logo.src) : null,
     status: 'building',
     steps: buildSteps(mode, { hasLogo: !!logo, references: references.length, model: model.id }),
     messages: [{ role: 'user', text: prompt.trim() || (mode === 'logo' ? 'Extract my logo' : 'New Presto banners'), attachments: [logo && 'logo', references.length && `${references.length} reference${references.length > 1 ? 's' : ''}`].filter(Boolean) }],
@@ -378,28 +390,57 @@ export async function makeBanners(project, { text, modelId = 'auto' }, { stepMs 
 }
 
 /** A follow-up on a logo project that isn't about banners: point at the looks. */
-export function logoReply(project, text, { pick, methods = [] }) {
+const REMOVE_BG = /\b(remove|get rid of|take (out|away|off)|drop|lose|delete|isolate|cut ?out|extract|knock ?out|lift)\b.*\b(background|bg|black|dark|smoke|white|light|grey|gray)\b|\bisolate\b|\bcut ?out\b|\btransparent\b/
+const KEEP_MORE = /\b(add|bring|put|keep)\b.*\bback\b|\brestore\b|\bkeep more\b|\bless aggressive\b|\btoo much\b|\b(missing|lost|gone|disappeared)\b|\bremove less\b/
+const REMOVE_MORE = /\bremove more\b|\bmore aggressive\b|\bcleaner\b|\bstill (some |a bit of |the )?(background|black|smoke|grey|gray|haze)\b|\b(rest|remaining) of the (background|black|smoke)\b/
+const ORIGINAL = /\b(original|as uploaded|keep the background|undo|put the background back|with the background)\b/
+const KEY_IDS = ['darkkey', 'lightkey']
+const pctText = (s) => `${Math.round(s * 100)}%`
+
+/**
+ * A logo follow-up in chat: acts on the selected clean-up (or picks the
+ * right one) — remove the background, keep more / remove more of it, go back
+ * to the original, or switch look / SVG.
+ */
+export async function logoReply(project, text, { pick, methods = [], tune, current } = {}) {
   project.messages.push({ role: 'user', text })
   const t = text.toLowerCase()
+  const say = (msg) => project.messages.push({ role: 'agent', text: msg })
   const has = (id) => methods.some((m) => m.id === id)
-  // "Isolate / cut out / remove the background": the clean-up method that
-  // takes the background away for this kind of upload.
-  if (/isolate|cut ?out|extract|remove (the )?(dark |light )?background|transparent|knock ?out|lift/.test(t)) {
-    const id = /light/.test(t) && has('lightkey') ? 'lightkey'
-      : has('darkkey') ? 'darkkey' : has('lightkey') ? 'lightkey'
-        : has('flood') ? 'flood' : has('trim') ? 'trim' : ''
+  const now = current?.()
+  const key = KEY_IDS.includes(now?.id) ? now.id : (/\b(white|light)\b/.test(t) && has('lightkey') ? 'lightkey' : has('darkkey') ? 'darkkey' : has('lightkey') ? 'lightkey' : '')
+
+  if (ORIGINAL.test(t) && !REMOVE_BG.test(t) && has('asis') && pick({ method: 'asis' })) {
+    return say('Back to the original, with its background. Pick “Remove dark background” any time to lift the logo off it again.')
+  }
+  // "Add back the blue / red", "too much removed": remove less.
+  if (KEEP_MORE.test(t) && key && tune) {
+    const from = KEY_IDS.includes(now?.id) ? (now.strength ?? 0.35) : 0.35
+    const to = Math.round(Math.max(0, from - 0.2) * 100) / 100
+    await tune(key, to)
+    return say(`I removed less of the background (strength ${pctText(from)} → ${pctText(to)}), so more of the logo's colour and gradients stay. If background is creeping back in, ask me to remove a bit more, or drag the slider on the clean-up.`)
+  }
+  // "Remove more", "still some smoke": remove more.
+  if (REMOVE_MORE.test(t) && key && tune) {
+    const from = KEY_IDS.includes(now?.id) ? (now.strength ?? 0.35) : 0.35
+    const to = Math.round(Math.min(1, from + 0.2) * 100) / 100
+    await tune(key, to)
+    return say(`I removed more of the background (strength ${pctText(from)} → ${pctText(to)}). If parts of the logo went with it, ask me to add them back, or drag the slider.`)
+  }
+  // "Remove the black background", "isolate the logo", "cut it out".
+  if (REMOVE_BG.test(t)) {
+    const id = key || (has('flood') ? 'flood' : has('trim') ? 'trim' : '')
     if (id && pick({ method: id })) {
       const what = { darkkey: 'I removed the dark background', lightkey: 'I removed the light background', flood: 'I took the box away from around the logo', trim: 'Your logo was already transparent, so I trimmed it' }[id]
-      project.messages.push({ role: 'agent', text: `${what}: it's the selected clean-up now, and the looks and brand kit are updating. If parts of the logo went missing, pick another clean-up on the canvas.` })
-      return
+      return say(`${what}. It’s the selected clean-up now, and the looks and brand kit are updating. Say “add back the blue” (or any colour) if too much went, or “remove more” if some background is left.`)
     }
   }
   const want = /svg|vector|trace/.test(t) ? { method: 'vector' }
     : /white/.test(t) ? { look: 'white' } : /outline|stroke/.test(t) ? { look: 'outline' }
       : /glow/.test(t) ? { look: 'glow' } : /shadow/.test(t) ? { look: 'shadow' }
-        : /box|plate|badge/.test(t) ? { look: 'box' } : /original|as is|colou?rs/.test(t) ? { look: 'original' } : null
+        : /box|plate|badge/.test(t) ? { look: 'box' } : /as is|colou?rs/.test(t) ? { look: 'original' } : null
   if (want && pick(want)) return
-  project.messages.push({ role: 'agent', text: 'For the logo I can isolate it from its background, switch clean-up (edge fill, colour key, soft edges, SVG trace) or change its look on dark banners (white, outline, glow, white box, shadow). Click one on the canvas, or ask for it here.' })
+  say('For the logo I can remove its background (“remove the black background”), keep more of it (“add back the blue”) or remove more (“still some smoke”), go back to the original, or change its look on dark banners (white, outline, glow, white box, shadow). You can also click a clean-up or look on the canvas.')
 }
 
 /**

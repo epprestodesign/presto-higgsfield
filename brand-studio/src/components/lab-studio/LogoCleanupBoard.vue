@@ -9,7 +9,7 @@ const props = defineProps({
   lab: { type: Object, required: true }, // useLogoLab().state
   selected: { type: String, default: '' },
 })
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'tune'])
 
 const bgNote = computed(() => {
   const b = props.lab.background
@@ -31,10 +31,8 @@ const bgNote = computed(() => {
       </figure>
 
       <div class="lc__grid">
-        <button
-          v-for="m in lab.methods" :key="m.id" type="button" class="lc__card" :class="{ 'is-on': m.id === selected }"
-          :aria-pressed="m.id === selected" @click="emit('select', m.id)"
-        >
+        <div v-for="m in lab.methods" :key="m.id" class="lc__item" :class="{ 'is-on': m.id === selected }">
+        <button type="button" class="lc__card" :aria-pressed="m.id === selected" @click="emit('select', m.id)">
           <div class="lc__img"><img :src="m.url" :alt="`${m.label} result`" /></div>
           <div class="lc__meta">
             <p class="lc__title">
@@ -48,6 +46,16 @@ const bgNote = computed(() => {
             </p>
           </div>
         </button>
+        <!-- Background removal can be tuned: re-cuts the logo when you let go -->
+        <div v-if="m.tunable" class="lc__tune" @pointerdown.stop @dblclick.stop>
+          <span>Remove less</span>
+          <q-slider
+            :model-value="m.strength" :min="0" :max="1" :step="0.05" dense color="deep-purple" :aria-label="`${m.label}: how much to remove`"
+            @change="(v) => emit('tune', m.id, v)"
+          />
+          <span>Remove more</span>
+        </div>
+        </div>
         <div v-if="lab.vectorLoading" class="lc__card lc__card--wait"><q-spinner size="18px" /> Tracing an SVG…</div>
       </div>
     </template>
@@ -61,6 +69,11 @@ const bgNote = computed(() => {
 .lc__before figcaption { display: grid; gap: 2px; font-size: 0.8125rem; color: var(--bs-ink-soft); }
 .lc__before figcaption strong { color: var(--bs-ink); font-size: 0.875rem; }
 .lc__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.lc__item { display: grid; border-radius: 14px; border: 1px solid var(--bs-line); background: #fff; overflow: hidden; transition: border-color 0.15s, background-color 0.15s; }
+.lc__item:hover { border-color: var(--bs-ink-faint); }
+.lc__item.is-on { border-color: var(--bs-accent); background: var(--bs-accent-soft); }
+.lc__item .lc__card { border: 0; border-radius: 0; background: transparent; }
+.lc__tune { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 0 12px 10px; font: 600 0.6875rem var(--bs-font); color: var(--bs-ink-soft); }
 .lc__card { display: grid; gap: 10px; text-align: left; padding: 10px; border-radius: 14px; border: 1px solid var(--bs-line); background: #fff; cursor: pointer; font: inherit; color: inherit; transition: border-color 0.15s, background-color 0.15s; }
 .lc__card:hover { border-color: var(--bs-ink-faint); }
 .lc__card.is-on { border-color: var(--bs-accent); background: var(--bs-accent-soft); }

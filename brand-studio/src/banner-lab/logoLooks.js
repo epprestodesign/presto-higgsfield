@@ -54,6 +54,27 @@ const edgeLabel = (h) => (h < 0.04 ? 'Clean edge' : h < 0.15 ? 'Slight light edg
 
 // ── 1 · Clean-up methods ──────────────────────────────────────────────────
 
+export const DEFAULT_STRENGTH = 0.35
+
+/** A background-removal clean-up at a given strength (0 = keep most, 1 = remove most). */
+function keyMethod(raw, dark, strength) {
+  const { img: keyedRaw, kept } = lumaKey(raw, { dark, strength })
+  const { img: keyed } = dropStrays(keyedRaw) // lights or specks far from the logo
+  const canvas = trimmed(keyed)
+  return {
+    id: dark ? 'darkkey' : 'lightkey',
+    label: dark ? 'Remove dark background' : 'Remove light background',
+    hint: dark
+      ? 'Keeps anything more colourful or brighter than the background (blue, red, white, silver) and removes the dark grey and black. Use the slider to remove less or more.'
+      : 'Keeps anything more colourful or darker than the background and removes the light grey and white. Use the slider to remove less or more.',
+    canvas, url: png(canvas), kept, strength, tunable: true,
+    stats: [
+      { label: `${Math.round((1 - kept) * 100)}% removed`, tone: 'ok' },
+      kept > 0.85 ? { label: 'Most of it stayed: try removing more', tone: 'warn' } : { label: 'Background lifted', tone: 'ok' },
+    ],
+  }
+}
+
 /**
  * @returns {{ before, background, methods: [{ id, label, hint, url, canvas, stats: [], tone }], recommended }}
  */
@@ -92,28 +113,15 @@ export async function cleanupMethods(src) {
     const borderL = background.color ? luminance(...background.color) : 0.2
     const order = borderL < 0.35 ? [true, false] : [false, true]
     for (const dark of order) {
-      const { img: keyedRaw, kept } = lumaKey(raw, { dark })
-      const { img: keyed } = dropStrays(keyedRaw) // lights or specks far from the logo
-      if (kept < 0.01) continue
-      methods.push({
-        id: dark ? 'darkkey' : 'lightkey',
-        label: dark ? 'Remove dark background' : 'Remove light background',
-        hint: dark
-          ? 'Lifts bright and colourful lettering off a dark photo, gradient or smoke. Very dark parts of the logo go too.'
-          : 'Lifts dark and colourful lettering off a light photo or texture. Very light parts of the logo go too.',
-        canvas: trimmed(keyed), kept,
-        stats: [
-          { label: `${Math.round((1 - kept) * 100)}% removed`, tone: 'ok' },
-          kept > 0.85 ? { label: 'Most of it stayed: check the edges', tone: 'warn' } : { label: 'Busy background lifted', tone: 'ok' },
-        ],
-      })
+      const m = keyMethod(raw, dark, DEFAULT_STRENGTH)
+      if (m.kept >= 0.01) methods.push(m)
     }
     methods.push({
       id: 'asis', label: 'Keep the background', hint: 'Leaves the photo or gradient behind the logo. Use the white box look with it, or upload a PNG or SVG.',
       canvas: base, stats: [{ label: 'Busy background', tone: 'warn' }],
     })
   }
-  methods.forEach((m) => { m.url = png(m.canvas) })
+  methods.forEach((m) => { m.url ||= png(m.canvas) })
 
   // On a busy background, recommend the key that matches it if it removed a
   // real share without wiping the logo.
@@ -125,7 +133,9 @@ export async function cleanupMethods(src) {
       return flood.halo >= 0.04 && soft.halo < flood.halo * 0.6 ? soft : flood
     })()
 
-  return { before: png(scaled(base, 600)), background, methods, recommended: pick.id }
+  // Re-run a background-removal clean-up at another strength (slider / chat).
+  const rekey = (id, strength) => keyMethod(raw, id === 'darkkey', strength)
+  return { before: png(scaled(base, 600)), background, methods, recommended: pick.id, rekey }
 }
 
 /** The SVG-trace method, built from another method's result (slower, so separate). */

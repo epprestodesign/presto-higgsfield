@@ -211,31 +211,33 @@ export function keyOut(img, color, { tolerance = 36, feather = 28 } = {}) {
 }
 
 /**
- * Lift a logo off a busy dark (or light) background: a photo, gradient or
- * smoke rather than one flat colour. Each pixel is scored by how much it
- * stands apart from that kind of background (brightness for a dark one,
- * darkness for a light one, and colourfulness either way), and pixels that
- * score like the background become transparent. The cut-off is learned from
- * the image's own border, so it adapts to how bright the background is.
+ * Lift a logo off a busy dark (or light) background: smoke, a photo or a
+ * gradient rather than one flat colour. Two separate tests, each measured
+ * against the image's own border (which is mostly background):
+ *   colour     — is the pixel clearly more colourful than the background?
+ *                (keeps blue gradients and red script on grey/black smoke)
+ *   brightness — is it clearly brighter (dark backgrounds) or darker (light
+ *                ones) than the background? (keeps white and silver lettering)
+ * A pixel stays if either test says so. `strength` (0–1) moves both cut-offs:
+ * 0 keeps as much as possible, 1 removes as much as possible.
  * @returns {{ img, kept }} kept = share of pixels left visible
  */
-export function lumaKey(img, { dark = true, softness = 0.12, margin = 0.03 } = {}) {
+export function lumaKey(img, { dark = true, strength = 0.35 } = {}) {
   const { width: w, height: h, data } = img
-  const score = (i) => {
-    const r = data[i], g = data[i + 1], b = data[i + 2]
-    const l = luminance(r, g, b)
-    const chroma = (Math.max(r, g, b) - Math.min(r, g, b)) / 255
-    return Math.max(dark ? l : 1 - l, chroma * 0.75)
-  }
-  const border = borderPixels(w, h).filter((p) => data[p * 4 + 3] >= 16).map((p) => score(p * 4)).sort((a, b) => a - b)
-  const low = (border.length ? border[Math.floor(border.length * 0.95)] : 0.1) + margin
-  const high = low + softness
+  const chromaAt = (i) => (Math.max(data[i], data[i + 1], data[i + 2]) - Math.min(data[i], data[i + 1], data[i + 2])) / 255
+  const lightAt = (i) => { const l = luminance(data[i], data[i + 1], data[i + 2]); return dark ? l : 1 - l }
+  const border = borderPixels(w, h).filter((p) => data[p * 4 + 3] >= 16)
+  const pct = (vals, q) => { vals.sort((a, b) => a - b); return vals.length ? vals[Math.min(vals.length - 1, Math.floor(vals.length * q))] : 0 }
+  const s = clamp(strength, 0, 1)
+  const chromaCut = pct(border.map((p) => chromaAt(p * 4)), 0.95) + 0.05 + s * 0.3
+  const lightCut = pct(border.map((p) => lightAt(p * 4)), 0.98) + 0.04 + s * 0.25
+  const ramp = (v, cut, width) => clamp((v - cut) / width + 0.5, 0, 1)
   const out = cloneImage(img)
   const bg = dark ? 0 : 255
   let kept = 0
   for (let i = 0; i < out.data.length; i += 4) {
     if (!out.data[i + 3]) continue
-    const a = clamp((score(i) - low) / (high - low), 0, 1)
+    const a = Math.max(ramp(chromaAt(i), chromaCut, 0.08), ramp(lightAt(i), lightCut, 0.1))
     if (a <= 0.02) { out.data[i + 3] = 0; continue }
     if (a < 1) for (let c = 0; c < 3; c++) out.data[i + c] = clamp((out.data[i + c] - (1 - a) * bg) / a, 0, 255)
     out.data[i + 3] = Math.round(out.data[i + 3] * a)

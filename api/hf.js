@@ -40,6 +40,6 @@ export default async function handler(req, res) {
   }
 
   const auth = await authenticate(req)
-  if (!auth.ok) return send(res, auth.status, { detail: auth.detail, code: auth.code })
+  if (!auth.ok) return send(res, auth.status, { detail: auth.detail, code: auth.code, reason: auth.reason })
   return handleHiggsfield(req, res, { route, query, creds, save: null, streamImages: true })
 }

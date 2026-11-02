@@ -51,4 +51,4 @@ export const takeRedirectError = () => (authMode() === 'clerk' ? clerk.takeRedir
 /** End the session. Mock: nothing to end. */
 export const signOut = () => (authMode() === 'clerk' ? clerk.signOut() : Promise.resolve())
 /** Clerk session JWT for supabase-js (`accessToken`) and API calls; null when signed out or mocked. */
-export const getSessionToken = () => (authMode() === 'clerk' ? clerk.getSessionToken() : Promise.resolve(null))
+export const getSessionToken = (opts) => (authMode() === 'clerk' ? clerk.getSessionToken(opts) : Promise.resolve(null))

@@ -1,10 +1,10 @@
 // GET /api/health — public liveness check. Reports which server pieces are
 // configured (booleans only, never values).
 import { send } from '../brand-studio/server/http.js'
-import { clerkConfig } from '../brand-studio/server/auth.js'
+import { clerkConfig, clerkKeysMatch } from '../brand-studio/server/auth.js'
 import { credentialsFrom } from '../brand-studio/server/higgsfield.js'
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   const env = process.env
   return send(res, 200, {
     ok: true,
@@ -14,5 +14,7 @@ export default function handler(req, res) {
     higgsfield: !!credentialsFrom(env),
     supabase: !!(env.SUPABASE_URL && env.SUPABASE_SECRET_KEY),
     clerkWebhook: !!env.CLERK_WEBHOOK_SIGNING_SECRET,
+    // Same Clerk instance on both sides? (null = couldn't check)
+    clerkKeysMatch: await clerkKeysMatch(env),
   })
 }

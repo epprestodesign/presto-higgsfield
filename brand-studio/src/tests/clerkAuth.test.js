@@ -76,3 +76,27 @@ describe('auth adapters', () => {
     await expect(clerk.signUp({ firstName: 'A', email: 'a@b.co', password: 'short' })).rejects.toMatchObject({ field: 'password' })
   })
 })
+
+describe('server session check', () => {
+  const env = { CLERK_SECRET_KEY: 'sk_test_x' }
+  const req = (headers) => ({ headers })
+  it('says why a token was rejected', async () => {
+    const { authenticate } = await import('../../server/auth.js')
+    const verify = async () => { throw Object.assign(new Error('expired'), { reason: 'token-expired' }) }
+    const r = await authenticate(req({ authorization: 'Bearer abc' }), { env, verify })
+    expect(r).toMatchObject({ ok: false, status: 401, reason: 'token-expired' })
+    const none = await authenticate(req({}), { env, verify })
+    expect(none.reason).toBe('no-token')
+  })
+  it('accepts a valid token', async () => {
+    const { authenticate } = await import('../../server/auth.js')
+    const r = await authenticate(req({ authorization: 'Bearer abc' }), { env, verify: async () => ({ sub: 'user_1' }) })
+    expect(r).toMatchObject({ ok: true, userId: 'user_1' })
+  })
+  it('reads the Clerk host from a publishable key', async () => {
+    const { frontendApiOf } = await import('../../server/auth.js')
+    const key = `pk_test_${Buffer.from('bold-shrew-3922.clerk.accounts.dev$').toString('base64')}`
+    expect(frontendApiOf(key)).toBe('bold-shrew-3922.clerk.accounts.dev')
+    expect(frontendApiOf('nope')).toBe('')
+  })
+})

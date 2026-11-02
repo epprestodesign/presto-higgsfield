@@ -100,6 +100,26 @@ export function useLogoLab(getProject, getPhoto) {
     const look = state.looks.find((l) => l.id === id)
     applyLogoLook(project, { method, look })
   }
+  /**
+   * Re-cut a background-removal clean-up at another strength (0 = keep most,
+   * 1 = remove most), from the slider or a chat tweak, and use it.
+   */
+  async function tune(id, strength) {
+    if (!entry) return false
+    const r = await entry.methods
+    if (!r.rekey || !state.methods.some((m) => m.id === id)) return false
+    const s = Math.max(0, Math.min(1, strength))
+    const lab = getProject().logoLab
+    lab.strength = { ...(lab.strength || {}), [id]: s }
+    const fresh = markRaw(r.rekey(id, s))
+    state.methods = state.methods.map((m) => (m.id === id ? fresh : m))
+    entry.looks.delete(id)
+    lab.methodId = id
+    await loadLooks(id, true)
+    return true
+  }
+  const current = () => state.methods.find((m) => m.id === getProject().logoLab?.methodId) || null
+
   /** For follow-ups like "trace it to SVG" or "use the white version". */
   function pick({ method, look }) {
     if (method && state.methods.some((m) => m.id === method)) { chooseMethod(method); return true }
@@ -112,5 +132,5 @@ export function useLogoLab(getProject, getPhoto) {
     return [p?.id, p?.logoLab?.source, p?.status]
   }, run, { immediate: true })
 
-  return { state, chooseMethod, chooseLook, pick }
+  return { state, chooseMethod, chooseLook, pick, tune, current }
 }
