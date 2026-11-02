@@ -41,6 +41,11 @@ const logoSrc = () => props.project.logo?.onDarkSrc || props.project.logo?.src |
   <div class="bb">
     <header v-if="set" class="bb__set">
       <p class="bb__set-prompt">“{{ set.prompt }}”</p>
+      <details v-if="set.sentPrompt" class="bb__sent" @pointerdown.stop @dblclick.stop>
+        <summary>Prompt sent to Higgsfield</summary>
+        <pre>{{ set.sentPrompt }}</pre>
+      </details>
+      <p v-if="set.status === 'failed'" class="bb__failed" role="alert"><q-icon name="error" size="16px" /> {{ set.error || 'Higgsfield couldn’t make this set.' }}</p>
       <p class="bb__set-meta">
         <span><q-icon name="auto_awesome" size="13px" /> {{ getModel(set.modelId).name }}</span>
         <span>{{ ago(set.createdAt) }}</span>
@@ -82,6 +87,10 @@ const logoSrc = () => props.project.logo?.onDarkSrc || props.project.logo?.src |
 .bb__set-meta { margin: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.75rem; color: var(--bs-ink-soft); }
 .bb__set-meta span { display: inline-flex; align-items: center; gap: 4px; }
 .bb__set-live { color: var(--bs-accent); font-weight: 600; }
+.bb__sent { font-size: 0.75rem; color: var(--bs-ink-soft); }
+.bb__sent summary { cursor: pointer; font-weight: 600; color: var(--bs-accent); }
+.bb__sent pre { margin: 6px 0 0; padding: 10px; border-radius: 8px; background: var(--bs-surface-2); white-space: pre-wrap; font: 400 0.75rem/1.5 var(--bs-font); color: var(--bs-ink); }
+.bb__failed { margin: 0; display: flex; align-items: flex-start; gap: 6px; padding: 8px 10px; border-radius: 8px; background: #fee2e2; color: #991b1b; font-size: 0.8125rem; }
 .bb__item { display: grid; gap: 8px; padding: 10px; border-radius: 14px; border: 2px solid transparent; cursor: pointer; }
 .bb__item:hover { background: var(--bs-surface-2); }
 .bb__item.is-on { border-color: var(--bs-accent); background: var(--bs-accent-soft); }

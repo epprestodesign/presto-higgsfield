@@ -352,3 +352,33 @@ describe('stray bits after a background key', () => {
     expect(dropped).toBe(9 + 16)
   })
 })
+
+describe('real banner generation (Studio)', () => {
+  it('turns a chat request into a subject and names the church scene', async () => {
+    const { briefFromRequest, optimizePrompt } = await import('../banner-lab/optimizePrompt.js')
+    expect(briefFromRequest('can we add in a church dark background ?')).toBe('church dark background')
+    const { prompt } = optimizePrompt({ description: 'can we add in a church dark background ?' })
+    expect(prompt).toMatch(/^Scene: church dark background\./)
+    expect(prompt).toMatch(/stained-glass/)
+    expect(prompt).toMatch(/calm, uncluttered, darker center/)
+  })
+  it('builds tweaks on the previous brief', async () => {
+    const { composeBrief } = await import('../banner-lab/studioGenerate.js')
+    expect(composeBrief('make it darker', 'Church dark background')).toBe('Church dark background. Change: make it darker')
+    expect(composeBrief('a sunny beach festival', 'Church dark background')).toBe('a sunny beach festival')
+  })
+  it('fills a set from the generator, and marks it failed when nothing comes back', async () => {
+    const { revise, setBanners } = await import('../banner-lab/studioProjects.js')
+    const project = { messages: [], banners: [], sets: [], colors: { primary: '#123456' }, logo: null, status: 'ready', steps: [] }
+    const generate = async ({ text }) => ({ brief: text, prompt: `Scene: ${text}.`, images: ['https://cdn.example/a.png', 'https://cdn.example/b.png'], errors: [] })
+    const set = await revise(project, { text: 'church dark background' }, { generate })
+    expect(set).toMatchObject({ status: 'ready', sentPrompt: 'Scene: church dark background.', modelId: 'flare' })
+    const made = setBanners(project, set.id) // in the order they were made
+    expect(made.map((b) => b.src)).toEqual(['https://cdn.example/a.png', 'https://cdn.example/b.png'])
+    expect(project.selectedBannerId).toBe(made[0].id)
+    const failing = async () => ({ brief: 'x', prompt: 'x', images: [], errors: ['You need to be logged in to generate banners.'] })
+    const set2 = await revise(project, { text: 'something else' }, { generate: failing })
+    expect(set2).toMatchObject({ status: 'failed', error: 'You need to be logged in to generate banners.' })
+    expect(project.messages.at(-1).text).toMatch(/failed/)
+  })
+})
