@@ -5,7 +5,7 @@
 // zoom, and a prompt bar for follow-ups. ▶ Preview / Export open the Presto
 // preview modal.
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { revise, toPrestoProject, makeBanners, logoReply, BANNERS_FOR_LOGO, wantsBanners } from '../../banner-lab/studioProjects.js'
+import { revise, toPrestoProject, makeBanners, logoReply, BANNERS_FOR_LOGO, wantsBanners, swapLogo } from '../../banner-lab/studioProjects.js'
 import { prestoBannerConcept } from '../../providers/ai/conceptFactory.js'
 import AgentPanel from './AgentPanel.vue'
 import BrandKitBoard from './BrandKitBoard.vue'
@@ -276,14 +276,28 @@ function useSuggestion(sg) {
   composer.value?.focus()
 }
 const lookLabel = computed(() => logoLab.state.looks.find((l) => l.id === props.project.logoLab?.lookId)?.label || '')
+// Attachments on the canvas prompt box: a logo swaps the project's logo;
+// reference images go to Higgsfield with this prompt's banners.
+const attachLogo = ref(null)
+const attachRefs = ref([])
 async function send(t = text.value) {
-  if (!t.trim() || building.value) return
+  const logo = attachLogo.value
+  const references = attachRefs.value
+  if ((!t.trim() && !logo) || building.value) return
   text.value = ''
-  const route = routeFor(t)
+  attachLogo.value = null
+  attachRefs.value = []
+  if (logo) {
+    swapLogo(props.project, logo)
+    nextTick(() => zoomToBoard('cleanup'))
+    if (!t.trim()) return
+  }
+  // Reference images only make sense for banners.
+  const route = references.length ? (isLogoOnly.value ? 'make' : 'banners') : routeFor(t)
   if (route === 'logo') { await logoReply(props.project, t, { pick: logoLab.pick, methods: logoLab.state.methods, tune: logoLab.tune, current: logoLab.current }); return }
-  if (route === 'make') { await makeBanners(props.project, { text: t, modelId: model.value }, { generate: props.generate }); return }
+  if (route === 'make') { await makeBanners(props.project, { text: t, modelId: model.value, references }, { generate: props.generate }); return }
   // A new set: zoom to its frame while it builds, and again when it's done.
-  const set = await revise(props.project, { text: t, modelId: model.value }, { generate: props.generate, onSet: (s) => nextTick(() => zoomToBoard(`set:${s.id}`, { max: 1 })) })
+  const set = await revise(props.project, { text: t, modelId: model.value, references }, { generate: props.generate, onSet: (s) => nextTick(() => zoomToBoard(`set:${s.id}`, { max: 1 })) })
   nextTick(() => zoomToBoard(`set:${set.id}`))
 }
 const history = computed(() => [...(props.project.sets || [])].reverse())
@@ -397,7 +411,7 @@ function openPreview(withExport, board = null) {
       <div :ref="(el) => (chips.el.value = el)" class="ws__suggest hs" :class="chips.classes.value" @scroll="chips.onScroll" @wheel="chips.onWheel">
         <button v-for="(sg, i) in SUGGEST" :key="sg.label" type="button" class="ws__chip" :class="{ 'is-on': text === sg.prompt }" :disabled="building" @click="useSuggestion(sg)">{{ sg.label }} <span>{{ i + 1 }}</span></button>
       </div>
-      <PromptComposer ref="composer" v-model:text="text" v-model:model="model" compact :show-mode="false" :droppable="false" :busy="building" placeholder="What would you like to change or create?" @submit="send()" />
+      <PromptComposer ref="composer" v-model:text="text" v-model:model="model" v-model:logo="attachLogo" v-model:references="attachRefs" compact :show-mode="false" :busy="building" placeholder="What would you like to change or create?" @submit="send()" />
     </div>
 
     <div class="ws__zoom">

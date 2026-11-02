@@ -254,6 +254,19 @@ export function createProject({ prompt = '', mode = 'banner', modelId = 'auto', 
 }
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
+const refsLabel = (refs = []) => (refs.length ? [`${refs.length} reference${refs.length > 1 ? 's' : ''}`] : [])
+
+/**
+ * Swap the project's logo (dropped or uploaded on the canvas prompt box): the
+ * clean-up, looks and brand colours start over from the new file.
+ */
+export function swapLogo(project, logo) {
+  project.logo = { src: logo.src, onDarkSrc: '', name: (logo.name && nameFromFile(logo.name)) || project.logo?.name || project.name }
+  project.logoLab = newLogoLab(logo.src)
+  project.colorsFromLogo = true
+  project.messages.push({ role: 'user', text: 'Use this logo instead.', attachments: [`logo: ${project.logo.name}`] })
+  project.messages.push({ role: 'agent', text: `Swapped in the new logo (${project.logo.name}). I’m cleaning it up and redoing the looks and brand colours from it.` })
+}
 
 /** Walk the build steps, then fill in the banners and the agent's summary. */
 // ── Real generation (Higgsfield) ──────────────────────────────────────────
@@ -268,10 +281,11 @@ const brandPalette = (project) => [project.colors?.primary, project.colors?.seco
  * Fill `set` with real Higgsfield banners, walking `steps` (first = writing the
  * prompt, second = generating). Returns the banners made (may be empty).
  */
-async function fillSetLive(project, set, text, generate, steps) {
+async function fillSetLive(project, set, text, generate, steps, references = []) {
   steps[0].status = 'active'
+  set.referenceCount = references.length
   const run = generate({
-    text, previousBrief: lastBrief(project, set), palette: brandPalette(project),
+    text, previousBrief: lastBrief(project, set), palette: brandPalette(project), references,
     onProgress: (n, total) => { steps[1].label = `Generating ${total} banners with Higgsfield Flare (${n} of ${total} done)` },
   })
   steps[0].status = 'done'
@@ -373,9 +387,9 @@ export function applyLogoLook(project, { method, look, recommended = false }) {
 }
 
 /** Logo project → logo + banners: generates banners that use the chosen look. */
-export async function makeBanners(project, { text, modelId = 'auto' }, { stepMs = 550, generate } = {}) {
-  const model = resolveModel(modelId, { mode: 'banner', prompt: text, references: 0, hasLogo: true })
-  project.messages.push({ role: 'user', text })
+export async function makeBanners(project, { text, modelId = 'auto', references = [] }, { stepMs = 550, generate } = {}) {
+  const model = resolveModel(modelId, { mode: 'banner', prompt: text, references: references.length, hasLogo: true })
+  project.messages.push({ role: 'user', text, attachments: refsLabel(references) })
   // Becomes a logo + banners project right away, so the banner and page frames
   // appear (as placeholders) under the logo work while they're made.
   project.kind = 'kit'
@@ -383,7 +397,7 @@ export async function makeBanners(project, { text, modelId = 'auto' }, { stepMs 
   const set = addSet(project, { prompt: text, modelId: model.id, status: 'building' })
   if (generate) {
     project.steps = liveSteps()
-    const made = await fillSetLive(project, set, text, generate, project.steps)
+    const made = await fillSetLive(project, set, text, generate, project.steps, references)
     project.messages.push(made.length
       ? { role: 'agent', text: `I made ${made.length} banners with Higgsfield Flare for your logo, and mocked up your Presto pages. The exact prompt I sent is on the set.` }
       : { role: 'agent', text: `Higgsfield couldn’t make these banners. ${set.error}` })
@@ -465,15 +479,15 @@ export async function logoReply(project, text, { pick, methods = [], tune, curre
  * stay on the canvas as the project's history.
  * @returns the new set
  */
-export async function revise(project, { text, modelId = 'auto' }, { stepMs = 500, onSet, generate } = {}) {
+export async function revise(project, { text, modelId = 'auto', references = [] }, { stepMs = 500, onSet, generate } = {}) {
   const model = resolveModel(modelId, { mode: 'banner', prompt: text, references: 0, hasLogo: !!project.logo })
-  project.messages.push({ role: 'user', text })
+  project.messages.push({ role: 'user', text, attachments: refsLabel(references) })
   project.status = 'building'
   const set = addSet(project, { prompt: text, modelId: generate ? 'flare' : model.id, status: 'building' })
   onSet?.(set)
   if (generate) {
     project.steps = liveSteps()
-    const made = await fillSetLive(project, set, text, generate, project.steps)
+    const made = await fillSetLive(project, set, text, generate, project.steps, references)
     project.messages.push(made.length
       ? { role: 'agent', text: `Set ${set.n} is ready: ${made.length} new banners from Higgsfield Flare. The exact prompt I sent is on the set${set.error ? ` (some requests failed: ${set.error})` : ''}.` }
       : { role: 'agent', text: `Set ${set.n} failed: ${set.error}` })

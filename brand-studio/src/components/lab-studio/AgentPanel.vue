@@ -25,7 +25,10 @@ const promptOpen = ref(false)
 
       <div class="ap__body">
         <template v-for="(m, i) in project.messages.slice(1)" :key="i">
-          <p v-if="m.role === 'user'" class="ap__user">{{ m.text }}</p>
+          <p v-if="m.role === 'user'" class="ap__user">
+            {{ m.text }}
+            <span v-if="m.attachments?.length" class="ap__att"><q-icon name="attach_file" size="13px" />{{ m.attachments.join(' · ') }}</span>
+          </p>
           <div v-else class="ap__msg" :class="{ 'is-muted': m.muted }">
             <p>{{ m.text }}</p>
             <ul v-if="m.items"><li v-for="it in m.items" :key="it">{{ it }}</li></ul>
@@ -77,6 +80,7 @@ const promptOpen = ref(false)
 .ap__prompt span { flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
 .ap__prompt span.is-open { -webkit-line-clamp: unset; }
 .ap__body { display: grid; gap: 10px; font-size: 0.8125rem; line-height: 1.5; color: var(--bs-ink); }
+.ap__att { display: flex; align-items: center; gap: 3px; margin-top: 3px; font-size: 0.75rem; opacity: 0.75; }
 .ap__user { margin: 0; justify-self: end; max-width: 90%; padding: 7px 11px; border-radius: 12px 12px 4px 12px; background: var(--bs-ink); color: #fff; }
 .ap__msg p { margin: 0; }
 .ap__msg ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 3px; }
