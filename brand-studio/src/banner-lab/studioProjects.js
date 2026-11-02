@@ -213,7 +213,11 @@ export const buildSteps = (mode, { hasLogo, references, model }) => (mode === 'l
  * Start a project from the composer. Returns it with status 'building'; call
  * runBuild() to walk the steps.
  */
-export function createProject({ prompt = '', mode = 'banner', modelId = 'auto', logo = null, references = [] }) {
+/**
+ * `brand` (optional) is a website lookup (server/brand.js): its name, colours
+ * and fonts win over what the logo would suggest.
+ */
+export function createProject({ prompt = '', mode = 'banner', modelId = 'auto', logo = null, references = [], brand = null }) {
   const key = matchKey(prompt)
   const p = sampleProject(key)
   const model = resolveModel(modelId, { mode, prompt, references: references.length, hasLogo: !!logo })
@@ -221,7 +225,7 @@ export function createProject({ prompt = '', mode = 'banner', modelId = 'auto', 
   const project = reactive({
     id: uid('lab'),
     key,
-    name: logo?.name ? nameFromFile(logo.name) : p.event.name,
+    name: brand?.name || (logo?.name ? nameFromFile(logo.name) : p.event.name),
     kind,
     createdAt: new Date(),
     shared: false,
@@ -229,9 +233,12 @@ export function createProject({ prompt = '', mode = 'banner', modelId = 'auto', 
     modelId: model.id,
     autoReason: modelId === 'auto' ? model.reason : '',
     logo: logo ? { src: logo.src, onDarkSrc: '', name: logo.name || p.event.name } : p.brandKit.logo ? { src: p.brandKit.logo.src, onDarkSrc: p.brandKit.logoOnDark?.src || '', name: p.event.name } : null,
-    colors: p.brandKit.colors,
-    typography: { heading: p.brandKit.typography?.heading, body: p.brandKit.typography?.body },
-    colorsFromLogo: !!logo, // take the brand colours from the uploaded logo once it's analysed
+    colors: brand?.colors ? { ...p.brandKit.colors, ...brand.colors } : p.brandKit.colors,
+    typography: brand?.typography || { heading: p.brandKit.typography?.heading, body: p.brandKit.typography?.body },
+    // Take the brand colours from the uploaded logo once it's analysed, unless
+    // the website already told us its colours.
+    colorsFromLogo: !!logo && !brand?.colors,
+    site: brand?.site || '',
     banners: [],
     sets: [],
     selectedBannerId: null,

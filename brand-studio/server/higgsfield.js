@@ -17,6 +17,7 @@
 import crypto from 'node:crypto'
 import { Readable } from 'node:stream'
 import { send, readJson } from './http.js'
+import { lookupBrand } from './brand.js'
 
 export const API = 'https://api.higgsfield.ai'
 
@@ -90,8 +91,9 @@ export function imageUrlAllowed(u, pasted) {
  * @param {((body:object) => Promise<object>)|null} [o.save]  `_save` implementation; null → 404
  * @param {object} [o.health]     overrides merged into the `_health` answer
  * @param {boolean} [o.streamImages] pipe `_image` bytes instead of buffering (Vercel's response cap)
+ * @param {string} [o.firecrawlKey] FIRECRAWL_API_KEY, for `_brand` (a website's logo + colours)
  */
-export async function handleHiggsfield(req, res, { route, query, creds, save = null, health = {}, streamImages = false }) {
+export async function handleHiggsfield(req, res, { route, query, creds, save = null, health = {}, streamImages = false, firecrawlKey = '' }) {
   try {
     if (route === '/_health' && req.method === 'GET') {
       return send(res, 200, { proxy: true, configured: !!creds, keyId: creds ? mask(creds.id) : null, ...health })
@@ -126,6 +128,13 @@ export async function handleHiggsfield(req, res, { route, query, creds, save = n
       res.setHeader('Content-Type', type)
       res.setHeader('Cache-Control', 'private, max-age=86400')
       return res.end(buf)
+    }
+
+    // A website's logo, colours and fonts (Firecrawl). Not a Higgsfield call,
+    // so it doesn't need the Higgsfield key.
+    if (route === '/_brand' && req.method === 'POST') {
+      const { url } = await readJson(req)
+      return send(res, 200, await lookupBrand(url, { apiKey: firecrawlKey }))
     }
 
     if (route === '/_save' && !save) return send(res, 404, { detail: 'Saving into the repo is only available on the local dev server.' })
@@ -173,6 +182,6 @@ export async function handleHiggsfield(req, res, { route, query, creds, save = n
 
     return send(res, 404, { detail: 'Unknown Higgsfield proxy route' })
   } catch (e) {
-    return send(res, e.status || 500, { detail: e.message })
+    return send(res, e.status || 500, { detail: e.message, ...(e.code ? { code: e.code } : {}) })
   }
 }

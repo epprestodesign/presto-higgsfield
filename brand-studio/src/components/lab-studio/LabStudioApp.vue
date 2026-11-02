@@ -11,6 +11,8 @@ import StudioHome from './StudioHome.vue'
 import StudioWorkspace from './StudioWorkspace.vue'
 import AuthScreen from '../auth/AuthScreen.vue'
 import { generateBanners } from '../../banner-lab/studioGenerate.js'
+import { hf } from '../../providers/higgsfield/client.js'
+import { siteFromText, siteLabel } from '../../banner-lab/siteBrand.js'
 import AccountMenu from '../auth/AccountMenu.vue'
 import * as auth from '../../auth/index.js'
 
@@ -71,6 +73,35 @@ function create(input) {
   projectId.value = p.id
   runBuild(p, { stepMs: props.stepMs, generate: generator })
 }
+// From the Home prompt. Live (the real app): a website in the prompt and no
+// logo attached → fetch the site's logo, colours and fonts first; Logo mode
+// with neither asks for one rather than falling back to a sample logo.
+const lookingUp = ref(false)
+const homeNotice = ref('')
+async function createFromHome(input) {
+  homeNotice.value = ''
+  if (props.liveGeneration && !input.logo) {
+    const site = siteFromText(input.prompt)
+    if (site) {
+      lookingUp.value = true
+      homeNotice.value = `Getting the logo from ${siteLabel(site)}…`
+      try {
+        const brand = await hf.brand(site)
+        input = { ...input, logo: { src: brand.logo.src, name: brand.name }, brand }
+        homeNotice.value = ''
+      } catch (e) {
+        homeNotice.value = e?.message || `Couldn’t get a logo from ${siteLabel(site)}. Drop the logo in instead.`
+        return
+      } finally {
+        lookingUp.value = false
+      }
+    } else if (input.mode === 'logo') {
+      homeNotice.value = 'Drop in your logo, or type its website (like espn.com) and I’ll get it.'
+      return
+    }
+  }
+  create(input)
+}
 if (props.buildDemo) create({ modelId: 'auto', references: [], logo: null, ...props.buildDemo })
 const count = computed(() => studio.projects.length)
 </script>
@@ -91,7 +122,7 @@ const count = computed(() => studio.projects.length)
       </header>
       <StudioHome
         class="lsa__home" :model-menu-open="modelMenuOpen" :initial-text="homeText" :initial-mode="homeMode"
-        :initial-logo="homeLogo" :initial-references="homeReferences" @open="(id) => (projectId = id)" @create="create"
+        :initial-logo="homeLogo" :initial-references="homeReferences" :busy="lookingUp" :notice="homeNotice" @open="(id) => (projectId = id)" @create="createFromHome"
       />
     </template>
     <StudioWorkspace v-else :key="project.id" :project="project" :preview-open="previewOpen" :export-open="exportOpen" :preview-page="previewPage" :preview-device="previewDevice" :tutorial-open="tutorialOpen" :generate="generator" :user="user" @home="projectId = ''" @sign-out="signOut" />

@@ -65,6 +65,8 @@ export const hf = {
   status: (requestId) => call('GET', `/requests/${requestId}/status`),
   cancel: (requestId) => call('POST', `/requests/${requestId}/cancel`, {}),
   save: (url, name, meta) => call('POST', '/_save', { url, name, meta }),
+  /** A website's logo (as a data: URL), colours and fonts, via Firecrawl on the server. */
+  brand: (url) => call('POST', '/_brand', { url }),
 
   /** Upload a data: URL (logo / photo) and get a public URL Higgsfield can read. */
   async uploadDataUrl(dataUrl) {

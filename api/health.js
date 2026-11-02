@@ -14,6 +14,7 @@ export default async function handler(req, res) {
     higgsfield: !!credentialsFrom(env),
     supabase: !!(env.SUPABASE_URL && env.SUPABASE_SECRET_KEY),
     clerkWebhook: !!env.CLERK_WEBHOOK_SIGNING_SECRET,
+    firecrawl: !!env.FIRECRAWL_API_KEY,
     // Same Clerk instance on both sides? (null = couldn't check)
     clerkKeysMatch: await clerkKeysMatch(env),
   })
