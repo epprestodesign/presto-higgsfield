@@ -551,3 +551,22 @@ describe('rename and delete', () => {
     expect(removeProject('nope')).toBeNull()
   })
 })
+
+describe('AI cut-out in chat', () => {
+  it('"use AI to remove the background" runs the cut-out', async () => {
+    const { logoReply } = await import('../banner-lab/studioProjects.js')
+    let ran = 0
+    const project = { messages: [] }
+    await logoReply(project, 'Can you use AI to remove the background?', { pick: () => true, methods: [{ id: 'darkkey' }], ai: async () => (ran++, true) })
+    expect(ran).toBe(1)
+    expect(project.messages.at(-1).text).toMatch(/AI cut-out is the selected clean-up/)
+  })
+  it('a plain "remove the background" still uses the free clean-ups', async () => {
+    const { logoReply } = await import('../banner-lab/studioProjects.js')
+    let ran = 0
+    const picked = []
+    await logoReply({ messages: [] }, 'remove the black background', { pick: (w) => (picked.push(w), true), methods: [{ id: 'darkkey' }], ai: async () => (ran++, true) })
+    expect(ran).toBe(0)
+    expect(picked).toEqual([{ method: 'darkkey' }])
+  })
+})

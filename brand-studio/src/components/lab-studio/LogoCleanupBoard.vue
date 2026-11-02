@@ -9,7 +9,10 @@ const props = defineProps({
   lab: { type: Object, required: true }, // useLogoLab().state
   selected: { type: String, default: '' },
 })
-const emit = defineEmits(['select', 'tune'])
+const emit = defineEmits(['select', 'tune', 'ai'])
+// The AI cut-out costs money per image, so it's offered, not run: on photo /
+// gradient backgrounds, or any logo that isn't already transparent.
+const offerAi = computed(() => props.lab.background && props.lab.background.kind !== 'transparent' && !props.lab.methods.some((m) => m.id === 'ai'))
 
 const bgNote = computed(() => {
   const b = props.lab.background
@@ -57,6 +60,17 @@ const bgNote = computed(() => {
         </div>
         </div>
         <div v-if="lab.vectorLoading" class="lc__card lc__card--wait"><q-spinner size="18px" /> Tracing an SVG…</div>
+        <div v-if="offerAi" class="lc__item lc__ai" @pointerdown.stop @dblclick.stop>
+          <div class="lc__ai-body">
+            <p class="lc__title"><strong>AI cut-out</strong><span class="lc__tag lc__tag--rec"><q-icon name="auto_awesome" size="12px" /> Photoroom</span></p>
+            <p class="lc__hint">Lets an AI find the logo and cut it out. Best when the logo sits on a photo, smoke or a gradient. About $0.02 per run.</p>
+            <p v-if="lab.aiError" class="lc__ai-error" role="alert">{{ lab.aiError }}</p>
+            <q-btn
+              unelevated no-caps dense class="lc__ai-btn" :loading="lab.ai === 'running'" icon="auto_fix_high"
+              :label="lab.aiError ? 'Try again' : 'Run AI cut-out'" @click="emit('ai')"
+            />
+          </div>
+        </div>
       </div>
     </template>
   </div>
@@ -69,6 +83,10 @@ const bgNote = computed(() => {
 .lc__before figcaption { display: grid; gap: 2px; font-size: 0.8125rem; color: var(--bs-ink-soft); }
 .lc__before figcaption strong { color: var(--bs-ink); font-size: 0.875rem; }
 .lc__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.lc__ai { align-content: center; border-style: dashed; }
+.lc__ai-body { display: grid; gap: 8px; padding: 14px; }
+.lc__ai-btn { justify-self: start; background: var(--bs-ink); color: #fff; padding: 4px 12px; border-radius: 999px; }
+.lc__ai-error { margin: 0; font-size: 0.75rem; color: var(--bs-danger, #c62828); }
 .lc__item { display: grid; border-radius: 14px; border: 1px solid var(--bs-line); background: #fff; overflow: hidden; transition: border-color 0.15s, background-color 0.15s; }
 .lc__item:hover { border-color: var(--bs-ink-faint); }
 .lc__item.is-on { border-color: var(--bs-accent); background: var(--bs-accent-soft); }

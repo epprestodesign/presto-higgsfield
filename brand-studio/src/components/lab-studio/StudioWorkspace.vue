@@ -294,7 +294,7 @@ async function send(t = text.value) {
   }
   // Reference images only make sense for banners.
   const route = references.length ? (isLogoOnly.value ? 'make' : 'banners') : routeFor(t)
-  if (route === 'logo') { await logoReply(props.project, t, { pick: logoLab.pick, methods: logoLab.state.methods, tune: logoLab.tune, current: logoLab.current }); return }
+  if (route === 'logo') { await logoReply(props.project, t, { pick: logoLab.pick, methods: logoLab.state.methods, tune: logoLab.tune, current: logoLab.current, ai: logoLab.aiCutout }); return }
   if (route === 'make') { await makeBanners(props.project, { text: t, modelId: model.value, references }, { generate: props.generate }); return }
   // A new set: zoom to its frame while it builds, and again when it's done.
   const set = await revise(props.project, { text: t, modelId: model.value, references }, { generate: props.generate, onSet: (s) => nextTick(() => zoomToBoard(`set:${s.id}`, { max: 1 })) })
@@ -376,7 +376,7 @@ function openPreview(withExport, board = null) {
             <!-- Live page mockups (some are iframes) would swallow clicks; the shield lets the canvas select and zoom them -->
             <div v-if="isMockup(b) && !building" class="ws__shield" />
             <div v-if="pending(b)" class="ws__skel" :class="`ws__skel--${b.id}`"><span /><span /><span /></div>
-            <LogoCleanupBoard v-else-if="b.id === 'cleanup'" :lab="logoLab.state" :selected="project.logoLab?.methodId || ''" @select="logoLab.chooseMethod" @tune="logoLab.tune" />
+            <LogoCleanupBoard v-else-if="b.id === 'cleanup'" :lab="logoLab.state" :selected="project.logoLab?.methodId || ''" @select="logoLab.chooseMethod" @tune="logoLab.tune" @ai="logoLab.aiCutout" />
             <LogoLooksBoard v-else-if="b.id === 'looks'" :lab="logoLab.state" :selected="project.logoLab?.lookId || ''" @select="logoLab.chooseLook" />
             <BrandKitBoard v-else-if="b.id === 'kit'" :project="project" />
             <BannerBoard v-else-if="b.set" :project="project" :set="b.set" @select="(id) => (project.selectedBannerId = id)" />
