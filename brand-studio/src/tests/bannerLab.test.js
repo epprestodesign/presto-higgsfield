@@ -476,3 +476,23 @@ describe('real generation prompt', () => {
     vi.doUnmock('../providers/higgsfield/client.js')
   })
 })
+
+describe('banner requests while the logo is selected', () => {
+  it('knows a banner request from a logo edit', async () => {
+    const { wantsBanners, BANNERS_FOR_LOGO } = await import('../banner-lab/studioProjects.js')
+    expect(wantsBanners(BANNERS_FOR_LOGO({ name: 'ESPN' }, 'Drop shadow'))).toBe(true)
+    expect(wantsBanners('Scene: Presto banner backgrounds for the ESPN logo - add a basketball court')).toBe(true)
+    expect(wantsBanners('I want banners with a church dark background')).toBe(true)
+    expect(wantsBanners('Use the white version of the logo on dark banners.')).toBe(false)
+    expect(wantsBanners('Put the logo on a white box so it keeps its colours on dark banners.')).toBe(false)
+    expect(wantsBanners('Isolate the logo from its background')).toBe(false)
+    expect(wantsBanners('make the logo white')).toBe(false)
+  })
+  it('"drop shadow" is not a request to drop the background', async () => {
+    const { logoReply } = await import('../banner-lab/studioProjects.js')
+    const project = { messages: [] }
+    const picked = []
+    await logoReply(project, 'Use the drop shadow look on a calm, dark center', { pick: (w) => (picked.push(w), true), methods: [{ id: 'darkkey' }, { id: 'asis' }] })
+    expect(picked.some((p) => p.method)).toBe(false)
+  })
+})
