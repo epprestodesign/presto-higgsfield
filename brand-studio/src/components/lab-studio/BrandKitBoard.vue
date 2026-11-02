@@ -1,16 +1,30 @@
 <script setup>
-// Canvas board · Brand kit: the extracted logo on light and dark, the colours,
-// the type, and the exact size the logo gets in each Presto placement.
+// Canvas board · Brand kit: the extracted logo on light and dark, the colours
+// and type (both editable; they flow into the banners, pages and export), and
+// the exact size the logo gets in each Presto placement.
 import { computed, ref, watch } from 'vue'
 import { PLACEMENTS, fitInBox, SYSTEM_DARK } from '../../banner-lab/standards.js'
 import { sampleProject } from '../../data/sampleEvents.js'
-import { getFont } from '../../theme/fonts.js'
+import { FONT_OPTIONS, getFont } from '../../theme/fonts.js'
+import { paletteToColors } from '../../banner-lab/studioProjects.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
 
 const kit = computed(() => sampleProject(props.project.key).brandKit)
-const colors = computed(() => Object.entries(props.project.colors || {}).filter(([k]) => k !== 'surface'))
-const fonts = computed(() => [['Headline', kit.value.typography?.heading], ['Body', kit.value.typography?.body]].map(([role, id]) => ({ role, family: getFont(id).family, label: getFont(id).label || id })))
+const ROLES = ['primary', 'secondary', 'accent', 'ink']
+const colors = computed(() => ROLES.map((role) => [role, props.project.colors?.[role] || '#000000']))
+const HEX = /^#?[0-9a-f]{6}$/i
+function setColor(role, value) {
+  const v = String(value).trim()
+  if (!HEX.test(v)) return
+  props.project.colors = { ...props.project.colors, [role]: (v.startsWith('#') ? v : `#${v}`).toUpperCase() }
+}
+const canUseLogoColors = computed(() => props.project.logoPalette?.length)
+function useLogoColors() { props.project.colors = paletteToColors(props.project.logoPalette, props.project.colors) }
+
+const typeOf = (role) => props.project.typography?.[role] || kit.value.typography?.[role]
+const fonts = computed(() => [['heading', 'Headline'], ['body', 'Body']].map(([role, label]) => ({ role, label, id: typeOf(role), family: getFont(typeOf(role)).family })))
+function setFont(role, id) { props.project.typography = { ...(props.project.typography || {}), [role]: id } }
 
 const aspect = ref(1)
 watch(() => props.project.logo?.src, (src) => {
@@ -34,21 +48,30 @@ const sizes = computed(() => PLACEMENTS.map((p) => ({ ...p, size: p.square ? { w
       <span class="bk__tag"><q-icon name="crop_square" size="14px" /> 200 × 200</span>
     </div>
 
-    <p class="bk__h">Colours</p>
-    <div class="bk__colors">
+    <div class="bk__hrow">
+      <p class="bk__h">Colours</p>
+      <button v-if="canUseLogoColors" type="button" class="bk__link" @pointerdown.stop @dblclick.stop @click="useLogoColors">Use logo colours</button>
+    </div>
+    <div class="bk__colors" @pointerdown.stop @dblclick.stop>
       <div v-for="[name, hex] in colors" :key="name" class="bk__color">
-        <span :style="{ background: hex }" />
+        <label class="bk__swatch" :style="{ background: hex }" :title="`Change the ${name} colour`">
+          <input type="color" :value="hex" :aria-label="`${name} colour`" @input="setColor(name, $event.target.value)" />
+          <q-icon name="edit" size="14px" class="bk__swatch-edit" />
+        </label>
         <strong>{{ name }}</strong>
-        <code>{{ hex }}</code>
+        <input class="bk__hex" :value="hex" maxlength="7" spellcheck="false" :aria-label="`${name} hex`" @change="setColor(name, $event.target.value)" @keydown.enter="$event.target.blur()" />
       </div>
     </div>
 
     <p class="bk__h">Type</p>
-    <div class="bk__type">
-      <div v-for="f in fonts" :key="f.role">
+    <div class="bk__type" @pointerdown.stop @dblclick.stop>
+      <label v-for="f in fonts" :key="f.role" class="bk__font">
         <span class="bk__aa" :style="{ fontFamily: f.family }">Aa</span>
-        <small>{{ f.role }} · {{ f.label }}</small>
-      </div>
+        <small>{{ f.label }}</small>
+        <select :value="f.id" :aria-label="`${f.label} font`" :style="{ fontFamily: f.family }" @change="setFont(f.role, $event.target.value)">
+          <option v-for="o in FONT_OPTIONS" :key="o.id" :value="o.id">{{ o.label }}</option>
+        </select>
+      </label>
     </div>
 
     <p class="bk__h">Logo sizes in Presto</p>
@@ -71,11 +94,20 @@ const sizes = computed(() => PLACEMENTS.map((p) => ({ ...p, size: p.square ? { w
 .bk__h { margin: 6px 0 0; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--bs-ink-faint); }
 .bk__colors { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .bk__color { display: grid; gap: 4px; }
-.bk__color span { height: 54px; border-radius: 10px; border: 1px solid rgb(0 0 0 / 0.06); }
+.bk__hrow { display: flex; align-items: baseline; justify-content: space-between; }
+.bk__link { border: 0; background: none; padding: 0; font: 600 0.75rem var(--bs-font); color: var(--bs-accent); cursor: pointer; }
+.bk__swatch { position: relative; display: block; height: 54px; border-radius: 10px; border: 1px solid rgb(0 0 0 / 0.06); cursor: pointer; overflow: hidden; }
+.bk__swatch input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.bk__swatch-edit { position: absolute; right: 6px; bottom: 6px; padding: 3px; border-radius: 6px; background: rgb(255 255 255 / 0.85); color: var(--bs-ink); opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+.bk__swatch:hover .bk__swatch-edit, .bk__swatch:focus-within .bk__swatch-edit { opacity: 1; }
+.bk__swatch:focus-within { outline: 2px solid var(--bs-accent); outline-offset: 2px; }
+.bk__hex { width: 100%; border: 1px solid transparent; border-radius: 6px; padding: 1px 4px; margin-left: -4px; background: transparent; font: 500 0.6875rem ui-monospace, monospace; color: var(--bs-ink-soft); text-transform: uppercase; }
+.bk__hex:hover { border-color: var(--bs-line); }
+.bk__hex:focus { outline: none; border-color: var(--bs-ink); background: #fff; color: var(--bs-ink); }
 .bk__color strong { font-size: 0.75rem; text-transform: capitalize; color: var(--bs-ink); }
-.bk__color code { font-size: 0.6875rem; color: var(--bs-ink-soft); }
 .bk__type { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.bk__type > div { padding: 10px 12px; border-radius: 10px; background: var(--bs-surface-2); }
+.bk__font { display: grid; gap: 4px; padding: 10px 12px; border-radius: 10px; background: var(--bs-surface-2); cursor: pointer; }
+.bk__font select { margin-top: 2px; width: 100%; padding: 5px 8px; border: 1px solid var(--bs-line); border-radius: 8px; background: #fff; font-size: 0.8125rem; color: var(--bs-ink); cursor: pointer; }
 .bk__aa { display: block; font-size: 2.75rem; line-height: 1; color: var(--bs-ink); }
 .bk__type small { font-size: 0.75rem; color: var(--bs-ink-soft); }
 .bk__sizes { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }

@@ -4,7 +4,7 @@
 // or switching back to a method is instant.
 import { markRaw, reactive, watch } from 'vue'
 import { cleanupMethods, vectorMethod, darkLooks } from '../../banner-lab/logoLooks.js'
-import { applyLogoLook } from '../../banner-lab/studioProjects.js'
+import { applyLogoLook, paletteToColors } from '../../banner-lab/studioProjects.js'
 
 const cache = new Map() // `${id}|${source}` → { methods: Promise, looks: Map(methodId → Promise) }
 
@@ -70,6 +70,12 @@ export function useLogoLab(getProject, getPhoto) {
     state.looks = r.looks.map(markRaw)
     state.recommendedLook = r.recommended
     state.looksLoading = false
+    // Brand colours from the logo itself (uploaded logos, once).
+    project.logoPalette = r.palette
+    if (project.colorsFromLogo && r.palette?.length) {
+      project.colors = paletteToColors(r.palette, project.colors)
+      project.colorsFromLogo = false
+    }
     const lab = project.logoLab
     const lookId = lab.lookId && state.looks.some((l) => l.id === lab.lookId) ? lab.lookId : r.recommended
     // Only a fresh logo project announces its pick; reopening a project, or

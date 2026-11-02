@@ -211,6 +211,92 @@ export function keyOut(img, color, { tolerance = 36, feather = 28 } = {}) {
 }
 
 /**
+ * Lift a logo off a busy dark (or light) background: a photo, gradient or
+ * smoke rather than one flat colour. Each pixel is scored by how much it
+ * stands apart from that kind of background (brightness for a dark one,
+ * darkness for a light one, and colourfulness either way), and pixels that
+ * score like the background become transparent. The cut-off is learned from
+ * the image's own border, so it adapts to how bright the background is.
+ * @returns {{ img, kept }} kept = share of pixels left visible
+ */
+export function lumaKey(img, { dark = true, softness = 0.12, margin = 0.03 } = {}) {
+  const { width: w, height: h, data } = img
+  const score = (i) => {
+    const r = data[i], g = data[i + 1], b = data[i + 2]
+    const l = luminance(r, g, b)
+    const chroma = (Math.max(r, g, b) - Math.min(r, g, b)) / 255
+    return Math.max(dark ? l : 1 - l, chroma * 0.75)
+  }
+  const border = borderPixels(w, h).filter((p) => data[p * 4 + 3] >= 16).map((p) => score(p * 4)).sort((a, b) => a - b)
+  const low = (border.length ? border[Math.floor(border.length * 0.95)] : 0.1) + margin
+  const high = low + softness
+  const out = cloneImage(img)
+  const bg = dark ? 0 : 255
+  let kept = 0
+  for (let i = 0; i < out.data.length; i += 4) {
+    if (!out.data[i + 3]) continue
+    const a = clamp((score(i) - low) / (high - low), 0, 1)
+    if (a <= 0.02) { out.data[i + 3] = 0; continue }
+    if (a < 1) for (let c = 0; c < 3; c++) out.data[i + c] = clamp((out.data[i + c] - (1 - a) * bg) / a, 0, 255)
+    out.data[i + 3] = Math.round(out.data[i + 3] * a)
+    if (out.data[i + 3] >= 128) kept++
+  }
+  return { img: out, kept: kept / (w * h) }
+}
+
+/**
+ * After a background key, drop stray bits that aren't part of the logo:
+ * bright specks or lights left behind far from the main artwork. The logo is
+ * the biggest connected pieces (plus everything near them, so small text next
+ * to it stays); anything wholly outside that area, by `near` × the image's
+ * long edge, is cleared.
+ */
+export function dropStrays(img, { near = 0.08, mainShare = 0.2 } = {}) {
+  const { width: w, height: h, data } = img
+  const label = new Int32Array(w * h).fill(-1)
+  const comps = []
+  for (let start = 0; start < w * h; start++) {
+    if (label[start] !== -1 || data[start * 4 + 3] < 128) continue
+    const id = comps.length
+    const c = { area: 0, x0: w, y0: h, x1: 0, y1: 0, px: [] }
+    const stack = [start]
+    label[start] = id
+    while (stack.length) {
+      const p = stack.pop()
+      const x = p % w, y = (p - x) / w
+      c.area++; c.px.push(p)
+      if (x < c.x0) c.x0 = x; if (x > c.x1) c.x1 = x; if (y < c.y0) c.y0 = y; if (y > c.y1) c.y1 = y
+      for (const q of [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, y > 0 ? p - w : -1, y < h - 1 ? p + w : -1]) {
+        if (q >= 0 && label[q] === -1 && data[q * 4 + 3] >= 128) { label[q] = id; stack.push(q) }
+      }
+    }
+    comps.push(c)
+  }
+  if (comps.length < 2) return { img, dropped: 0 }
+  const biggest = Math.max(...comps.map((c) => c.area))
+  const main = comps.filter((c) => c.area >= biggest * mainShare)
+  const pad = near * Math.max(w, h)
+  const box = {
+    x0: Math.min(...main.map((c) => c.x0)) - pad, y0: Math.min(...main.map((c) => c.y0)) - pad,
+    x1: Math.max(...main.map((c) => c.x1)) + pad, y1: Math.max(...main.map((c) => c.y1)) + pad,
+  }
+  const out = cloneImage(img)
+  let dropped = 0
+  for (const c of comps) {
+    const outside = c.x1 < box.x0 || c.x0 > box.x1 || c.y1 < box.y0 || c.y0 > box.y1
+    if (!outside) continue
+    for (const p of c.px) out.data[p * 4 + 3] = 0
+    dropped += c.area
+  }
+  // Faint edge pixels (alpha < 128) outside the logo's area go too.
+  for (let p = 0; p < w * h; p++) {
+    const x = p % w, y = (p - x) / w
+    if (out.data[p * 4 + 3] && out.data[p * 4 + 3] < 128 && (x < box.x0 || x > box.x1 || y < box.y0 || y > box.y1)) out.data[p * 4 + 3] = 0
+  }
+  return { img: out, dropped }
+}
+
+/**
  * One-colour version for dark banners that keeps the logo's inner detail: the
  * dark parts become `hex` and light details (white lettering on a dark badge)
  * become cut-outs the banner shows through. A logo that's mostly light, or
