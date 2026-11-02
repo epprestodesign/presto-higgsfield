@@ -10,6 +10,8 @@
 import { send } from '../brand-studio/server/http.js'
 import { authenticate, clerkConfig } from '../brand-studio/server/auth.js'
 import { handleHiggsfield, credentialsFrom, mask } from '../brand-studio/server/higgsfield.js'
+import { adminDb } from '../brand-studio/server/db.js'
+import { usageLog } from '../brand-studio/server/usage.js'
 
 export function routeOf(req) {
   const url = new URL(req.url || '/', 'http://vercel.local')
@@ -42,5 +44,11 @@ export default async function handler(req, res) {
 
   const auth = await authenticate(req)
   if (!auth.ok) return send(res, auth.status, { detail: auth.detail, code: auth.code, reason: auth.reason })
-  return handleHiggsfield(req, res, { route, query, creds, save: null, streamImages: true, firecrawlKey: process.env.FIRECRAWL_API_KEY || '' })
+  const db = adminDb()
+  return handleHiggsfield(req, res, {
+    route, query, creds, save: null, streamImages: true,
+    firecrawlKey: process.env.FIRECRAWL_API_KEY || '',
+    usage: db ? usageLog(db) : null, // every paid request lands in generation_jobs
+    userId: auth.userId,
+  })
 }

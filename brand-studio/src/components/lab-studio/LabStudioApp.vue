@@ -78,7 +78,11 @@ const homeStatus = computed(() => homeNotice.value
 
 function create(input) {
   const p = createProject(input)
-  if (persistence.status === 'ready') p._persist = true
+  if (persistence.status === 'ready') {
+    // Saved from the start, so its generations are logged against it.
+    p._persist = true
+    p.dbId = crypto.randomUUID()
+  }
   projectId.value = p.id
   runBuild(p, { stepMs: props.stepMs, generate: generator })
 }
