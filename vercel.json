@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "VITE_DEFAULT_ROUTE=studio BANNER_LAB_BASE=/ pnpm build-banner-lab",
+  "outputDirectory": "brand-studio/banner-lab/dist",
+  "functions": {
+    "api/**/*.js": { "maxDuration": 60 }
+  },
+  "rewrites": [
+    { "source": "/hf-api/:path*", "destination": "/api/hf?__hfpath=:path*" },
+    { "source": "/((?!api/|hf-api/).*)", "destination": "/index.html" }
+  ]
+}

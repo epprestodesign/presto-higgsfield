@@ -9,9 +9,10 @@ const r = (p) => fileURLToPath(new URL(p, import.meta.url))
 // Presto Banner Lab — standalone prototype (logo optimizer + background
 // graphics). Same Quasar/Presto setup and Higgsfield dev proxy as the Brand
 // Studio prototype; relative base so it runs from /presto-higgsfield/banner-lab/.
+// Vercel serves it from the domain root (BANNER_LAB_BASE=/, see vercel.json).
 export default defineConfig({
   root: r('.'),
-  base: './',
+  base: process.env.BANNER_LAB_BASE || './',
   envDir: r('../..'),
   plugins: [
     vue({ template: { transformAssetUrls } }),
