@@ -5,7 +5,7 @@
 // zoom, and a prompt bar for follow-ups. ▶ Preview / Export open the Presto
 // preview modal.
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { revise, toPrestoProject, makeBanners, logoReply, BANNERS_FOR_LOGO } from '../../banner-lab/studioProjects.js'
+import { revise, toPrestoProject, makeBanners, logoReply, BANNERS_FOR_LOGO, wantsBanners } from '../../banner-lab/studioProjects.js'
 import { prestoBannerConcept } from '../../providers/ai/conceptFactory.js'
 import AgentPanel from './AgentPanel.vue'
 import BrandKitBoard from './BrandKitBoard.vue'
@@ -244,6 +244,8 @@ const editTarget = computed(() => (LOGO_FRAMES.includes(selectedBoard.value) ? '
 const LOGO_WORDS = /\b(logo|isolate|cut ?out|extract|remove (the )?(black |dark |light |white )?background|black background|transparent|knock ?out|trace|svg|vector|white version|outline|glow|drop shadow|white box|plate|badge|lettering|wordmark|gradient|add (it |them )?back|remove (more|less))\b/i
 const BANNER_WORDS = /\b(banners?|background|backdrop|hero|scene|photo|set)\b/i
 function routeFor(t) {
+  // Asking for banners always makes banners, whichever frame is selected.
+  if (wantsBanners(t)) return isLogoOnly.value ? 'make' : 'banners'
   if (editTarget.value === 'logo') return 'logo'
   if (editTarget.value === 'banners') return isLogoOnly.value ? 'make' : 'banners'
   if (hasLogoWork.value && LOGO_WORDS.test(t)) return 'logo'

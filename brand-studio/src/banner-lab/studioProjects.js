@@ -165,14 +165,14 @@ function newLogoLab(source) {
   return { source, methodId: '', lookId: '', recommendedLook: '', announced: false }
 }
 
-function summaryMessages(s, p, banners) {
+function summaryMessages(s, p, banners, name = p.event.name) {
   const model = getModel(s.model).name
   return [
     { role: 'user', text: s.prompt },
     {
       role: 'agent',
       text: s.kind === 'logo'
-        ? `I cleaned up the ${p.event.name} logo a few different ways and tried it in looks made for dark Presto banners, each scored for contrast.`
+        ? `I cleaned up the ${name} logo a few different ways and tried it in looks made for dark Presto banners, each scored for contrast.`
         : `I made ${banners.length} Presto banner backgrounds with ${model}, each cropped to 1440×400 and 1440×240 and checked against the banner standard.`,
       items: s.kind === 'logo'
         ? ['1 · Clean-up: edge fill, colour key, soft edges and an SVG trace', '2 · Looks on dark banners: white, outline, glow, white box and more', '3 · Brand kit: the chosen look, colours and every Presto size']
@@ -316,13 +316,23 @@ export async function runBuild(project, { stepMs = 650, generate } = {}) {
     project.banners = bannersFor(project.key, project.modelId, project.prompt, Date.now(), set.id).reverse()
     project.selectedBannerId = project.banners[project.banners.length - 1]?.id || null
   }
-  project.messages.push(summaryMessages({ kind: project.kind, model: project.modelId }, sampleProject(project.key), project.banners)[1])
+  project.messages.push(summaryMessages({ kind: project.kind, model: project.modelId }, sampleProject(project.key), project.banners, project.name)[1])
   if (project.autoReason) project.messages.push({ role: 'agent', text: `Auto picked ${getModel(project.modelId).name}: ${project.autoReason}`, muted: true })
   if (project.kind !== 'logo') project.messages.push({ role: 'agent', text: 'What do you think of this direction? Open ▶ Preview to see the real Presto pages and export.' })
   project.status = 'ready'
 }
 
 // ── Logo projects: choosing a look, then moving on to banners ─────────────
+
+/**
+ * Is this a request to make banners? Wins over the selected frame, so "make
+ * banners for this logo" or a pasted "Scene: …" brief goes to Higgsfield even
+ * while the logo is selected. Logo edits that only mention banners as the
+ * place the logo goes ("use the white version on dark banners") don't count.
+ */
+export const wantsBanners = (t = '') => /^\s*Scene:/m.test(t)
+  || /\bbanner (backgrounds?|images?|art|options|concepts|versions)\b/i.test(t)
+  || /\b(make|create|generate|build|design|give me|want|try|new)\b[^.?!]{0,60}\bbanners?\b/i.test(t)
 
 export const BANNERS_FOR_LOGO = (project, lookLabel) =>
   `Make Presto banner backgrounds for the ${project.name} logo${lookLabel ? ` (${lookLabel.toLowerCase()} look)` : ''}: a calm, dark center where the logo sits, the brand colours as soft accents toward the edges, and no text in the art.`
@@ -390,7 +400,7 @@ export async function makeBanners(project, { text, modelId = 'auto' }, { stepMs 
 }
 
 /** A follow-up on a logo project that isn't about banners: point at the looks. */
-const REMOVE_BG = /\b(remove|get rid of|take (out|away|off)|drop|lose|delete|isolate|cut ?out|extract|knock ?out|lift)\b.*\b(background|bg|black|dark|smoke|white|light|grey|gray)\b|\bisolate\b|\bcut ?out\b|\btransparent\b/
+const REMOVE_BG = /\b(remove|get rid of|take (out|away|off)|drop(?! shadow)|lose|delete|isolate|cut ?out|extract|knock ?out|lift)\b.*\b(background|bg|black|dark|smoke|white|light|grey|gray)\b|\bisolate\b|\bcut ?out\b|\btransparent\b/
 const KEEP_MORE = /\b(add|bring|put|keep)\b.*\bback\b|\brestore\b|\bkeep more\b|\bless aggressive\b|\btoo much\b|\b(missing|lost|gone|disappeared)\b|\bremove less\b/
 const REMOVE_MORE = /\bremove more\b|\bmore aggressive\b|\bcleaner\b|\bstill (some |a bit of |the )?(background|black|smoke|grey|gray|haze)\b|\b(rest|remaining) of the (background|black|smoke)\b/
 const ORIGINAL = /\b(original|as uploaded|keep the background|undo|put the background back|with the background)\b/
