@@ -4,7 +4,7 @@
 import { reactive } from 'vue'
 import { BRANDS, brandFor } from './mockData.js'
 import { route, go } from './router.js'
-import { newAds, seedAds } from './ads.js'
+import { newAds, seedAds, createAd, purposeDefaults, packageSizes, readySizes } from './ads.js'
 
 export const state = reactive({
   projects: [],
@@ -172,9 +172,20 @@ export const STAGES = [
   { id: 'logo', label: 'Logo', card: 'looks' },
   { id: 'banners', label: 'Banners', card: 'banners' },
   { id: 'pages', label: 'Pages', card: 'pages' },
+  { id: 'ads', label: 'Ads', card: 'ads' },
   { id: 'files', label: 'Files', card: 'export' },
 ]
-export const stagesFor = (p) => STAGES.filter((s) => p.mode !== 'banners' || s.id !== 'logo')
+// What each starting choice on Home makes (the composer's modes).
+export const MODES = [
+  { id: 'logo', label: 'Logo only', icon: 'spark', stages: ['brand', 'logo', 'files'], credits: 'About 1 credit for a logo clean-up.' },
+  { id: 'banners', label: 'Banners', icon: 'image', stages: ['brand', 'banners', 'pages', 'files'], credits: 'About 6 credits for a first set of 3 banners.' },
+  { id: 'ads', label: 'Ads', icon: 'megaphone', stages: ['brand', 'ads', 'pages', 'files'], credits: 'About 1 credit per ad size (4 sizes for the standard placements).' },
+  { id: 'full', label: 'Full suite', icon: 'layers', stages: ['brand', 'logo', 'banners', 'pages', 'ads', 'files'], credits: 'About 11 credits: logo clean-up, 3 banners and an ad package.' },
+]
+export const stagesFor = (p) => {
+  const m = MODES.find((x) => x.id === p.mode) || MODES[3]
+  return STAGES.filter((s) => m.stages.includes(s.id))
+}
 
 const STEP = {
   brand: (p) => ({
@@ -205,11 +216,27 @@ const STEP = {
     card: { type: 'pages' },
     chips: ['Edit the text', 'Try another banner'],
   }),
-  files: () => ({
-    steps: ['Sizing the logo for the Presto pages', 'Cropping banners to 1440×400 and 1440×240'],
-    text: 'All done. Four files, sized for Presto. You can keep changing things; I’ll remake the files when you ask.',
+  ads: (p) => {
+    // The standard approved placements, and a first ad pointing at the event's
+    // About page, made in every size they need. Sponsors are added in Advertisements.
+    if (!p.ads.offers.length) p.ads.offers.push('landing-billboard', 'browse-rail', 'details-bottom')
+    const ad = createAd(p, { purpose: 'about', how: 'package', ...purposeDefaults('about', p.brand) })
+    packageSizes(p.ads).forEach((z) => { ad.sizes[z] = 'ready' })
+    return {
+      steps: ['Picking the approved ad placements', `Designing an ad for your About page in ${packageSizes(p.ads).length} sizes · about ${packageSizes(p.ads).length} credits`],
+      text: 'I picked three approved placements and made an ad that links to your **About page** in every size they need. Add sponsor ads, or link your Sponsors page or FAQ, in Advertisements.',
+      card: { type: 'ads', adId: ad.id },
+      chips: ['Open Advertisements'],
+    }
+  },
+  files: (p) => ({
+    steps: [
+      p.mode === 'ads' ? 'Exporting each ad size' : 'Sizing the logo for the Presto pages',
+      ...(p.mode === 'logo' ? [] : p.mode === 'ads' ? ['Packing the ads by placement'] : ['Cropping banners to 1440×400 and 1440×240']),
+    ],
+    text: 'All done. Your files are sized for Presto. You can keep changing things; I’ll remake the files when you ask.',
     card: { type: 'export' },
-    chips: ['Try another banner', 'Edit the text'],
+    chips: p.mode === 'logo' ? ['Add a new logo'] : p.mode === 'ads' ? ['Open Advertisements'] : ['Try another banner', 'Edit the text'],
   }),
 }
 const GO = {
@@ -221,8 +248,14 @@ const GO = {
 
 /** The go-ahead button for wherever the project is waiting (or null when it's finished). */
 function nextFor(p) {
-  const st = stagesFor(p)[p.stage]
-  return st && GO[st.id] ? { label: GO[st.id], say: GO[st.id] } : null
+  const all = stagesFor(p)
+  const st = all[p.stage]
+  const next = all[p.stage + 1]
+  if (!st || !next) return null
+  const label = next.id === 'files'
+    ? { logo: 'Use this look, make the files', pages: 'Looks good, make the files', ads: 'Looks good, make the files' }[st.id] || 'Looks good, make the files'
+    : next.id === 'ads' ? 'Looks good, now the ads' : GO[st.id] || 'Looks good'
+  return { label, say: label }
 }
 
 async function runStage(p, i) {
@@ -270,6 +303,10 @@ export async function reply(p, text) {
     }
     p.stalled = false
     const turn = (opts) => agentTurn(p, opts).then((ok) => { if (ok) p.messages.at(-1).next = nextFor(p); return ok })
+    if (/\bads?\b|advert|sponsor/.test(t)) {
+      const ad = p.ads.items.find((a) => readySizes(a).length)
+      return turn({ steps: ['Opening your ads'], text: 'Here are your ads. Add sponsors, or change them, in **Advertisements**.', card: ad ? { type: 'ads', adId: ad.id } : null, chips: ['Open Advertisements'] })
+    }
     if (/export|download|files|zip/.test(t)) {
       if (!finished) return runStage(p, stagesFor(p).length - 1)
       return turn(STEP.files(p))
@@ -362,7 +399,7 @@ export async function seed() {
   ]
   for (const [prompt, ago, upTo, changes] of plan) {
     const p = await createProject(prompt, { open: false })
-    while (p.stage < stagesFor(p).length - 1 && stagesFor(p)[p.stage].id !== upTo) await reply(p, GO[stagesFor(p)[p.stage].id])
+    while (p.stage < stagesFor(p).length - 1 && stagesFor(p)[p.stage].id !== upTo) await reply(p, nextFor(p).say)
     for (const [i, ask] of changes.entries()) {
       await reply(p, ask)
       select(p, projectBanners(p)[i % 2 ? 1 : 0])

@@ -167,7 +167,7 @@ export function adsKey(ads) {
 
 /** Seed ads for a sample project (Heartland): sponsors from brand-studio + an FAQ house ad. */
 export function seedAds(project) {
-  project.ads.offers.push('landing-billboard', 'browse-rail', 'details-bottom')
+  for (const o of ['landing-billboard', 'browse-rail', 'details-bottom']) if (!project.ads.offers.includes(o)) project.ads.offers.push(o)
   const sizes = packageSizes(project.ads)
   const spn = SAMPLE_SPONSORS.slice(0, 2)
   for (const s of [...spn].reverse()) {

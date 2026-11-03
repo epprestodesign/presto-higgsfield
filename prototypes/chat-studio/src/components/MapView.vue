@@ -21,7 +21,8 @@ const general = computed(() => [
   { label: 'Pages', ...L({ view: 'library', library: 'pages' }) },
   { label: 'Advertisements', ...L({ view: 'library', library: 'ads' }) },
 ])
-const starts = computed(() => SUGGESTIONS.Popular.slice(0, 4).map((p) => ({ label: `New project: “${p}”`, ...L({ view: 'new', prompt: p }) })))
+const MODE_LABEL = { logo: 'Logo only', banners: 'Banners', ads: 'Ads', full: 'Full suite' }
+const starts = computed(() => ['full', 'logo', 'banners', 'ads'].map((m, i) => { const p = SUGGESTIONS.Popular[i]; return { label: `${MODE_LABEL[m]}: “${p}”`, ...L({ view: 'new', prompt: p, mode: m }) } }))
 const projects = computed(() => [...state.projects].sort((a, b) => b.updated - a.updated).map((p) => ({
   p,
   main: [

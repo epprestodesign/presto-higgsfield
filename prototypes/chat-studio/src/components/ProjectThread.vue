@@ -18,12 +18,13 @@ import BannersCard from './cards/BannersCard.vue'
 import PagesCard from './cards/PagesCard.vue'
 import ExportCard from './cards/ExportCard.vue'
 import AdCard from './cards/AdCard.vue'
+import AdsStepCard from './cards/AdsStepCard.vue'
 import AdsTab from './ads/AdsTab.vue'
 import { reply, state, stopWorking, stagesFor, draftView, toast, uploadLogo } from '../mockAgent.js'
 import { route, link, go } from '../router.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
-const CARDS = { brand: BrandCard, looks: LooksCard, banners: BannersCard, pages: PagesCard, export: ExportCard, ad: AdCard }
+const CARDS = { brand: BrandCard, looks: LooksCard, banners: BannersCard, pages: PagesCard, export: ExportCard, ad: AdCard, ads: AdsStepCard }
 
 // Tab and open draft live in the route, so they deep-link.
 const tab = computed({ get: () => route.tab, set: (t) => { route.tab = t; route.draft = 0; route.at = '' } })
@@ -82,7 +83,11 @@ function ask(text, opts = {}) {
 
 // "Add a new logo": a chip (or the header's logo menu) that asks for a file.
 const logoPicker = ref(null)
-function onChip(c) { if (c === 'Add a new logo') logoPicker.value?.click(); else ask(c) }
+function onChip(c) {
+  if (c === 'Add a new logo') logoPicker.value?.click()
+  else if (c === 'Open Advertisements') tab.value = 'ads'
+  else ask(c)
+}
 function onLogoFile(e) {
   const f = e.target.files?.[0]
   e.target.value = ''

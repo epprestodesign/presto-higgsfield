@@ -1,15 +1,17 @@
 <script setup>
 // New project: a big serif line, the composer, and starter prompts by topic.
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import Icon from './Icon.vue'
 import Composer from './Composer.vue'
 import { SUGGESTIONS } from '../mockData.js'
+import { MODES } from '../mockAgent.js'
 
 defineProps({ working: { type: Boolean, default: false } })
 const emit = defineEmits(['send'])
 const tab = ref('Popular')
 const draft = ref('')
 const composer = ref(null)
+const credits = computed(() => (MODES.find((m) => m.id === composer.value?.mode) || MODES[3]).credits)
 function use(s) { draft.value = s; composer.value?.focus() }
 </script>
 
@@ -35,7 +37,7 @@ function use(s) { draft.value = s; composer.value?.focus() }
         </button>
       </li>
     </ul>
-    <p class="home__note"><Icon name="credit" :size="16" /> About 7 credits for a logo clean-up and a first set of 3 banners.</p>
+    <p class="home__note"><Icon name="credit" :size="16" /> {{ credits }}</p>
   </section>
 </template>
 

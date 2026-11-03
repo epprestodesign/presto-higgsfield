@@ -3,6 +3,7 @@
 // at the bottom ("Ask for changes…") and glows while the agent is working.
 import { nextTick, ref, watch } from 'vue'
 import Icon from './Icon.vue'
+import { MODES } from '../mockAgent.js'
 
 const props = defineProps({
   variant: { type: String, default: 'dock' }, // 'home' | 'dock'
@@ -12,10 +13,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['send', 'stop', 'update:modelValue'])
 
-const MODES = [
-  { id: 'full', label: 'Logo + banners', icon: 'spark' },
-  { id: 'banners', label: 'Banners only', icon: 'image' },
-]
+// What to make: Logo only · Banners · Ads · Full suite (see mockAgent MODES).
 const mode = ref('full')
 const text = ref(props.modelValue)
 watch(() => props.modelValue, (v) => { text.value = v; nextTick(grow) })
@@ -46,7 +44,7 @@ function send() {
 function key(e) {
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send() }
 }
-defineExpose({ focus: () => box.value?.focus() })
+defineExpose({ focus: () => box.value?.focus(), mode })
 </script>
 
 <template>
