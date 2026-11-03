@@ -34,9 +34,9 @@ function showMap() { open.value = false; go({ view: 'map' }) }
 <template>
   <div ref="root" class="acct">
     <div v-if="open" class="acct__menu" role="menu" aria-label="Account">
-      <div class="acct__themes" role="group" aria-label="Theme">
+      <div class="acct__themes cs-tabs" role="group" aria-label="Theme">
         <button
-          v-for="t in THEMES" :key="t.id" type="button" class="acct__theme" :class="{ 'is-on': theme === t.id }"
+          v-for="t in THEMES" :key="t.id" type="button" class="cs-tab cs-tab--sm" :class="{ 'is-on': theme === t.id }"
           role="menuitemradio" :aria-checked="theme === t.id" @click="emit('theme', t.id)"
         >
           <Icon :name="t.icon" :size="18" /> {{ t.label }}
@@ -70,9 +70,8 @@ function showMap() { open.value = false; go({ view: 'map' }) }
 .acct__team { padding: 1px 8px; border-radius: 999px; background: var(--navy-50); color: var(--navy-900); font: 700 11px/1.6 var(--sans); letter-spacing: 0.06em; }
 .acct__menu { position: absolute; left: 0; right: 0; bottom: calc(100% + 6px); z-index: 20; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-overlay); }
 .acct__menu hr { border: 0; border-top: 1px solid var(--line); margin: 8px 0; }
-.acct__themes { display: grid; grid-template-columns: repeat(3, 1fr); padding: 2px; border: 1px solid var(--line-bold); border-radius: var(--r); }
-.acct__theme { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; border: 0; border-radius: 2px; background: none; font-size: 13px; font-weight: 700; color: var(--ink-2); cursor: pointer; }
-.acct__theme.is-on { background: var(--pill); color: var(--pill-ink); }
+.acct__themes { flex-wrap: nowrap; gap: 4px; padding: 2px 0 6px; }
+.acct__themes .cs-tab { flex: 1; justify-content: center; padding: 4px 8px; }
 .acct__item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 40px; padding: 8px 10px; border: 0; border-radius: var(--r); background: none; text-align: left; cursor: pointer; }
 .acct__item:hover { background: var(--surface-3); }
 .acct__label { margin: 4px 10px 2px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }

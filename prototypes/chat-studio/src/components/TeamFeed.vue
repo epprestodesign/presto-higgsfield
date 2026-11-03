@@ -2,7 +2,7 @@
 // Home, further down: what the rest of the team has been making, grouped by
 // theme. Switch between their banners, their logos, or whole page concepts.
 // Click one to see its Presto pages (desktop, then mobile).
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import Icon from './Icon.vue'
 import LogoMark from './LogoMark.vue'
 import DraftStack from './presto/DraftStack.vue'
@@ -67,7 +67,7 @@ const open = computed({
 })
 // #/home/team scrolls down to this section.
 const root = ref(null)
-onMounted(() => { if (route.at === 'team' || route.open || route.theme !== 'All' || route.show !== 'banners') nextTick(() => root.value?.scrollIntoView({ block: 'start' })) })
+watch(() => route.at === 'team' || !!route.open, (go) => { if (go) nextTick(() => root.value?.scrollIntoView({ block: 'start' })) }, { immediate: true })
 const openProject = computed(() => open.value && ({ name: open.value.view.brand.short, drafts: [openDraft.value] }))
 const openDraft = computed(() => open.value && ({ id: open.value.id, n: 1, label: `${open.value.view.brand.name} · by ${open.value.person.name}`, at: 0, snap: open.value.view }))
 </script>
@@ -79,16 +79,16 @@ const openDraft = computed(() => open.value && ({ id: open.value.id, n: 1, label
         <h2 id="tf-title" class="tf__title"><Icon name="users" :size="26" /> From your team</h2>
         <p class="tf__sub">Logos, banners and page drafts your teammates made recently, by theme.</p>
       </div>
-      <div class="tf__modes" role="radiogroup" aria-label="Show">
-        <button type="button" role="radio" :aria-checked="mode === 'banners'" :class="{ 'is-on': mode === 'banners' }" @click="mode = 'banners'"><Icon name="image" :size="16" /> Banners</button>
-        <button type="button" role="radio" :aria-checked="mode === 'logos'" :class="{ 'is-on': mode === 'logos' }" @click="mode = 'logos'"><Icon name="grid" :size="16" /> Logos</button>
-        <button type="button" role="radio" :aria-checked="mode === 'pages'" :class="{ 'is-on': mode === 'pages' }" @click="mode = 'pages'"><Icon name="layers" :size="16" /> Pages</button>
+      <div class="cs-tabs" role="radiogroup" aria-label="Show">
+        <button type="button" role="radio" :aria-checked="mode === 'banners'" class="cs-tab" :class="{ 'is-on': mode === 'banners' }" @click="mode = 'banners'"><Icon name="image" :size="16" /> Banners</button>
+        <button type="button" role="radio" :aria-checked="mode === 'logos'" class="cs-tab" :class="{ 'is-on': mode === 'logos' }" @click="mode = 'logos'"><Icon name="grid" :size="16" /> Logos</button>
+        <button type="button" role="radio" :aria-checked="mode === 'pages'" class="cs-tab" :class="{ 'is-on': mode === 'pages' }" @click="mode = 'pages'"><Icon name="layers" :size="16" /> Pages</button>
       </div>
     </header>
 
-    <div class="tf__themes" role="group" aria-label="Theme">
+    <div class="tf__themes cs-tabs" role="group" aria-label="Theme">
       <button
-        v-for="t in ['All', ...Object.keys(THEMES)]" :key="t" type="button" class="tf__theme" :class="{ 'is-on': theme === t }"
+        v-for="t in ['All', ...Object.keys(THEMES)]" :key="t" type="button" class="cs-tab" :class="{ 'is-on': theme === t }"
         :aria-pressed="theme === t" @click="pick(t)"
       >{{ t }}</button>
     </div>
@@ -129,13 +129,7 @@ const openDraft = computed(() => open.value && ({ id: open.value.id, n: 1, label
 .tf__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .tf__title { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 28px; }
 .tf__sub { margin: 4px 0 0; color: var(--ink-2); }
-.tf__modes { display: inline-flex; padding: 2px; border: 1px solid var(--line-bold); border-radius: var(--r); background: var(--surface); }
-.tf__modes button { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 4px 12px; border: 0; border-radius: 2px; background: none; color: var(--ink-2); font-size: 14px; font-weight: 700; cursor: pointer; }
-.tf__modes button.is-on { background: var(--pill); color: var(--pill-ink); }
-.tf__themes { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 24px; }
-.tf__theme { min-height: 40px; padding: 8px 18px; border: 1px solid var(--line-bold); border-radius: 999px; background: var(--surface); font-size: 15px; cursor: pointer; }
-.tf__theme:hover { background: var(--surface-3); }
-.tf__theme.is-on { background: var(--pill); border-color: var(--pill); color: var(--pill-ink); font-weight: 700; }
+.tf__themes { margin: 20px 0 24px; }
 
 .tf__grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 24px; }
 .tf__grid.is-pages { grid-template-columns: repeat(2, minmax(0, 1fr)); }

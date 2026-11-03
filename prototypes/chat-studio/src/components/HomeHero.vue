@@ -21,9 +21,9 @@ function use(s) { draft.value = s; composer.value?.focus() }
 
     <Composer ref="composer" v-model="draft" variant="home" placeholder="Describe the event, or paste its website" :working="working" @send="(t, o) => emit('send', t, o)" />
 
-    <div class="home__tabs" role="tablist" aria-label="Starter prompts">
+    <div class="home__tabs cs-tabs" role="tablist" aria-label="Starter prompts">
       <button
-        v-for="(_, t) in SUGGESTIONS" :key="t" type="button" role="tab" class="home__tab"
+        v-for="(_, t) in SUGGESTIONS" :key="t" type="button" role="tab" class="cs-tab"
         :class="{ 'is-on': tab === t }" :aria-selected="tab === t" @click="tab = t"
       >{{ t }}</button>
     </div>
@@ -44,11 +44,7 @@ function use(s) { draft.value = s; composer.value?.focus() }
 .home__eyebrow { margin: 0; text-align: center; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
 .home__title { margin: 0; text-align: center; font: 700 clamp(30px, 4vw, 44px)/1.15 var(--sans); color: var(--ink); }
 .home__sub { margin: 0 auto 20px; max-width: 600px; text-align: center; font-size: 17px; color: var(--ink-2); }
-.home__tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 20px; border-bottom: 1px solid var(--line); }
-.home__tab { position: relative; min-height: 44px; padding: 8px 16px; border: 0; background: none; font-weight: 700; font-size: 15px; color: var(--ink-2); cursor: pointer; }
-.home__tab:hover { color: var(--ink); }
-.home__tab.is-on { color: var(--ink); }
-.home__tab.is-on::after { content: ''; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--pill); }
+.home__tabs { margin-top: 20px; }
 .home__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0 24px; }
 .home__sug { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 4px; border: 0; background: none; text-align: left; font-size: 15px; cursor: pointer; }
 .home__sug svg { color: var(--ink-3); }

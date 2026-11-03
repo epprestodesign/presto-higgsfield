@@ -30,9 +30,9 @@ const LINES = [
   <CardShell kicker="Presto pages" :title="live ? 'Your pages, with today’s picks' : 'Your pages, as they were in this draft'">
     <template #aside>
       <div class="pg__tools">
-        <div class="pg__seg" role="radiogroup" aria-label="Device">
-          <button type="button" role="radio" :aria-checked="device === 'desktop'" :class="{ 'is-on': device === 'desktop' }" @click="device = 'desktop'"><Icon name="monitor" :size="16" /> Desktop</button>
-          <button type="button" role="radio" :aria-checked="device === 'mobile'" :class="{ 'is-on': device === 'mobile' }" @click="device = 'mobile'"><Icon name="phone" :size="16" /> Mobile</button>
+        <div class="cs-tabs" role="radiogroup" aria-label="Device">
+          <button type="button" role="radio" :aria-checked="device === 'desktop'" class="cs-tab" :class="{ 'is-on': device === 'desktop' }" @click="device = 'desktop'"><Icon name="monitor" :size="16" /> Desktop</button>
+          <button type="button" role="radio" :aria-checked="device === 'mobile'" class="cs-tab" :class="{ 'is-on': device === 'mobile' }" @click="device = 'mobile'"><Icon name="phone" :size="16" /> Mobile</button>
         </div>
         <button v-if="live" type="button" class="cs-btn-ghost" :aria-expanded="editing" @click="editing = !editing">
           <Icon :name="editing ? 'check' : 'pencil'" :size="16" /> {{ editing ? 'Done' : 'Edit text' }}
@@ -59,9 +59,6 @@ const LINES = [
 
 <style scoped>
 .pg__tools { display: flex; align-items: center; gap: 8px; }
-.pg__seg { display: inline-flex; padding: 2px; border: 1px solid var(--line-bold); border-radius: var(--r); background: var(--surface); }
-.pg__seg button { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 4px 10px; border: 0; border-radius: 2px; background: none; color: var(--ink-2); font-size: 13px; font-weight: 700; cursor: pointer; }
-.pg__seg button.is-on { background: var(--pill); color: var(--pill-ink); }
 
 
 .pg__edit { display: grid; gap: 12px; margin: -4px 0 18px; padding: 16px; border-radius: var(--r-card); background: var(--surface-2); border: 1px solid var(--line); }

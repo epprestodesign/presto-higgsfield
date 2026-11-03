@@ -76,7 +76,7 @@ defineExpose({ focus: () => box.value?.focus() })
         <button type="button" class="comp__round" aria-label="Attach a logo" @click="picker.click()"><Icon name="clip" :size="18" /></button>
         <div class="comp__modes" role="radiogroup" aria-label="What to make">
           <button
-            v-for="m in MODES" :key="m.id" type="button" class="comp__mode" :class="{ 'is-on': mode === m.id }"
+            v-for="m in MODES" :key="m.id" type="button" class="cs-tab cs-tab--sm" :class="{ 'is-on': mode === m.id }"
             role="radio" :aria-checked="mode === m.id" @click="mode = m.id"
           >
             <Icon :name="m.icon" :size="18" /> {{ m.label }}
@@ -105,9 +105,6 @@ defineExpose({ focus: () => box.value?.focus() })
 .comp textarea::placeholder { color: var(--ink-3); }
 .comp__tools { display: flex; align-items: center; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
 .comp__modes { display: flex; gap: 6px; flex: 1; flex-wrap: wrap; }
-.comp__mode { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 12px; border: 1px solid var(--line-bold); border-radius: var(--r); background: var(--surface); color: var(--ink-2); cursor: pointer; font-size: 14px; font-weight: 700; }
-.comp__mode.is-on { background: var(--selected); border-color: var(--navy-900); color: var(--ink); }
-.cs[data-theme='dark'] .comp__mode.is-on { border-color: var(--navy-200); }
 .comp__round { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border: 1px solid var(--line-bold); border-radius: var(--r); background: var(--surface); color: var(--ink-2); cursor: pointer; }
 .comp__round:hover { background: var(--surface-3); }
 .comp__send { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border: 0; border-radius: var(--r); background: var(--pill); color: var(--pill-ink); cursor: pointer; }

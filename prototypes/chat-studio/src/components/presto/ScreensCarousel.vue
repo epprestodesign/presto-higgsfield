@@ -39,9 +39,9 @@ const uid = Math.random().toString(36).slice(2, 7)
 
 <template>
   <div class="sc">
-    <div class="sc__tabs" role="tablist" aria-label="Screens">
+    <div class="sc__tabs cs-tabs" role="tablist" aria-label="Screens">
       <button
-        v-for="(s, i) in SCREENS" :id="`sc-${uid}-${s.id}`" :key="s.id" type="button" role="tab" class="sc__tab"
+        v-for="(s, i) in SCREENS" :id="`sc-${uid}-${s.id}`" :key="s.id" type="button" role="tab" class="cs-tab"
         :class="{ 'is-on': index === i }" :aria-selected="index === i" :aria-controls="`sc-${uid}-panel`" @click="go(i)"
       >{{ i + 1 }}. {{ s.label }}</button>
     </div>
@@ -60,12 +60,8 @@ const uid = Math.random().toString(36).slice(2, 7)
 </template>
 
 <style scoped>
-.sc__tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--line); overflow-x: auto; }
-.sc__tab { position: relative; flex: none; min-height: 40px; padding: 6px 12px; border: 0; background: none; color: var(--ink-2); font-size: 14px; font-weight: 700; cursor: pointer; }
-.sc__tab:hover { color: var(--ink); }
-.sc__tab.is-on { color: var(--ink); }
-.sc__tab.is-on::after { content: ''; position: absolute; left: 6px; right: 6px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--pill); }
-.sc__toolbar { display: flex; align-items: center; gap: 8px; margin: -2px 0 14px; }
+.sc__tabs { margin-bottom: 14px; }
+.sc__toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: -2px 0 14px; }
 .sc__carousel { position: relative; }
 .sc__track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; border-radius: var(--r-card); }
 .sc__track::-webkit-scrollbar { display: none; }

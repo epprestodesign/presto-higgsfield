@@ -45,10 +45,10 @@ const count = computed(() => ({ banners: banners.value.length, logos: inScope.va
         <p class="lib__sub">{{ COPY[kind].sub }}</p>
       </header>
 
-      <div class="lib__filters" role="group" aria-label="Project">
-        <button type="button" class="lib__chip" :class="{ 'is-on': filter === 'all' }" :aria-pressed="filter === 'all'" @click="filter = 'all'">All projects</button>
+      <div class="lib__filters cs-tabs" role="group" aria-label="Project">
+        <button type="button" class="cs-tab" :class="{ 'is-on': filter === 'all' }" :aria-pressed="filter === 'all'" @click="filter = 'all'">All projects</button>
         <button
-          v-for="p in projects" :key="p.id" type="button" class="lib__chip" :class="{ 'is-on': filter === p.id }"
+          v-for="p in projects" :key="p.id" type="button" class="cs-tab" :class="{ 'is-on': filter === p.id }"
           :aria-pressed="filter === p.id" @click="filter = p.id"
         >{{ p.name }}</button>
       </div>
@@ -104,10 +104,7 @@ const count = computed(() => ({ banners: banners.value.length, logos: inScope.va
 .lib__title { display: flex; align-items: center; gap: 12px; margin: 0; font-size: 34px; }
 .lib__title span { padding: 0 10px; border-radius: 999px; background: var(--navy-50); color: var(--navy-900); font-size: 15px; line-height: 26px; }
 .lib__sub { margin: 6px 0 0; color: var(--ink-2); font-size: 16px; }
-.lib__filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 28px; }
-.lib__chip { min-height: 40px; padding: 8px 18px; border: 1px solid var(--line-bold); border-radius: 999px; background: var(--surface); font-size: 15px; cursor: pointer; }
-.lib__chip:hover { background: var(--surface-3); }
-.lib__chip.is-on { background: var(--pill); border-color: var(--pill); color: var(--pill-ink); font-weight: 700; }
+.lib__filters { margin: 24px 0 28px; }
 .lib__grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 24px; }
 .lib__grid.is-logos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .lib__grid.is-pages { grid-template-columns: repeat(2, minmax(0, 1fr)); }

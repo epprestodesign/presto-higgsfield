@@ -51,9 +51,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key))
       <div class="dv__body">
         <ScreensCarousel :key="draft.id" v-model:screen="screen" :view="view" :device="device">
           <template #toolbar>
-            <div class="dv__seg" role="radiogroup" aria-label="Device">
-              <button type="button" role="radio" :aria-checked="device === 'desktop'" :class="{ 'is-on': device === 'desktop' }" @click="device = 'desktop'"><Icon name="monitor" :size="16" /> Desktop</button>
-              <button type="button" role="radio" :aria-checked="device === 'mobile'" :class="{ 'is-on': device === 'mobile' }" @click="device = 'mobile'"><Icon name="phone" :size="16" /> Mobile</button>
+            <div class="cs-tabs" role="radiogroup" aria-label="Device">
+              <button type="button" role="radio" :aria-checked="device === 'desktop'" class="cs-tab" :class="{ 'is-on': device === 'desktop' }" @click="device = 'desktop'"><Icon name="monitor" :size="16" /> Desktop</button>
+              <button type="button" role="radio" :aria-checked="device === 'mobile'" class="cs-tab" :class="{ 'is-on': device === 'mobile' }" @click="device = 'mobile'"><Icon name="phone" :size="16" /> Mobile</button>
             </div>
           </template>
         </ScreensCarousel>
@@ -81,9 +81,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key))
 .dv__icon { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--line-bold); border-radius: var(--r); background: var(--surface); cursor: pointer; }
 .dv__icon:hover:not(:disabled) { background: var(--surface-3); }
 .dv__icon:disabled { opacity: 0.4; cursor: default; }
-.dv__seg { display: inline-flex; padding: 2px; border: 1px solid var(--line-bold); border-radius: var(--r); }
-.dv__seg button { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 10px; border: 0; border-radius: 2px; background: none; color: var(--ink-2); font-size: 13px; font-weight: 700; cursor: pointer; }
-.dv__seg button.is-on { background: var(--pill); color: var(--pill-ink); }
 .dv__body { padding: 18px 28px 24px; }
 .dv__foot { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 14px 18px; border-top: 1px solid var(--line); background: var(--surface); }
 .dv__foot p { flex: 1; margin: 0; font-size: 14px; color: var(--ink-2); }
