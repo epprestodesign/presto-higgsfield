@@ -10,7 +10,7 @@ import DraftStack from './presto/DraftStack.vue'
 import DraftViewer from './DraftViewer.vue'
 import { state, openProject, draftView, LOGO_LOOKS, projectBySlug, logoOf } from '../mockAgent.js'
 import { route, go } from '../router.js'
-import AdPreview from './ads/AdPreview.vue'
+import AdMosaic from './ads/AdMosaic.vue'
 import LibrarySearch from './LibrarySearch.vue'
 import BannerStack from './BannerStack.vue'
 import { readySizes, AD_SIZES, PURPOSES } from '../ads.js'
@@ -137,11 +137,9 @@ const filtered = computed(() => tags.value.length || !!route.q)
       </ul>
 
       <!-- Advertisements -->
-      <ul v-else-if="kind === 'ads'" class="lib__grid">
+      <ul v-else-if="kind === 'ads'" class="lib__grid is-pages">
         <li v-for="x in adList" :key="x.a.id">
-          <button type="button" class="lib__card lib__ad" :aria-label="`${x.a.name} on ${x.p.name}`" @click="go({ view: 'project', project: x.p.slug, tab: 'ads' })">
-            <AdPreview :ad="x.a" :size="x.size" :max-width="300" :max-height="170" />
-          </button>
+          <AdMosaic :ad="x.a" :project="x.p" :label="`${x.a.name} on ${x.p.name}`" @open="go({ view: 'project', project: x.p.slug, tab: 'ads' })" />
           <div class="lib__meta">
             <span class="lib__mark"><img :src="logoOf(x.p)" alt="" /></span>
             <span><b>{{ x.a.name }}</b><small>{{ purposeLabel(x.a.purpose) }} · {{ x.p.name }} · {{ readySizes(x.a).length }} {{ readySizes(x.a).length === 1 ? 'size' : 'sizes' }}</small></span>
@@ -191,7 +189,6 @@ const filtered = computed(() => tags.value.length || !!route.q)
 .lib__lv > :deep(.lm) { position: relative; }
 .lib__lv em { position: absolute; top: 8px; left: 8px; padding: 0 8px; border-radius: 999px; background: #dcfce7; color: #15803d; font-style: normal; font-size: 11px; font-weight: 700; line-height: 20px; }
 .lib__stack { padding: 6% 4% 0; }
-.lib__ad { display: grid; place-items: center; aspect-ratio: 16 / 10; padding: 16px; }
 .lib__meta { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .lib__meta b { display: block; font-size: 16px; }
 .lib__meta small { color: var(--ink-3); font-size: 13px; }
