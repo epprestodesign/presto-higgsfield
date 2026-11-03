@@ -55,6 +55,7 @@ function newProject(brand, prompt) {
     messages: [],
     sets: 0,
     look: 'badge',
+    font: brand.fonts.display, // heading font on the Presto pages
     mode: 'full',
     stage: 0, // index into stagesFor(p)
     palette: [...brand.colors],
@@ -71,6 +72,7 @@ export function snapshot(p) {
   return {
     brand: p.brand,
     look: p.look,
+    font: p.font,
     palette: [...p.palette],
     selected: p.selected ? { ...p.selected } : null,
     copy: JSON.parse(JSON.stringify(p.copy)),
@@ -89,7 +91,7 @@ export function restoreDraft(p, d) {
   if (!d.snap || state.working) return
   const s = d.snap
   startDraft(p, `Restored draft ${d.n}`)
-  Object.assign(p, { look: s.look, palette: [...s.palette], selected: s.selected ? { ...s.selected } : null, copy: JSON.parse(JSON.stringify(s.copy)) })
+  Object.assign(p, { look: s.look, font: s.font, palette: [...s.palette], selected: s.selected ? { ...s.selected } : null, copy: JSON.parse(JSON.stringify(s.copy)) })
   p.messages.push({ id: nid('m'), role: 'agent', status: 'done', steps: [{ label: `Restoring draft ${d.n}`, done: true }], seconds: 1, text: `Restored **draft ${d.n}** (${d.label.toLowerCase()}). Keep going from here.`, card: { type: 'pages' }, chips: [], draft: p.drafts.length })
   p.updated = Date.now()
 }

@@ -5,18 +5,19 @@
 // and page text.
 import { toPrestoProject } from '@bs/banner-lab/studioProjects.js'
 
-const FONT_IDS = { Oswald: 'oswald', 'Barlow Condensed': 'barlow-condensed', 'Playfair Display': 'playfair', Montserrat: 'montserrat' }
+const FONT_IDS = { Oswald: 'oswald', 'Barlow Condensed': 'barlow-condensed', 'Playfair Display': 'playfair', Montserrat: 'montserrat', 'PT Sans': 'pt-sans' }
 const abs = (src) => (src ? new URL(src, window.location.href).href : src)
 
 export function toPresto(view) {
   const b = view.brand
+  const heading = view.font || b.fonts.display
   const sel = view.selected || { key: b.images[0].id, src: b.images[0].src }
   const [primary, accent, , dark] = view.palette
   const lab = {
     key: b.id,
     name: b.name,
     colors: { primary, secondary: dark, accent },
-    typography: FONT_IDS[b.fonts.display] ? { heading: FONT_IDS[b.fonts.display] } : {},
+    typography: FONT_IDS[heading] ? { heading: FONT_IDS[heading] } : {},
     logo: { src: abs(b.logo), onDarkSrc: abs(b.logoOnDark), name: `${b.name} logo` },
     banners: [{ id: `proto-${sel.key}`, src: abs(sel.src), alt: `${b.name} banner`, kind: 'photo' }],
     selectedBannerId: `proto-${sel.key}`,

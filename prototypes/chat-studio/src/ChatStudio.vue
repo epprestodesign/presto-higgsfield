@@ -104,6 +104,6 @@ onBeforeUnmount(() => mq?.removeEventListener?.('change', syncSystem))
   .cs.rail-open .cs__rail { transform: none; box-shadow: 20px 0 60px rgba(0, 0, 0, 0.2); }
   .cs__scrim { position: absolute; inset: 0; z-index: 25; background: rgba(10, 12, 20, 0.35); }
   .cs__menu { display: grid; place-items: center; position: absolute; top: 14px; left: 12px; z-index: 5; width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); cursor: pointer; }
-  .cs__main :deep(.th__top) { padding-left: 66px; }
+  .cs__main :deep(.ph) { padding-left: 66px; }
 }
 </style>

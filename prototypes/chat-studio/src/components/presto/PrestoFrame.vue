@@ -43,7 +43,7 @@ watch(frame, (el) => {
 function onMessage(e) {
   if (e.source === frame.value?.contentWindow && e.data?.type === 'bs-preview:ready') setTimeout(() => { ready.value = true }, 250)
 }
-watch(() => [JSON.stringify(props.view.copy), props.view.selected?.key, props.view.palette.join(), props.view.look, props.page], () => link?.send())
+watch(() => [JSON.stringify(props.view.copy), props.view.selected?.key, props.view.palette.join(), props.view.look, props.view.font, props.page], () => link?.send())
 
 onMounted(() => {
   window.addEventListener('message', onMessage)
