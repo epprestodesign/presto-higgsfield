@@ -4,7 +4,7 @@
 import { reactive } from 'vue'
 import { BRANDS, brandFor } from './mockData.js'
 import { route, go } from './router.js'
-import { newAds, seedAds, createAd, purposeDefaults, packageSizes, readySizes, designSize, AD_SIZES } from './ads.js'
+import { newAds, seedAds, createAd, purposeDefaults, readySizes, designSize, AD_SIZES, adSizes, firstEmptySpot, spotsOf, pageLabel } from './ads.js'
 
 export const state = reactive({
   projects: [],
@@ -224,13 +224,15 @@ const STEP = {
       }),
   ads: (p) => {
     // The standard approved placements, and a first ad pointing at the event's
-    // About page, made in every size they need. Sponsors are added in Advertisements.
+    // About page, in the first open spot. Each spot holds its own ad; the rest
+    // are filled in Advertisements (sponsors, the FAQ, the Sponsors page…).
     if (!p.ads.offers.length) p.ads.offers.push('landing-banners', 'browse-rail', 'details-bottom')
-    const ad = createAd(p, { purpose: 'about', how: 'package', ...purposeDefaults('about', p.brand) })
-    packageSizes(p.ads).forEach((z) => { ad.sizes[z] = 'ready' })
+    const spot = firstEmptySpot(p.ads)
+    const ad = createAd(p, { purpose: 'about', how: 'package', ...purposeDefaults('about', p.brand), spot: spot?.id })
+    adSizes(p.ads, ad).forEach((z) => { ad.sizes[z] = 'ready' })
     return {
-      steps: ['Picking the approved ad placements', `Designing an ad for your About page in ${packageSizes(p.ads).length} sizes · about ${packageSizes(p.ads).length} credits`],
-      text: 'I picked three approved placements and made an ad that links to your **About page** in every size they need. Add sponsor ads, or link your Sponsors page or FAQ, in Advertisements.',
+      steps: ['Picking the approved ad placements', `Designing an ad for your About page${spot ? ` for ${spot.label} on the ${pageLabel(spot.page).toLowerCase()}` : ''}`],
+      text: `I picked three approved placements (${spotsOf(p.ads).length} ad spots) and made an ad that links to your **About page**${spot ? ` for **${spot.label}** on the ${pageLabel(spot.page).toLowerCase()}` : ''}. Each spot holds its own ad: fill the others with sponsors, your FAQ or your Sponsors page, in Advertisements.`,
       card: { type: 'ads', adId: ad.id },
       chips: ['Open Advertisements'],
     }
@@ -386,15 +388,14 @@ export function clearChatContext() { Object.assign(chatContext, { projectId: nul
  */
 export async function packageAds(p, ads, userText) {
   if (state.working || !ads.length) return
-  const sizes = packageSizes(p.ads)
-  const todo = ads.flatMap((a) => sizes.filter((s) => a.sizes[s] !== 'ready').map((s) => [a, s]))
+  const todo = ads.flatMap((a) => adSizes(p.ads, a).filter((s) => a.sizes[s] !== 'ready').map((s) => [a, s]))
   return run(async () => {
     userMsg(p, userText)
     const designing = Promise.all(todo.map(([a, s], i) => designSize(p, a, s, 700 + i * 260)))
-    const files = ads.reduce((n, a) => n + new Set([...sizes, ...readySizes(a)]).size, 0)
+    const files = ads.reduce((n, a) => n + new Set([...adSizes(p.ads, a), ...readySizes(a)]).size, 0)
     const one = ads.length === 1
     await agentTurn(p, {
-      steps: [...(todo.length ? [`Designing ${todo.length} missing ${todo.length === 1 ? 'size' : 'sizes'} with Higgsfield`] : []), 'Sizing for each Presto placement', 'Packaging the files'],
+      steps: [...(todo.length ? [`Designing ${todo.length} missing ${todo.length === 1 ? 'size' : 'sizes'} with Higgsfield`] : []), 'Sizing for each Presto spot', 'Packaging the files'],
       text: one
         ? `Packaged **${ads[0].name}** in ${files} sizes, ready for Presto.`
         : `Packaged **${ads.length} ads**: ${files} files, ready for Presto.`,

@@ -1,24 +1,45 @@
 <script setup>
 // A project's Advertisements: 1) pick the banners this event offers (the
 // approved placements), 2) make ads — for a sponsor, or pointing at the
-// event's own About / Sponsors / FAQ pages — designed with Higgsfield one size
-// at a time or as a whole package, or re-fitted from an uploaded ad,
-// 3) see them on the real Presto pages.
-import { computed, reactive, ref } from 'vue'
+// event's own About / Sponsors / FAQ pages — page by page, one ad per spot
+// (Banner 1, 2, 3 on the landing page, each skyscraper…), each made just for
+// its spot's size, designed with Higgsfield or re-fitted from an uploaded ad.
+// See them on the real Presto pages from the header.
+import { computed, nextTick, reactive, ref } from 'vue'
 import Icon from '../Icon.vue'
 import AdSuite from './AdSuite.vue'
-import { OFFERS, PAGES, AD_SIZES, PURPOSES, offerMobile, packageSizes, purposeDefaults, createAd, designPackage, designSize, restoreAd } from '../../ads.js'
+import AdSpot from './AdSpot.vue'
+import { OFFERS, PAGES, AD_SIZES, PURPOSES, offerMobile, purposeDefaults, createAd, designPackage, restoreAd, spotsOf, adInSpot, spotLabel, pageLabel, adSizes } from '../../ads.js'
 import { adsChat, packageAds, state } from '../../mockAgent.js'
 import { route } from '../../router.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
 const ads = computed(() => props.project.ads)
-const sizes = computed(() => packageSizes(ads.value))
 // Deleted ads, offered back (Undo) where they were.
-const removed = computed(() => Object.entries(ads.value.removed || {}).map(([id, r]) => ({ id, name: r.ad.name })))
+const removed = computed(() => Object.entries(ads.value.removed || {}).map(([id, r]) => ({ id, name: r.ad.name, where: spotLabel(ads.value, r.ad) })))
+
+// ---- Spots, page by page
+const spots = computed(() => spotsOf(ads.value))
+const filled = computed(() => spots.value.filter((s) => adInSpot(ads.value, s.id)).length)
+const PLURAL = { Banner: 'banners', Skyscraper: 'skyscrapers', Leaderboard: 'leaderboard', Billboard: 'billboard' }
+const pagesWithSpots = computed(() => PAGES.map((pg) => {
+  const offers = OFFERS.filter((o) => o.page === pg.id && ads.value.offers.includes(o.id)).map((o) => ({ ...o, spots: spots.value.filter((s) => s.offer.id === o.id) }))
+  const summary = offers.map((o) => { const k = o.spots[0].label.replace(/ \d+$/, ''); return o.count > 1 ? `${o.count} ${PLURAL[k] || k.toLowerCase() + 's'}` : `1 ${k.toLowerCase()}` }).join(' · ')
+  return { ...pg, offers, summary }
+}).filter((pg) => pg.offers.length))
+const shapeOf = (size) => { const r = AD_SIZES[size].width / AD_SIZES[size].height; return r < 0.7 ? 'tall' : r > 2.2 ? 'wide' : 'box' }
+const PAGE_LABEL = pageLabel
+// Ads whose spot was turned off above.
+const unplaced = computed(() => ads.value.items.filter((a) => !a.spot || !spots.value.some((s) => s.id === a.spot)))
+
+// Edit: the ad opens below its row (details, sizes, changes).
+const editId = ref('')
+const editing = computed(() => ads.value.items.find((a) => a.id === editId.value) || null)
+function toggleEdit(ad) { fillId.value = ''; editId.value = editId.value === ad?.id ? '' : ad?.id || '' }
 // Package every ad: designs what's missing, then the files land in the chat.
 function packageAll() {
-  packageAds(props.project, [...ads.value.items], `Looks good, package all ${ads.value.items.length} ads`)
+  const live = ads.value.items.filter((a) => !unplaced.value.includes(a))
+  packageAds(props.project, live, `Looks good, package all ${live.length} ads`)
   route.tab = 'chat'
 }
 
@@ -36,8 +57,15 @@ function shape(size) {
   return { width: `${Math.max(6, w * s)}px`, height: `${Math.max(4, h * s)}px` }
 }
 
-// ---- 2. New ad
-const formOpen = ref(!ads.value.items.length)
+// ---- 2. Fill a spot
+const fillId = ref('')
+const fillSpot = computed(() => spots.value.find((s) => s.id === fillId.value) || null)
+const fillSizes = computed(() => (fillSpot.value ? [fillSpot.value.size, ...(fillSpot.value.mobile ? [fillSpot.value.mobile] : [])] : []))
+function openFill(sp) {
+  editId.value = ''
+  fillId.value = fillId.value === sp.id ? '' : sp.id
+  if (fillId.value) nextTick(() => document.querySelector('.ad__form')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }))
+}
 const form = reactive({ purpose: 'sponsor', how: 'package', name: '', tagline: '', cta: 'Learn more', url: '', logo: null, logoName: '', upload: null, uploadName: '' })
 function pickPurpose(p) {
   form.purpose = p
@@ -47,30 +75,25 @@ const logoInput = ref(null)
 const uploadInput = ref(null)
 function onLogo(e) { const f = e.target.files?.[0]; e.target.value = ''; if (f) { form.logo = URL.createObjectURL(f); form.logoName = f.name } }
 function onUpload(e) { const f = e.target.files?.[0]; e.target.value = ''; if (f) { form.upload = URL.createObjectURL(f); form.uploadName = f.name; form.how = 'upload'; if (!form.name) form.name = f.name.replace(/\.[^.]+$/, '') } }
-const canCreate = computed(() => sizes.value.length && (form.how === 'upload' ? !!form.upload : !!form.name.trim()))
+const canCreate = computed(() => !!fillSpot.value && (form.how === 'upload' ? !!form.upload : !!form.name.trim()))
 const HOWS = [
-  { id: 'package', label: 'Higgsfield · whole package', icon: 'spark', note: 'Every size at once' },
-  { id: 'single', label: 'Higgsfield · one size at a time', icon: 'image', note: 'Design sizes as you go' },
-  { id: 'upload', label: 'Upload an existing ad', icon: 'clip', note: 'We re-fit it to every size' },
+  { id: 'package', label: 'Design with Higgsfield', icon: 'spark', note: 'Made for this spot' },
+  { id: 'upload', label: 'Upload an existing ad', icon: 'clip', note: 'We re-fit it to this spot' },
 ]
 
 function create() {
   if (!canCreate.value) return
-  const ad = createAd(props.project, { ...form, logo: form.purpose === 'sponsor' ? form.logo : null })
+  const sp = fillSpot.value
+  const ad = createAd(props.project, { ...form, logo: form.purpose === 'sponsor' ? form.logo : null, spot: sp.id })
+  const where = `${sp.label} on the ${pageLabel(sp.page).toLowerCase()}`
   const what = form.purpose === 'sponsor' ? `a sponsor ad for ${ad.name}` : `an ad for our ${PURPOSES.find((p) => p.id === form.purpose).label.toLowerCase()}`
-  if (form.how === 'package') {
-    adsChat(props.project, `Make ${what}, the whole package`, `Designing **${ad.name}** with Higgsfield in ${sizes.value.length} sizes · about ${sizes.value.length} credits.`, ad.id)
-    designPackage(props.project, ad)
-  } else if (form.how === 'upload') {
-    adsChat(props.project, `Here's an existing ad (${form.uploadName}). Re-fit it for our pages.`, `Re-fitting **${form.uploadName}** to ${sizes.value.length} sizes.`, ad.id)
-    designPackage(props.project, ad)
-  } else {
-    adsChat(props.project, `Make ${what}, one size at a time`, `Starting **${ad.name}** with the largest size. Design the others when you’re ready.`, ad.id)
-    designSize(props.project, ad, sizes.value[0])
-  }
+  const sizesTxt = `${sp.size.replace('x', '×')}${sp.mobile ? `, and ${sp.mobile.replace('x', '×')} for phones` : ''}`
+  if (form.how === 'upload') adsChat(props.project, `Here's an existing ad (${form.uploadName}). Put it in ${where}.`, `Re-fitting **${form.uploadName}** for ${where} (${sizesTxt}).`, ad.id)
+  else adsChat(props.project, `Make ${what} for ${where}`, `Designing **${ad.name}** with Higgsfield for ${where} (${sizesTxt}) · about ${adSizes(ads.value, ad).length} credits.`, ad.id)
+  designPackage(props.project, ad)
   Object.assign(form, { name: '', tagline: '', cta: 'Learn more', url: '', logo: null, logoName: '', upload: null, uploadName: '', how: 'package' })
   pickPurpose('sponsor')
-  formOpen.value = false
+  fillId.value = ''
 }
 
 // ---- 3. On the pages
@@ -99,7 +122,7 @@ function preview(screen) {
       <!-- 1. Offered banners -->
       <section class="ad__sec" aria-labelledby="ad-offers">
         <h3 id="ad-offers"><span>1</span> Banners you offer</h3>
-        <p class="ad__hint">The approved placements on the Presto pages. Pick the ones this event sells; every ad is made in the sizes they need.</p>
+        <p class="ad__hint">The approved placements on the Presto pages. Pick the ones this event sells; each one adds ad spots below.</p>
         <div class="ad__pages">
           <div v-for="pg in PAGES" :key="pg.id" class="ad__page">
             <p class="ad__pagelabel">{{ pg.label }}</p>
@@ -116,62 +139,81 @@ function preview(screen) {
             </button>
           </div>
         </div>
-        <p class="ad__sum"><b>{{ ads.offers.length }}</b> placements · <b>{{ sizes.length }}</b> sizes per ad<template v-if="sizes.length">: {{ sizes.map((s) => s.replace('x', '×')).join(', ') }}</template></p>
+        <p class="ad__sum"><b>{{ ads.offers.length }}</b> placements · <b>{{ spots.length }}</b> ad spots</p>
       </section>
 
-      <!-- 2. Ads -->
+      <!-- 2. Ads, page by page: each spot holds its own ad -->
       <section class="ad__sec" aria-labelledby="ad-items">
         <div class="ad__sechead">
-          <h3 id="ad-items"><span>2</span> Ads <small>{{ ads.items.length }}</small></h3>
-          <span class="ad__secacts">
-            <button v-if="ads.items.length && sizes.length" type="button" class="cs-tab" :disabled="state.working" @click="packageAll"><Icon name="download" :size="18" /> Package all ads</button>
-            <button v-if="!formOpen" type="button" class="cs-btn-dark" @click="formOpen = true"><Icon name="plus" :size="18" /> New ad</button>
-          </span>
+          <h3 id="ad-items"><span>2</span> Ads by page <small>{{ filled }} of {{ spots.length }} spots filled</small></h3>
+          <button v-if="ads.items.length" type="button" class="cs-tab" :disabled="state.working" @click="packageAll"><Icon name="download" :size="18" /> Package all ads</button>
         </div>
+        <p class="ad__hint">Each spot holds its own ad, made just for that size (and its phone size). Fill a spot with a sponsor, or with a link to your FAQ, About or Sponsors page.</p>
+        <p v-if="!spots.length" class="ad__gone">Pick at least one placement above to get ad spots.</p>
+        <p v-for="r in removed" :key="r.id" class="ad__gone" role="status"><b>{{ r.name }}</b> was deleted{{ r.where ? ` from ${r.where}` : '' }}. <button type="button" @click="restoreAd(project, r.id)">Undo</button></p>
 
-        <form v-if="formOpen" class="ad__form" @submit.prevent="create">
-          <div class="ad__field">
-            <span class="ad__label">What it’s for</span>
-            <div class="cs-tabs" role="radiogroup" aria-label="What the ad is for">
-              <button v-for="p in PURPOSES" :key="p.id" type="button" role="radio" class="cs-tab cs-tab--sm" :class="{ 'is-on': form.purpose === p.id }" :aria-checked="form.purpose === p.id" @click="pickPurpose(p.id)">
-                <Icon :name="p.icon" :size="16" /> {{ p.label }}
-              </button>
+        <section v-for="pg in pagesWithSpots" :key="pg.id" class="ad__bypage" :aria-labelledby="`ad-pg-${pg.id}`">
+          <h4 :id="`ad-pg-${pg.id}`">{{ pg.label }} <small>{{ pg.summary }}</small></h4>
+          <div v-for="o in pg.offers" :key="o.id" class="ad__row">
+            <p class="ad__rowlabel">{{ o.label }}</p>
+            <div class="ad__spots" :class="`is-${shapeOf(o.size)}`">
+              <AdSpot
+                v-for="sp in o.spots" :key="sp.id" :project="project" :spot="sp" :ad="adInSpot(ads, sp.id)"
+                :open="fillId === sp.id || (!!editId && adInSpot(ads, sp.id)?.id === editId)"
+                @fill="openFill(sp)" @edit="toggleEdit(adInSpot(ads, sp.id))"
+              />
+            </div>
+            <form v-if="fillSpot && fillSpot.offer.id === o.id" class="ad__form" @submit.prevent="create">
+              <p class="ad__formtitle"><b>Fill {{ fillSpot.label }}</b> · {{ PAGE_LABEL(fillSpot.page) }} · {{ fillSpot.size.replace('x', '×') }}<template v-if="fillSpot.mobile"> (phones {{ fillSpot.mobile.replace('x', '×') }})</template></p>
+              <div class="ad__field">
+                <span class="ad__label">What it’s for</span>
+                <div class="cs-tabs" role="radiogroup" aria-label="What the ad is for">
+                  <button v-for="p in PURPOSES" :key="p.id" type="button" role="radio" class="cs-tab cs-tab--sm" :class="{ 'is-on': form.purpose === p.id }" :aria-checked="form.purpose === p.id" @click="pickPurpose(p.id)">
+                    <Icon :name="p.icon" :size="16" /> {{ p.label }}
+                  </button>
+                </div>
+              </div>
+              <div class="ad__field">
+                <span class="ad__label">How to make it</span>
+                <div class="cs-tabs" role="radiogroup" aria-label="How to make the ad">
+                  <button v-for="h in HOWS" :key="h.id" type="button" role="radio" class="cs-tab cs-tab--sm" :class="{ 'is-on': form.how === h.id }" :aria-checked="form.how === h.id" :title="h.note" @click="h.id === 'upload' && !form.upload ? uploadInput.click() : (form.how = h.id)">
+                    <Icon :name="h.icon" :size="16" /> {{ h.label }}
+                  </button>
+                </div>
+                <input ref="uploadInput" type="file" accept="image/*" hidden aria-label="Choose an ad file" @change="onUpload" />
+                <p v-if="form.how === 'upload' && form.upload" class="ad__upload"><img :src="form.upload" alt="" /> {{ form.uploadName }} <button type="button" class="ad__link" @click="uploadInput.click()">Change</button></p>
+              </div>
+              <div class="ad__grid">
+                <label class="ad__input"><span>{{ form.purpose === 'sponsor' ? 'Sponsor name' : 'Headline' }}</span><input v-model="form.name" type="text" maxlength="40" /></label>
+                <label class="ad__input"><span>Short line</span><input v-model="form.tagline" type="text" maxlength="90" /></label>
+                <label class="ad__input"><span>Button</span><input v-model="form.cta" type="text" maxlength="24" /></label>
+                <label class="ad__input"><span>Link</span><input v-model="form.url" type="url" placeholder="https://" /></label>
+              </div>
+              <div v-if="form.purpose === 'sponsor'" class="ad__field">
+                <span class="ad__label">Sponsor logo</span>
+                <p class="ad__upload">
+                  <img v-if="form.logo" :src="form.logo" alt="" />
+                  <button type="button" class="cs-tab cs-tab--sm" @click="logoInput.click()"><Icon name="clip" :size="16" /> {{ form.logo ? form.logoName : 'Upload a logo' }}</button>
+                </p>
+                <input ref="logoInput" type="file" accept="image/*" hidden aria-label="Choose a sponsor logo" @change="onLogo" />
+              </div>
+              <div class="ad__formfoot">
+                <small>{{ form.how === 'upload' ? 'Re-fitted to' : 'Made for' }} this spot{{ fillSpot.mobile ? ' and phones' : '' }}{{ form.how === 'upload' ? '' : ` · about ${fillSizes.length} credit${fillSizes.length === 1 ? '' : 's'}` }}</small>
+                <button type="button" class="cs-btn-ghost" @click="fillId = ''">Cancel</button>
+                <button type="submit" class="cs-btn-dark" :disabled="!canCreate || state.working"><Icon name="spark" :size="16" /> Create ad</button>
+              </div>
+            </form>
+            <div v-if="editing && editing.spot && editing.spot.startsWith(`${o.id}#`)" class="ad__editing">
+              <AdSuite :project="project" :ad="editing" />
+              <button type="button" class="cs-btn-ghost ad__done" @click="editId = ''">Done</button>
             </div>
           </div>
-          <div class="ad__field">
-            <span class="ad__label">How to make it</span>
-            <div class="cs-tabs" role="radiogroup" aria-label="How to make the ad">
-              <button v-for="h in HOWS" :key="h.id" type="button" role="radio" class="cs-tab cs-tab--sm" :class="{ 'is-on': form.how === h.id }" :aria-checked="form.how === h.id" :title="h.note" @click="h.id === 'upload' && !form.upload ? uploadInput.click() : (form.how = h.id)">
-                <Icon :name="h.icon" :size="16" /> {{ h.label }}
-              </button>
-            </div>
-            <input ref="uploadInput" type="file" accept="image/*" hidden aria-label="Choose an ad file" @change="onUpload" />
-            <p v-if="form.how === 'upload' && form.upload" class="ad__upload"><img :src="form.upload" alt="" /> {{ form.uploadName }} <button type="button" class="ad__link" @click="uploadInput.click()">Change</button></p>
-          </div>
-          <div class="ad__grid">
-            <label class="ad__input"><span>{{ form.purpose === 'sponsor' ? 'Sponsor name' : 'Headline' }}</span><input v-model="form.name" type="text" maxlength="40" /></label>
-            <label class="ad__input"><span>Short line</span><input v-model="form.tagline" type="text" maxlength="90" /></label>
-            <label class="ad__input"><span>Button</span><input v-model="form.cta" type="text" maxlength="24" /></label>
-            <label class="ad__input"><span>Link</span><input v-model="form.url" type="url" placeholder="https://" /></label>
-          </div>
-          <div v-if="form.purpose === 'sponsor'" class="ad__field">
-            <span class="ad__label">Sponsor logo</span>
-            <p class="ad__upload">
-              <img v-if="form.logo" :src="form.logo" alt="" />
-              <button type="button" class="cs-tab cs-tab--sm" @click="logoInput.click()"><Icon name="clip" :size="16" /> {{ form.logo ? form.logoName : 'Upload a logo' }}</button>
-            </p>
-            <input ref="logoInput" type="file" accept="image/*" hidden aria-label="Choose a sponsor logo" @change="onLogo" />
-          </div>
-          <div class="ad__formfoot">
-            <small v-if="!sizes.length">Pick at least one banner above first.</small>
-            <small v-else>{{ form.how === 'upload' ? 'Re-fitted' : 'Made' }} in {{ sizes.length }} sizes{{ form.how === 'upload' ? '' : ` · about ${form.how === 'single' ? 1 : sizes.length} credit${form.how === 'single' ? '' : 's'}` }}</small>
-            <button v-if="ads.items.length" type="button" class="cs-btn-ghost" @click="formOpen = false">Cancel</button>
-            <button type="submit" class="cs-btn-dark" :disabled="!canCreate || state.working"><Icon name="spark" :size="16" /> Create ad</button>
-          </div>
-        </form>
+        </section>
 
-        <p v-for="r in removed" :key="r.id" class="ad__gone" role="status"><b>{{ r.name }}</b> was deleted. <button type="button" @click="restoreAd(project, r.id)">Undo</button></p>
-        <AdSuite v-for="a in ads.items" :key="a.id" :project="project" :ad="a" />
+        <template v-if="unplaced.length">
+          <h4 class="ad__unplaced">Not on the pages <small>Their spots are turned off above</small></h4>
+          <AdSuite v-for="a in unplaced" :key="a.id" :project="project" :ad="a" />
+        </template>
       </section>
     </div>
   </div>
@@ -219,6 +261,20 @@ function preview(screen) {
 .ad__link { border: 0; background: none; color: var(--accent); font-weight: 700; cursor: pointer; }
 .ad__formfoot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
 .ad__formfoot small { margin-right: auto; color: var(--ink-3); }
+.ad__formtitle { margin: 0; font-size: 14px; color: var(--ink-2); }
+.ad__formtitle b { color: var(--ink); font-size: 16px; }
+.ad__bypage { display: grid; gap: 14px; padding: 18px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); }
+.ad__bypage h4, .ad__unplaced { display: flex; align-items: baseline; gap: 10px; margin: 0; font-size: 17px; }
+.ad__bypage h4 small, .ad__unplaced small { color: var(--ink-3); font-size: 13px; font-weight: 400; }
+.ad__row { display: grid; gap: 10px; }
+.ad__row + .ad__row { padding-top: 14px; border-top: 1px solid var(--line); }
+.ad__rowlabel { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.ad__spots { display: grid; gap: 12px; }
+.ad__spots.is-box { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.ad__spots.is-tall { grid-template-columns: repeat(auto-fill, minmax(220px, 260px)); }
+.ad__spots.is-wide { grid-template-columns: 1fr; }
+.ad__editing { display: grid; gap: 8px; justify-items: end; }
+.ad__editing > :first-child { justify-self: stretch; }
 @media (max-width: 900px) { .ad__pages { grid-template-columns: 1fr; } .ad__grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 640px) { .ad__inner { padding: 20px 14px 48px; } .ad__grid { grid-template-columns: 1fr; } }
 </style>

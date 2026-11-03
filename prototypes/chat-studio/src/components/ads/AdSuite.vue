@@ -10,7 +10,7 @@
 import { computed, nextTick, reactive, ref } from 'vue'
 import Icon from '../Icon.vue'
 import AdPreview from './AdPreview.vue'
-import { AD_SIZES, PURPOSES, packageSizes, designSize, designPackage, reviseAd, removeSize, removeAd } from '../../ads.js'
+import { AD_SIZES, PURPOSES, adSizes, spotLabel, designSize, designPackage, reviseAd, removeSize, removeAd } from '../../ads.js'
 import { adsChat, editInChat, packageAds, state as agent } from '../../mockAgent.js'
 
 const props = defineProps({
@@ -18,7 +18,8 @@ const props = defineProps({
   ad: { type: Object, required: true },
   compact: { type: Boolean, default: false },
 })
-const sizes = computed(() => packageSizes(props.project.ads))
+const sizes = computed(() => adSizes(props.project.ads, props.ad))
+const where = computed(() => spotLabel(props.project.ads, props.ad))
 const purpose = computed(() => PURPOSES.find((p) => p.id === props.ad.purpose))
 const state = (s) => props.ad.sizes[s] || 'idle'
 const idle = computed(() => sizes.value.filter((s) => state(s) === 'idle'))
@@ -92,11 +93,11 @@ function pack() { packageAds(props.project, [props.ad], `Looks good, package ${p
       <span class="as__mark"><img v-if="ad.logo" :src="ad.logo" alt="" /><Icon v-else :name="purpose?.icon || 'image'" :size="20" /></span>
       <span class="as__name">
         <b>{{ ad.name }}</b>
-        <small><span class="as__badge">{{ purpose?.label }}</span> {{ how }}<template v-if="ad.url"> · <a :href="ad.url" target="_blank" rel="noopener sponsored">{{ ad.url.replace(/^https?:\/\//, '') }}</a></template></small>
+        <small><span class="as__badge">{{ purpose?.label }}</span><span v-if="where" class="as__badge is-spot">{{ where }}</span> {{ how }}<template v-if="ad.url"> · <a :href="ad.url" target="_blank" rel="noopener sponsored">{{ ad.url.replace(/^https?:\/\//, '') }}</a></template></small>
       </span>
       <span class="as__count">{{ ready }} of {{ sizes.length }} sizes</span>
       <button v-if="idle.length && !compact" type="button" class="cs-btn-dark as__all" :disabled="working" @click="all">
-        <Icon name="spark" :size="16" /> Design the whole package
+        <Icon name="spark" :size="16" /> {{ idle.length === sizes.length ? 'Design this ad' : 'Design the rest' }}
       </button>
       <span class="as__adacts">
         <button type="button" class="as__act" :class="{ 'is-on': details }" :aria-expanded="compact ? undefined : !!details" :aria-label="compact ? `Edit ${ad.name} in the chat` : `Edit ${ad.name}'s details`" @click="editAd"><Icon name="pencil" :size="15" /> Edit</button>
@@ -170,6 +171,7 @@ function pack() { packageAds(props.project, [props.ad], `Looks good, package ${p
 .as__name b { font-size: 17px; }
 .as__name small { color: var(--ink-3); font-size: 13px; }
 .as__name a { color: var(--ink-2); }
+.as__badge.is-spot { background: var(--surface-3); color: var(--ink-2); }
 .as__badge { display: inline-block; padding: 0 8px; margin-right: 4px; border-radius: 999px; background: var(--navy-50); color: var(--navy-900); font-weight: 700; font-size: 12px; line-height: 20px; }
 .as__count { font-size: 13px; color: var(--ink-3); white-space: nowrap; }
 .as__all { min-height: 40px; }

@@ -12,7 +12,7 @@ import { route, go } from '../router.js'
 import AdMosaic from './ads/AdMosaic.vue'
 import LibrarySearch from './LibrarySearch.vue'
 import BannerStack from './BannerStack.vue'
-import { readySizes, AD_SIZES, PURPOSES } from '../ads.js'
+import { readySizes, AD_SIZES, PURPOSES, spotLabel } from '../ads.js'
 import { facetItems, facetCategories, applyFacets } from '../libraryFacets.js'
 
 const props = defineProps({ kind: { type: String, required: true } })
@@ -22,7 +22,7 @@ const COPY = {
   banners: { title: 'Banners', how: 'Each project’s landing-page banners, newest in front. Hover a stack to peek at the ones behind, move across it to flip through, and click to open the project.' },
   logos: { title: 'Logos', how: 'Every version of each project’s logo. Hover to flip through the looks; the green tag marks the one on the pages. Click to open the project.' },
   pages: { title: 'Pages', how: 'Each project’s Presto pages, with earlier drafts behind. Click a stack to see them full size.' },
-  ads: { title: 'Advertisements', how: 'Each ad in every size its event offers. Hover a size to bring it forward; dashed outlines aren’t designed yet. Click to change it in the project’s Advertisements.' },
+  ads: { title: 'Advertisements', how: 'Each ad in the spot it fills, in that spot’s size and its phone size. Hover a size to bring it forward; dashed outlines aren’t designed yet. Click to change it in the project’s Advertisements.' },
 }
 const NOUN = { banners: ['project', 'projects'], logos: ['project', 'projects'], pages: ['project', 'projects'], ads: ['ad', 'ads'] }
 
@@ -143,7 +143,7 @@ const filtered = computed(() => tags.value.length || !!route.q)
           <AdMosaic :ad="x.a" :project="x.p" :label="`${x.a.name} on ${x.p.name}`" @open="go({ view: 'project', project: x.p.slug, tab: 'ads' })" />
           <div class="lib__meta">
             <span class="lib__mark"><img :src="logoOf(x.p)" alt="" /></span>
-            <span><b>{{ x.a.name }}</b><small>{{ purposeLabel(x.a.purpose) }} · {{ x.p.name }} · {{ readySizes(x.a).length }} {{ readySizes(x.a).length === 1 ? 'size' : 'sizes' }}</small></span>
+            <span><b>{{ x.a.name }}</b><small>{{ purposeLabel(x.a.purpose) }} · {{ x.p.name }}<template v-if="spotLabel(x.p.ads, x.a)"> · {{ spotLabel(x.p.ads, x.a) }}</template></small></span>
           </div>
         </li>
       </ul>

@@ -5,7 +5,7 @@ import { computed } from 'vue'
 import CardShell from './CardShell.vue'
 import Icon from '../Icon.vue'
 import AdSuite from '../ads/AdSuite.vue'
-import { offerById, packageSizes, restoreAd } from '../../ads.js'
+import { offerById, spotsOf, restoreAd } from '../../ads.js'
 import { route } from '../../router.js'
 
 const props = defineProps({ project: { type: Object, required: true }, card: { type: Object, required: true } })
@@ -15,7 +15,7 @@ const offers = computed(() => props.project.ads.offers.map(offerById).filter(Boo
 </script>
 
 <template>
-  <CardShell kicker="Advertisements" title="Your ad placements" :aside="`${offers.length} placements · ${packageSizes(project.ads).length} sizes`">
+  <CardShell kicker="Advertisements" title="Your ad placements" :aside="`${offers.length} placements · ${spotsOf(project.ads).length} spots`">
     <ul class="asc__offers">
       <li v-for="o in offers" :key="o.id"><Icon name="check" :size="14" /> {{ o.label }} <small>{{ o.size.replace('x', '×') }}</small></li>
     </ul>

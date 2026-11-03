@@ -45,6 +45,34 @@ export function packageSizes(ads) {
   return [...set].sort((a, b) => AD_SIZES[b].width * AD_SIZES[b].height - AD_SIZES[a].width * AD_SIZES[a].height)
 }
 
+// ---------- Spots: each unit of a placement, filled on its own ----------
+// A placement of 3 banners is three spots (Banner 1, 2, 3). Each spot holds its
+// own ad, made in that spot's size (and its phone size); ads aren't designed as
+// a matching set across sizes.
+const KIND = { '340x215': 'Banner', '160x600': 'Skyscraper', '970x90': 'Leaderboard', '728x90': 'Leaderboard', '970x250': 'Billboard', '300x250': 'Rectangle', '300x600': 'Half page' }
+/** Every spot the picked placements make, in page order. */
+export function spotsOf(ads) {
+  return OFFERS.filter((o) => ads.offers.includes(o.id)).flatMap((o) => Array.from({ length: o.count }, (_, i) => ({
+    id: `${o.id}#${i + 1}`, offer: o, page: o.page, size: o.size, mobile: offerMobile(o), n: i + 1,
+    label: `${KIND[o.size] || 'Ad'}${o.count > 1 ? ` ${i + 1}` : ''}`,
+  })))
+}
+export const spotById = (ads, id) => spotsOf(ads).find((s) => s.id === id)
+export const adInSpot = (ads, spotId) => ads.items.find((a) => a.spot === spotId)
+export const firstEmptySpot = (ads) => spotsOf(ads).find((s) => !adInSpot(ads, s.id)) || null
+export const pageLabel = (id) => PAGES.find((p) => p.id === id)?.label || id
+/** Where an ad runs, e.g. "Banner 3 · Landing page" (or null if its spot is turned off). */
+export function spotLabel(ads, ad) {
+  const s = ad.spot && spotById(ads, ad.spot)
+  return s ? `${s.label} · ${pageLabel(s.page)}` : null
+}
+/** The sizes an ad is made in: its spot's size and phone size (an ad outside a spot: every size the placements need). */
+export function adSizes(ads, ad) {
+  const s = ad.spot && spotById(ads, ad.spot)
+  if (s) return [s.size, ...(s.mobile ? [s.mobile] : [])]
+  return ad.spot ? Object.keys(ad.sizes).filter((z) => ad.sizes[z] === 'ready') : packageSizes(ads)
+}
+
 /** What an ad can point to. House ads promote the event's own pages. */
 export const PURPOSES = [
   { id: 'sponsor', label: 'Sponsor', icon: 'users' },
@@ -92,6 +120,7 @@ export function createAd(project, form) {
     colors: form.colors || (house
       ? { background: project.palette[0], foreground: '#FFFFFF', accent: project.palette[1] }
       : { background: '#0F172A', foreground: '#FFFFFF', accent: '#F59E0B' }),
+    spot: form.spot || null, // the spot it fills (see spotsOf)
     upload: form.upload || null, // the uploaded ad (object URL) when how = 'upload'
     artwork: {}, // { size: { src } } — re-fitted uploads
     overrides: {}, // { size: { colors, tagline, cta } } — changes asked for on one size only
@@ -111,7 +140,7 @@ export async function designSize(project, ad, size, delay = 1400) {
   project.updated = Date.now()
 }
 export async function designPackage(project, ad, { speed = 1 } = {}) {
-  const sizes = packageSizes(project.ads)
+  const sizes = adSizes(project.ads, ad)
   sizes.forEach((s) => { if (ad.sizes[s] !== 'ready') ad.sizes[s] = 'working' })
   await Promise.all(sizes.map((s, i) => designSize(project, ad, s, (900 + i * 450) * speed)))
 }
@@ -206,10 +235,11 @@ export function prestoAds(ads) {
   // One sponsor per ad, plus a variant for each size that has its own changes.
   const sponsors = live.flatMap((a) => [asSponsor(a), ...Object.keys(a.overrides || {}).map((sz) => asSponsor(a, sz))])
   const idFor = (a, size) => (a.overrides?.[size] ? `${a.id}@${size}` : a.id)
+  // One placement per spot, showing just the ad in that spot (empty spots stay empty).
   const placements = { landing: [], browse: [], details: [] }
-  for (const oid of ads?.offers || []) {
-    const o = offerById(oid)
-    if (o) placements[o.page].push(createPlacement({ slot: o.slot, size: o.size, count: o.count, sponsorIds: live.map((a) => idFor(a, o.size)) }))
+  for (const s of ads ? spotsOf(ads) : []) {
+    const a = live.find((x) => x.spot === s.id)
+    placements[s.page].push(createPlacement({ slot: s.offer.slot, size: s.size, count: 1, sponsorIds: a ? [idFor(a, s.size)] : [] }))
   }
   return { enabled: !!(sponsors.length && ads.offers.length), sponsors, placements, railMode: 'auto', presets: {} }
 }
@@ -217,20 +247,27 @@ export function prestoAds(ads) {
 /** A short key that changes whenever the ads on the pages would change. */
 export function adsKey(ads) {
   if (!ads) return ''
-  return `${ads.offers.join()}|${ads.items.map((a) => `${a.id}:${readySizes(a).join('+')}:${a.colors.background}${a.colors.accent}:${a.tagline}:${a.cta}:${JSON.stringify(a.overrides || {})}`).join(',')}`
+  return `${ads.offers.join()}|${ads.items.map((a) => `${a.id}@${a.spot}:${readySizes(a).join('+')}:${a.colors.background}${a.colors.accent}:${a.tagline}:${a.cta}:${JSON.stringify(a.overrides || {})}`).join(',')}`
 }
 
-/** Seed ads for a sample project (Heartland): sponsors from brand-studio + an FAQ house ad. */
+/**
+ * Seed ads for a sample project (Heartland), one per spot: sponsors from
+ * brand-studio and an FAQ house ad, with a couple of spots left to fill.
+ */
 export function seedAds(project) {
   for (const o of ['landing-banners', 'browse-rail', 'details-bottom']) if (!project.ads.offers.includes(o)) project.ads.offers.push(o)
-  const sizes = packageSizes(project.ads)
-  const spn = SAMPLE_SPONSORS.slice(0, 2)
-  for (const s of [...spn].reverse()) {
-    const ad = createAd(project, { purpose: 'sponsor', how: 'package', name: s.name, tagline: s.tagline, cta: s.cta, url: s.url, logo: s.logo?.src, colors: { ...s.colors } })
-    sizes.forEach((z) => { ad.sizes[z] = 'ready' })
+  const [fire, velo] = SAMPLE_SPONSORS
+  const sponsor = (s) => ({ purpose: 'sponsor', how: 'package', name: s.name, tagline: s.tagline, cta: s.cta, url: s.url, logo: s.logo?.src, colors: { ...s.colors } })
+  // Only open spots: the agent's own ad (About) already sits in the first one.
+  const fill = (spot, form) => {
+    if (adInSpot(project.ads, spot)) return
+    const ad = createAd(project, { ...form, spot })
+    adSizes(project.ads, ad).forEach((z) => { ad.sizes[z] = 'ready' })
   }
-  const faq = createAd(project, { purpose: 'faq', how: 'single', ...purposeDefaults('faq', project.brand) })
-  ;['970x250', '320x100'].forEach((z) => { faq.sizes[z] = 'ready' })
+  fill('landing-banners#1', sponsor(fire))
+  fill('landing-banners#2', sponsor(fire))
+  fill('browse-rail#1', sponsor(velo))
+  fill('details-bottom#1', { purpose: 'faq', how: 'package', ...purposeDefaults('faq', project.brand) })
 }
 
 // ---------- Re-fitting an uploaded ad to another size (canvas) ----------

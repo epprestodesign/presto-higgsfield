@@ -8,7 +8,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import Icon from '../Icon.vue'
 import AdPreview from './AdPreview.vue'
-import { AD_SIZES, packageSizes, readySizes } from '../../ads.js'
+import { AD_SIZES, adSizes, readySizes } from '../../ads.js'
 
 const props = defineProps({
   ad: { type: Object, required: true },
@@ -23,7 +23,7 @@ const H = 400
 const PAD = 22
 const GAP = 14
 const sizes = computed(() => {
-  const all = new Set([...packageSizes(props.project.ads), ...readySizes(props.ad)])
+  const all = new Set([...adSizes(props.project.ads, props.ad), ...readySizes(props.ad)])
   return [...all].filter((s) => AD_SIZES[s])
 })
 const ready = (s) => props.ad.sizes[s] === 'ready'
