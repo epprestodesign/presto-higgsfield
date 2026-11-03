@@ -135,7 +135,27 @@ export const AD_TYPES = [
   { id: 'neon', label: 'Neon sign', note: 'Glowing tube lettering at night', logo: false, model: 'marketing-studio/image/flare', ref: ref('neon'),
     copy: () => ({ name: '30 days to kickoff', tagline: 'Book your hotel' }) },
 ]
-export const typeById = (id) => AD_TYPES.find((t) => t.id === id) || null
+// Brand directions: look-and-feel directions generated per event from its own
+// brand (the logo as a reference image, its colours, type and photos), each
+// paired with the kind of page on the event's site it suits (see siteScrape).
+// Real Higgsfield generations (Ideogram 4.5, Nov 2026). `like` is the style
+// the stand-in generator borrows for other sizes.
+const dirs = import.meta.glob('./assets/directions/*/*.webp', { eager: true, query: '?url', import: 'default' })
+const dir = (brand, name) => dirs[`./assets/directions/${brand}/${name}.webp`]
+export const BRAND_DIRECTIONS = {
+  heartland: [
+    { id: 'hl-lights', label: 'Under the lights', note: 'Floodlit match photo, crest top-left', kind: 'travel', logo: true, like: 'split', model: 'ideogram/v4.0', ref: dir('heartland', 'lights') },
+    { id: 'hl-map', label: 'Field map', note: 'Illustrated fields, parking and shuttle', kind: 'venue', logo: true, like: 'map', model: 'ideogram/v4.0', ref: dir('heartland', 'map') },
+    { id: 'hl-scoreboard', label: 'Scoreboard', note: 'Stadium LED board with the dates', kind: 'schedule', logo: false, like: 'neon', model: 'ideogram/v4.0', ref: dir('heartland', 'scoreboard') },
+    { id: 'hl-checklist', label: 'Kit bag checklist', note: 'Flat-lay, crest on a clipboard', kind: 'faq', logo: true, like: 'editorial', model: 'ideogram/v4.0', ref: dir('heartland', 'checklist') },
+    { id: 'hl-crest', label: 'Crest & kit', note: 'The crest big, on kit stripes', kind: 'about', logo: true, like: 'bauhaus', model: 'ideogram/v4.0', ref: dir('heartland', 'crest') },
+    { id: 'hl-pennants', label: 'Pennant wall', note: 'Felt pennants, one per partner', kind: 'sponsors', logo: true, like: 'retro', model: 'ideogram/v4.0', ref: dir('heartland', 'pennants') },
+  ],
+}
+/** An event's own directions, or null when none have been generated yet. */
+export const directionsFor = (brandId) => BRAND_DIRECTIONS[brandId] || null
+const ALL_LOOKS = [...AD_TYPES, ...Object.values(BRAND_DIRECTIONS).flat()]
+export const typeById = (id) => ALL_LOOKS.find((t) => t.id === id) || null
 /** Three looks to start from, for an event (ticked on the looks card): one safe, one useful, one bold. */
 export function suggestTypes(brandId) {
   return ({
@@ -182,7 +202,9 @@ export async function mockGenerate({ ad, size, model, type = null, info = {}, v 
   const ctx = c.getContext('2d')
   ctx.scale(k, k)
   const brand = ad.colors || { background: '#0F172A', foreground: '#FFFFFF', accent: '#F59E0B' }
-  const T = typeById(type)
+  const D = typeById(type)
+  // A brand direction draws like the style it borrows, keeping its own logo rule.
+  const T = D?.like ? { ...typeById(D.like), logo: D.logo } : D
   const st = STYLE[model] || STYLE[MODELS[0].id]
   const L = T ? lookOf(T.id, brand) : { bg: brand.background, fg: brand.foreground, ac: brand.accent, font: st.font, upper: st.upper }
   const copy = { name: ad.name, tagline: ad.tagline, ...(T?.copy && ad.purpose === 'about' ? T.copy(ad, info) : {}) }

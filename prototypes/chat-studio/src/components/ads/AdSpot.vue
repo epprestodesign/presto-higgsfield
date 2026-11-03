@@ -8,6 +8,7 @@ import { MODELS, modelById, AD_TYPES, typeById } from '../../imageModels.js'
 import Icon from '../Icon.vue'
 import AdPreview from './AdPreview.vue'
 import { AD_SIZES, PURPOSES, removeAd, useModel, useType } from '../../ads.js'
+import { KIND_LABEL } from '../../siteScrape.js'
 
 const props = defineProps({
   project: { type: Object, required: true },
@@ -19,7 +20,7 @@ const emit = defineEmits(['fill', 'edit'])
 const W = computed(() => AD_SIZES[props.spot.size].width)
 const H = computed(() => AD_SIZES[props.spot.size].height)
 const state = computed(() => props.ad?.sizes[props.spot.size] || 'idle')
-const purpose = computed(() => PURPOSES.find((p) => p.id === props.ad?.purpose))
+const purpose = computed(() => (props.ad?.kind ? { label: KIND_LABEL[props.ad.kind] } : PURPOSES.find((p) => p.id === props.ad?.purpose)))
 const gen = computed(() => props.ad?.gen?.[props.spot.size])
 const models = ref(false)
 const looks = ref(false)

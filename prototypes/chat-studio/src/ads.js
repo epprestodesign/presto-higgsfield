@@ -128,7 +128,9 @@ export function createAd(project, form) {
     artwork: {}, // { size: { src } } — the finished image per size (generated, or a re-fitted upload)
     gen: {}, // { size: { model, why, v } } — which Higgsfield model made each size, and why
     model: null, // a model the person picked for this ad (else the agent picks per size)
-    type: form.type || null, // the look (imageModels AD_TYPES): Event photo, Hotel deal…
+    type: form.type || null, // the look: a brand direction or a style (imageModels)
+    link: form.link || null, // the page on the event's site it links to (siteScrape), and its kind
+    kind: form.kind || null,
     overrides: {}, // { size: { colors, tagline, cta } } — changes asked for on one size only
     sizes: {}, // { size: 'idle' | 'working' | 'ready' }
     created: Date.now(),
@@ -145,6 +147,14 @@ export async function paint(project, ad, size) {
   if (ad.how === 'upload' && ad.upload) { ad.artwork[size] = { src: await refit(ad.upload, size) }; return }
   const pick = pickModel(ad, size)
   const v = (ad.gen[size]?.v ?? -1) + 1
+  // A brand direction on the page it was made for, first time round, at the
+  // landing banner's shape: the real Higgsfield image.
+  const D = typeById(ad.type)
+  if (D?.ref && D.kind && D.kind === ad.kind && size === LANDING_SIZE && v === 0 && !ad.overrides?.[size]) {
+    ad.artwork[size] = { src: D.ref }
+    ad.gen[size] = { model: pick.id, why: pick.why, v, real: true }
+    return
+  }
   const b = project.brand
   const info = { photo: project.selected?.src || b.images[0]?.src, photos: b.images.map((i) => i.src), dates: b.dates, place: b.place, name: b.name, short: b.short }
   ad.artwork[size] = { src: await mockGenerate({ ad: adIn(ad, size), size, model: pick.id, type: ad.type, info, v }) }

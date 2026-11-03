@@ -5,7 +5,8 @@ import { reactive } from 'vue'
 import { BRANDS, brandFor } from './mockData.js'
 import { route, go } from './router.js'
 import { newAds, seedAds, createAd, purposeDefaults, readySizes, designSize, designPackage, AD_SIZES, adSizes, firstEmptySpot, spotsOf, pageLabel, offerById, PURPOSES, paintAll } from './ads.js'
-import { pickModel, modelById, typeById, suggestTypes } from './imageModels.js'
+import { pickModel, modelById, typeById, suggestTypes, directionsFor } from './imageModels.js'
+import { scrapeSite, KIND_LABEL } from './siteScrape.js'
 
 export const state = reactive({
   projects: [],
@@ -244,10 +245,8 @@ const STEP = {
   ads: (p) => {
     const first = stagesFor(p)[0].id === 'ads' && !p.ads.offers.length
     return {
-      steps: [...(first ? ['Reading your brief', `Looking up ${p.brand.website} for the logo and colours`] : []), 'Checking the ad placements Presto approves'],
-      text: first
-        ? `Let’s make the ads for **${p.brand.name}**. I’ll use the logo and colours from ${p.brand.website}. Where should they run, and what should they promote?`
-        : 'Where should ads run, and what should they promote? Pick both, and I’ll show you the placements and sizes on each page.',
+      steps: [...(first ? ['Reading your brief'] : []), `Scraping ${p.brand.website}: ${scrapeSite(p.brand).length} pages found`, 'Ranking the pages for hotels and getting there', 'Checking the ad placements Presto approves'],
+      text: `${first ? `Let’s make the ads for **${p.brand.name}**, in its own logo and colours. ` : ''}I read **${p.brand.website}** and ranked its pages by what helps guests most, starting with hotels. Pick where the ads run and which pages they link to.`,
       card: { type: 'adsWhere' },
       chips: [],
     }
@@ -438,17 +437,21 @@ export const sizeName = (s) => `${s.replace('x', '×')} ${AD_SIZES[s]?.name || '
 const lower = (t) => t.charAt(0).toLowerCase() + t.slice(1)
 const and = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`)
 
-const PROMOTE_SAY = { about: 'our About page', faq: 'our FAQ', sponsors: 'our Sponsors page', sponsor: 'sponsors' }
 /**
- * Ads, 1 of 4: the pages picked ("Landing page", "Hotel browse"…) and what the
- * ads promote (About, FAQ, Sponsors page, sponsors). Next: their placements.
+ * Ads, 1 of 4: the Presto pages picked ("Landing page", "Hotel browse"…) and
+ * what the ads link to: pages scraped from the event's site (ids like
+ * "/travel"), plus 'sponsor' to leave spots for sponsors' own ads.
  */
-export function chooseAdPages(p, pages, card, promote = ['about', 'sponsor']) {
+export function chooseAdPages(p, pages, card, promote) {
+  const site = scrapeSite(p.brand)
+  promote = promote || [...site.slice(0, 3).map((x) => x.id), 'sponsor']
   if (state.working || !pages.length || !promote.length) return
   if (card) { card.picked = [...pages]; card.promote = [...promote] }
   p.ads.promote = [...promote]
+  const links = site.filter((x) => promote.includes(x.id))
   return run(async () => {
-    userMsg(p, `Ads on the ${and(pages.map((x) => pageLabel(x).toLowerCase()))}, for ${and(promote.map((x) => PROMOTE_SAY[x]))}`)
+    const what = [...links.map((x) => lower(x.title)), ...(promote.includes('sponsor') ? ['our sponsors'] : [])]
+    userMsg(p, `Ads on the ${and(pages.map((x) => pageLabel(x).toLowerCase()))}, linking to ${and(what)}`)
     await agentTurn(p, {
       steps: [`Finding the approved placements on ${pages.length === 1 ? 'that page' : `those ${pages.length} pages`}`],
       text: 'Here are the approved placements and sizes. I ticked the usual ones; change them, then confirm.',
@@ -470,7 +473,7 @@ export function chooseAdPlacements(p, offerIds, card) {
     const pages = [...new Set(spots.map((s) => s.page))]
     await agentTurn(p, {
       steps: [`Setting up ${spots.length} ad spots`, 'Making sample ads in your colours'],
-      text: `That’s **${spots.length} ad spots** ${pages.length === 1 ? `on the ${pageLabel(pages[0]).toLowerCase().replace(/(?<!page)$/, ' page')}` : `across the ${and(pages.map((x) => pageLabel(x).toLowerCase()))}`}. What should they look like? Pick a few looks and I’ll spread them across the spots. I ticked three that suit ${p.brand.short}.`,
+      text: `That’s **${spots.length} ad spots** ${pages.length === 1 ? `on the ${pageLabel(pages[0]).toLowerCase().replace(/(?<!page)$/, ' page')}` : `across the ${and(pages.map((x) => pageLabel(x).toLowerCase()))}`}. ${directionsFor(p.brand.id) ? `Here are look-and-feel directions made from ${p.brand.short}’s own brand, one for each kind of page. I ticked the ones for the pages you picked.` : `What should they look like? Pick a few looks and I’ll spread them across the spots. I ticked three that suit ${p.brand.short}.`}`,
       card: { type: 'adsLooks', picked: null },
       chips: [],
     })
@@ -478,8 +481,21 @@ export function chooseAdPlacements(p, offerIds, card) {
 }
 
 // The looks picked, used in turn: the next spot gets the one used least.
+/** The looks to tick first: the event's own directions for the pages picked, else three styles. */
+export function suggestedLooks(p) {
+  const own = directionsFor(p.brand.id)
+  if (!own) return suggestTypes(p.brand.id)
+  const kinds = scrapeSite(p.brand).filter((x) => (p.ads.promote || []).includes(x.id)).map((x) => x.kind)
+  const mine = own.filter((d) => kinds.includes(d.kind)).map((d) => d.id)
+  return mine.length ? mine : own.slice(0, 3).map((d) => d.id)
+}
+// The look for an ad: the picked direction made for its kind of page, else the one used least.
+function lookFor(p, kind) {
+  const looks = p.ads.looks?.length ? p.ads.looks : suggestedLooks(p)
+  return looks.find((t) => typeById(t)?.kind === kind) || nextLook(p)
+}
 export function nextLook(p) {
-  const looks = p.ads.looks?.length ? p.ads.looks : suggestTypes(p.brand.id)
+  const looks = p.ads.looks?.length ? p.ads.looks : suggestedLooks(p)
   const used = (t) => p.ads.items.filter((a) => a.type === t && a.spot).length
   return [...looks].sort((x, y) => used(x) - used(y))[0]
 }
@@ -492,25 +508,24 @@ export function chooseAdLooks(p, types, card) {
   return run(async () => {
     userMsg(p, `Let’s go with ${and(types.map((t) => typeById(t).label.toLowerCase()))}`)
     const spots = spotsOf(p.ads)
-    // One ad for each of your own pages picked (About, FAQ, Sponsors page), in
-    // the first open spots; sponsors get the rest.
-    const promote = p.ads.promote || ['about', 'sponsor']
+    // One ad per page picked from the site, best first (hotels), in the first
+    // open spots, each in the direction made for that kind of page; sponsors get the rest.
+    const promote = p.ads.promote || []
     const made = []
-    for (const purpose of promote.filter((x) => x !== 'sponsor')) {
-      if (p.ads.items.some((a) => a.purpose === purpose && spots.some((s) => s.id === a.spot))) continue
+    for (const page of scrapeSite(p.brand).filter((x) => promote.includes(x.id))) {
+      if (p.ads.items.some((a) => a.link === page.id && spots.some((s) => s.id === a.spot))) continue
       const spot = firstEmptySpot(p.ads)
       if (!spot) break
-      const ad = createAd(p, { purpose, how: 'package', ...purposeDefaults(purpose, p.brand), spot: spot.id, type: nextLook(p) })
+      const ad = createAd(p, adFromPage(p, page, spot, lookFor(p, page.kind)))
       adSizes(p.ads, ad).forEach((z) => { ad.sizes[z] = 'ready' })
       paintAll(p, ad)
-      made.push({ ad, spot })
+      made.push({ ad, spot, page })
     }
     const openSpots = spots.filter((s) => !p.ads.items.some((a) => a.spot === s.id))
     const open = openSpots.length
-    const WHAT = { about: 'About page', faq: 'FAQ', sponsors: 'Sponsors page' }
     const ok = await agentTurn(p, {
-      steps: made.length ? made.map((m) => `Generating your ${WHAT[m.ad.purpose]} ad (${typeById(m.ad.type).label}) for ${m.spot.label} with ${modelById(pickModel(m.ad, m.spot.size).id).label}`) : ['Saving your looks'],
-      text: `${made.length ? `I made ${and(made.map((m) => `your **${WHAT[m.ad.purpose]}** ad as **${typeById(m.ad.type).label}** in **${m.spot.label}**`))}.` : 'Your looks are saved.'}${open === 1 ? ` **${openSpots[0].label}** is open${promote.includes('sponsor') ? ' for a sponsor' : ''}: fill it below.` : open ? ` ${made.length ? 'The rest are' : 'They’re'} open${promote.includes('sponsor') ? ' for sponsors' : ''}: fill them below.` : ''} Change any ad’s look or model on its spot.`,
+      steps: made.length ? made.map((m) => `Generating “${m.page.title}” (${typeById(m.ad.type).label}) for ${m.spot.label} with ${modelById(pickModel(m.ad, m.spot.size).id).label}`) : ['Saving your looks'],
+      text: `${made.length ? `I made ${and(made.map((m) => `**${m.page.title}** as **${typeById(m.ad.type).label}** in **${m.spot.label}**`))}, each linking back to ${p.brand.website}.` : 'Your looks are saved.'}${open === 1 ? ` **${openSpots[0].label}** is open${promote.includes('sponsor') ? ' for a sponsor' : ''}: fill it below.` : open ? ` ${made.length ? 'The rest are' : 'They’re'} open${promote.includes('sponsor') ? ' for sponsors' : ''}: fill them below.` : ''} Change any ad’s look or model on its spot.`,
       card: { type: 'adsSpots' },
       chips: ['Open Advertisements'],
     })
@@ -526,12 +541,20 @@ export function modelSay(ad, spot) {
   return b ? `${one(spot.size, a)}, and the ${one(spot.mobile, b).replace(' with', ' phone size with')}` : one(spot.size, a)
 }
 
-/** Ads, 4 of 4: fill a spot from the chat with a house ad (About, FAQ, Sponsors page). */
-export function fillSpotInChat(p, spot, purpose) {
+const PURPOSE_OF = { about: 'about', faq: 'faq', sponsors: 'sponsors' }
+/** An ad that links back to a page of the event's site, in a look. */
+export function adFromPage(p, page, spot, type) {
+  return { purpose: PURPOSE_OF[page.kind] || 'link', how: 'package', ...page.ad, url: page.url, link: page.id, kind: page.kind, spot: spot.id, type }
+}
+
+/** Ads, 4 of 4: fill a spot from the chat with a page from the event's site. */
+export function fillSpotInChat(p, spot, pageId) {
   if (state.working) return
-  const ad = createAd(p, { purpose, how: 'package', ...purposeDefaults(purpose, p.brand), spot: spot.id, type: nextLook(p) })
-  const what = { about: 'About page', faq: 'FAQ', sponsors: 'Sponsors page' }[purpose] || lower(PURPOSES.find((x) => x.id === purpose).label)
-  adsChat(p, `Put our ${what} in ${spot.label}`, `Generating **${ad.name}** as **${typeById(ad.type).label}** for **${spot.label}** on the ${pageLabel(spot.page).toLowerCase()}: ${modelSay(ad, spot)}.`, ad.id)
+  const page = scrapeSite(p.brand).find((x) => x.id === pageId)
+  if (!page) return
+  const ad = createAd(p, adFromPage(p, page, spot, lookFor(p, page.kind)))
+  const what = lower(page.title)
+  adsChat(p, `Put our ${what} page in ${spot.label}`, `Generating **${ad.name}** as **${typeById(ad.type).label}** for **${spot.label}** on the ${pageLabel(spot.page).toLowerCase()}: ${modelSay(ad, spot)}.`, ad.id)
   designPackage(p, ad)
 }
 
@@ -569,9 +592,9 @@ export async function seed() {
     while (p.stage < stagesFor(p).length - 1 && stagesFor(p)[p.stage].id !== upTo) {
       // At the ads step, answer its questions the usual way: every page, the usual placements.
       if (stagesFor(p)[p.stage].id === 'ads' && !p.ads.offers.length) {
-        await chooseAdPages(p, ['landing', 'browse', 'details'], p.messages.at(-1).card, ['about', 'sponsor'])
+        await chooseAdPages(p, ['landing', 'browse', 'details'], p.messages.at(-1).card)
         await chooseAdPlacements(p, ['landing-banners', 'browse-rail', 'details-bottom'], p.messages.at(-1).card)
-        await chooseAdLooks(p, suggestTypes(p.brand.id), p.messages.at(-1).card)
+        await chooseAdLooks(p, suggestedLooks(p), p.messages.at(-1).card)
       }
       await reply(p, nextFor(p).say)
     }

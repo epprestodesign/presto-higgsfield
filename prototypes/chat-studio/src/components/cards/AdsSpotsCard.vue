@@ -1,7 +1,7 @@
 <script setup>
-// Ads in the chat, 3 of 3: the spots on each page, live. Fill a spot with a
-// house ad (About, FAQ, Sponsors page: made right here) or a sponsor (opens
-// the form in Advertisements). Filled spots have Edit (into the chat box) and
+// Ads in the chat, 4 of 4: the spots on each page, live. Fill a spot with a
+// page from the event's site (ranked, hotels first; made right here) or a
+// sponsor (opens the form in Advertisements). Filled spots have Edit (into the chat box) and
 // Delete (with Undo).
 import { computed, ref } from 'vue'
 import CardShell from './CardShell.vue'
@@ -10,6 +10,7 @@ import AdSpot from '../ads/AdSpot.vue'
 import { OFFERS, PAGES, AD_SIZES, spotsOf, adInSpot, restoreAd, spotLabel, adsUi } from '../../ads.js'
 import { editInChat, fillSpotInChat, state } from '../../mockAgent.js'
 import { route } from '../../router.js'
+import { scrapeSite } from '../../siteScrape.js'
 
 const props = defineProps({ project: { type: Object, required: true }, card: { type: Object, required: true } })
 const ads = computed(() => props.project.ads)
@@ -24,12 +25,10 @@ const removed = computed(() => Object.entries(ads.value.removed || {}).map(([id,
 
 const menu = ref('') // the spot being filled
 const menuSpot = computed(() => spots.value.find((s) => s.id === menu.value))
-const HOUSE = [
-  { id: 'about', label: 'Your About page', icon: 'help' },
-  { id: 'faq', label: 'Your FAQ', icon: 'chat' },
-  { id: 'sponsors', label: 'Your Sponsors page', icon: 'grid' },
-]
-const used = (purpose) => ads.value.items.some((a) => a.purpose === purpose && spots.value.some((s) => s.id === a.spot))
+const site = computed(() => scrapeSite(props.project.brand))
+const used = (pageId) => ads.value.items.some((a) => a.link === pageId && spots.value.some((s) => s.id === a.spot))
+// Pages not on a spot yet first (in rank order), then the ones already used.
+const sitePages = computed(() => [...site.value].sort((a, b) => used(a.id) - used(b.id)))
 function fill(purpose) { const sp = menuSpot.value; menu.value = ''; fillSpotInChat(props.project, sp, purpose) }
 function sponsor() { adsUi.fill = menu.value; menu.value = ''; route.tab = 'ads' }
 </script>
@@ -50,8 +49,8 @@ function sponsor() { adsUi.fill = menu.value; menu.value = ''; route.tab = 'ads'
         <div v-if="menuSpot && menuSpot.offer.id === o.id" class="ac__menu" role="group" :aria-label="`Fill ${menuSpot.label}`">
           <span class="ac__menulabel">Fill <b>{{ menuSpot.label }}</b> with</span>
           <span class="cs-tabs">
-            <button v-for="h in HOUSE" :key="h.id" type="button" class="cs-tab cs-tab--sm" :disabled="state.working" @click="fill(h.id)">
-              <Icon :name="h.icon" :size="16" /> {{ h.label }}<small v-if="used(h.id)"> · again</small>
+            <button v-for="pg in sitePages" :key="pg.id" type="button" class="cs-tab cs-tab--sm" :title="pg.url" :disabled="state.working" @click="fill(pg.id)">
+              <Icon name="link" :size="16" /> {{ pg.title }}<small v-if="used(pg.id)"> · again</small>
             </button>
             <button type="button" class="cs-tab cs-tab--sm" @click="sponsor"><Icon name="users" :size="16" /> A sponsor…</button>
           </span>
