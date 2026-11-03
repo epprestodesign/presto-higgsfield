@@ -1,15 +1,19 @@
 <script setup>
-// Chat Studio — prototype of a chat-first Banner Lab. Projects on the left
-// (logo + banners), one vertical conversation per project on the right.
-// Standalone: mock data only, no auth, database or generation.
+// Chat Studio — prototype of a chat-first Banner Lab. Rail on the left (New
+// project, Banners / Logos / Pages, History); a project is one vertical
+// conversation on the right. Every view has a deep link (see router.js and
+// #/map). Standalone: mock data only, no auth, database or generation.
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import './styles.css'
 import ProjectRail from './components/ProjectRail.vue'
 import HomeHero from './components/HomeHero.vue'
 import TeamFeed from './components/TeamFeed.vue'
+import LibraryView from './components/LibraryView.vue'
+import MapView from './components/MapView.vue'
 import ProjectThread from './components/ProjectThread.vue'
 import Icon from './components/Icon.vue'
-import { state, activeProject, createProject, seed, openProject } from './mockAgent.js'
+import { state, activeProject, createProject, seed, projectBySlug } from './mockAgent.js'
+import { route, go, startRouter } from './router.js'
 
 const props = defineProps({
   /** Open this sample on load: 'heartland', 'fintech', 'wedding', 'golf'. */
@@ -36,18 +40,34 @@ async function start(text, opts) {
   await createProject(text, opts)
 }
 
+// The route decides what's on screen.
+const ready = ref(false)
+watch(() => [route.view, route.project, route.library, ready.value], () => {
+  if (!ready.value) return
+  if (route.view === 'new') {
+    if (route.prompt && !state.working) start(route.prompt, { mode: route.mode })
+    else go({ view: 'home' })
+    return
+  }
+  const p = route.view === 'project' ? projectBySlug(route.project) : null
+  if (route.view === 'project' && !p) { go({ view: 'home' }); return }
+  state.activeId = p?.id || null
+  state.library = route.view === 'library' ? route.library : null
+}, { immediate: true })
+
 onMounted(async () => {
   mq = window.matchMedia?.('(prefers-color-scheme: dark)')
   syncSystem()
   mq?.addEventListener?.('change', syncSystem)
   await seed()
   state.speed = props.speed
-  state.activeId = null
-  if (props.openBrand) {
-    const p = state.projects.find((x) => x.brand.id === props.openBrand)
-    if (p) openProject(p.id)
+  startRouter()
+  // Storybook / ?open= / ?prompt= entry points (when the URL has no #/ route).
+  if (!location.hash || location.hash === '#/') {
+    if (props.openBrand) go({ view: 'project', project: props.openBrand })
+    else if (props.autoPrompt) go({ view: 'new', prompt: props.autoPrompt })
   }
-  if (props.autoPrompt) start(props.autoPrompt, { mode: 'full' })
+  ready.value = true
 })
 onBeforeUnmount(() => mq?.removeEventListener?.('change', syncSystem))
 </script>
@@ -62,6 +82,8 @@ onBeforeUnmount(() => mq?.removeEventListener?.('change', syncSystem))
     <main class="cs__main">
       <button type="button" class="cs__menu" aria-label="Show projects" @click="railOpen = true"><Icon name="sidebar" /></button>
       <ProjectThread v-if="project" :key="project.id" :project="project" />
+      <LibraryView v-else-if="state.library" :kind="state.library" />
+      <MapView v-else-if="route.view === 'map'" />
       <div v-else class="cs__home"><HomeHero :working="state.working" @send="start" /><TeamFeed /></div>
     </main>
 

@@ -3,6 +3,7 @@
 // experience end to end without any real generation.
 import { reactive } from 'vue'
 import { BRANDS, brandFor } from './mockData.js'
+import { route, go } from './router.js'
 
 export const state = reactive({
   projects: [],
@@ -11,6 +12,7 @@ export const state = reactive({
   stop: false,
   speed: 1, // 0 = instant (seeded history, tests)
   toast: '',
+  library: null, // 'banners' | 'logos' | 'pages' when a library page is open
 })
 
 let uid = 0
@@ -18,6 +20,7 @@ const nid = (p) => `${p}${++uid}`
 const wait = (ms) => (state.speed ? new Promise((r) => setTimeout(r, ms * state.speed)) : Promise.resolve())
 
 export const activeProject = () => state.projects.find((p) => p.id === state.activeId) || null
+export const projectBySlug = (slug) => state.projects.find((p) => p.slug === slug) || null
 
 export function toast(msg) {
   state.toast = msg
@@ -226,9 +229,12 @@ const APPROVE = /^(yes|yep|yeah|ok|okay|sure|great|perfect|next|continue|go ahea
 export async function createProject(prompt, { mode = 'full', open = true } = {}) {
   const brand = brandFor(prompt)
   const p = newProject(brand, prompt)
+  // A short, stable name for links (heartland, heartland-2, …).
+  const taken = state.projects.filter((x) => x.brand.id === brand.id).length
+  p.slug = taken ? `${brand.id}-${taken + 1}` : brand.id
   p.mode = mode
   state.projects.unshift(p)
-  if (open) state.activeId = p.id
+  if (open) go({ view: 'project', project: p.slug })
   userMsg(p, prompt)
   await run(() => runStage(p, 0))
   return p
@@ -293,8 +299,15 @@ export function goAhead(p) {
 
 export function stopWorking() { if (state.working) state.stop = true }
 
-export function openProject(id) { state.activeId = id }
-export function newChat() { state.activeId = null }
+// Navigation goes through the route (the URL follows); ChatStudio maps it onto
+// state.activeId / state.library.
+export function openProject(id, extra = {}) {
+  const p = state.projects.find((x) => x.id === id)
+  if (p) go({ view: 'project', project: p.slug, ...extra })
+}
+export function newChat() { go({ view: 'home' }) }
+export function openLibrary(kind) { go({ view: 'library', library: kind }) }
+export { route }
 
 /** A few projects so the rail isn't empty (built instantly). Some have several drafts; Fintech is waiting on its banners. */
 export async function seed() {

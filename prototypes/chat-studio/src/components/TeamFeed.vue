@@ -2,12 +2,13 @@
 // Home, further down: what the rest of the team has been making, grouped by
 // theme. Switch between their banners, their logos, or whole page concepts.
 // Click one to see its Presto pages (desktop, then mobile).
-import { computed, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import Icon from './Icon.vue'
 import LogoMark from './LogoMark.vue'
 import DraftStack from './presto/DraftStack.vue'
 import DraftViewer from './DraftViewer.vue'
 import { BRANDS } from '../mockData.js'
+import { route } from '../router.js'
 
 const THEMES = {
   Sports: ['heartland', 'lakeshore', 'golf', 'esports'],
@@ -50,8 +51,9 @@ const items = Object.values(BRANDS).flatMap((b, bi) => [0, 1].map((k) => {
   }
 })).sort((a, b) => a.ago - b.ago)
 
-const theme = ref('All')
-const mode = ref('banners')
+// Theme, view and the open item live in the route (deep links).
+const theme = computed({ get: () => route.theme, set: (v) => { route.theme = v } })
+const mode = computed({ get: () => route.show, set: (v) => { route.show = v } })
 const shown = ref(9)
 const list = computed(() => items.filter((i) => theme.value === 'All' || i.theme === theme.value))
 const visible = computed(() => list.value.slice(0, shown.value))
@@ -59,13 +61,19 @@ function pick(t) { theme.value = t; shown.value = 9 }
 function when(m) { return m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago` }
 
 // Open one in the same viewer the Concepts tab uses (read-only).
-const open = ref(null)
+const open = computed({
+  get: () => items.find((i) => i.id === route.open) || null,
+  set: (it) => { route.open = it?.id || ''; if (!it) { route.device = 'desktop'; route.screen = 'landing' } },
+})
+// #/home/team scrolls down to this section.
+const root = ref(null)
+onMounted(() => { if (route.at === 'team' || route.open || route.theme !== 'All' || route.show !== 'banners') nextTick(() => root.value?.scrollIntoView({ block: 'start' })) })
 const openProject = computed(() => open.value && ({ name: open.value.view.brand.short, drafts: [openDraft.value] }))
 const openDraft = computed(() => open.value && ({ id: open.value.id, n: 1, label: `${open.value.view.brand.name} · by ${open.value.person.name}`, at: 0, snap: open.value.view }))
 </script>
 
 <template>
-  <section class="tf" aria-labelledby="tf-title">
+  <section ref="root" class="tf" aria-labelledby="tf-title">
     <header class="tf__head">
       <div>
         <h2 id="tf-title" class="tf__title"><Icon name="users" :size="26" /> From your team</h2>

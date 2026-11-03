@@ -31,11 +31,11 @@ const pos = computed(() => ({ 1: ['is-only'], 2: ['is-mid', 'is-front'], 3: ['is
 <style scoped>
 .ds { position: relative; aspect-ratio: 16 / 12; pointer-events: none; }
 .ds__layer { position: absolute; left: 50%; overflow: hidden; border-radius: var(--r-card); border: 1px solid rgba(15, 23, 42, 0.08); box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08), 0 14px 34px rgba(15, 23, 42, 0.14); transform: translateX(-50%); transition: transform 0.3s ease; }
-.ds__layer :deep(.ps) { aspect-ratio: 16 / 10; border: 0; border-radius: 0; }
+.ds__layer :deep(.ps-bare) { aspect-ratio: 16 / 10; }
 .ds__layer.is-back { top: 2%; width: 68%; }
 .ds__layer.is-mid { top: 16%; width: 76%; }
 .ds__layer.is-front { top: 32%; width: 84%; }
-.ds.is-small { aspect-ratio: 1440 / 400; }
+.ds.is-small { aspect-ratio: 1440 / 552; }
 .ds__layer.is-only { top: 0; width: 100%; border-radius: 3px; box-shadow: none; }
-.ds__layer.is-only :deep(.ps) { aspect-ratio: 1440 / 400; }
+.ds__layer.is-only :deep(.ps-bare) { aspect-ratio: 1440 / 552; }
 </style>

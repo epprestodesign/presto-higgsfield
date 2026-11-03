@@ -5,6 +5,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import Icon from './Icon.vue'
 import ScreensCarousel from './presto/ScreensCarousel.vue'
 import { draftView, restoreDraft, state } from '../mockAgent.js'
+import { route } from '../router.js'
 
 const props = defineProps({
   project: { type: Object, required: true },
@@ -13,7 +14,9 @@ const props = defineProps({
   readonly: { type: Boolean, default: false },
 })
 const emit = defineEmits(['close', 'restored', 'go'])
-const device = ref('desktop')
+// Device and screen live in the route, so a link opens this exact view.
+const device = computed({ get: () => route.device, set: (d) => { route.device = d } })
+const screen = computed({ get: () => route.screen, set: (s) => { route.screen = s } })
 const view = computed(() => draftView(props.project, props.draft))
 const i = computed(() => props.project.drafts.indexOf(props.draft))
 const dialog = ref(null)
@@ -50,7 +53,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key))
         </div>
       </header>
       <div class="dv__body">
-        <ScreensCarousel :key="draft.id" :view="view" :device="device" />
+        <ScreensCarousel :key="draft.id" v-model:screen="screen" :view="view" :device="device" />
       </div>
     </section>
   </div>

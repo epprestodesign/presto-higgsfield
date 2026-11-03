@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+/* The sample events' display fonts (headlines on the Presto mockups). */
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow+Condensed:wght@700&family=Space+Grotesk:wght@700&family=Bebas+Neue&family=Playfair+Display:wght@700&family=Cormorant+Garamond:wght@700&family=Rajdhani:wght@700&family=Montserrat:wght@700&display=swap');
 
 /* Chat Studio prototype: core Presto look (PT Sans, Navy + Slate, 4px corners).
    Values copied from the Presto tokens (src/css/ds-*.scss) so the prototype

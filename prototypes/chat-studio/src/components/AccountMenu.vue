@@ -3,6 +3,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import Icon from './Icon.vue'
 import { toast } from '../mockAgent.js'
+import { go } from '../router.js'
 
 defineProps({ theme: { type: String, default: 'system' } })
 const emit = defineEmits(['theme'])
@@ -25,6 +26,9 @@ function esc(e) { if (e.key === 'Escape') open.value = false }
 onMounted(() => { document.addEventListener('pointerdown', outside); document.addEventListener('keydown', esc) })
 onBeforeUnmount(() => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', esc) })
 function soon(label) { open.value = false; toast(`${label}: not part of this prototype yet`) }
+// Prototype helpers: deep links for giving feedback.
+function copyLink() { open.value = false; navigator.clipboard?.writeText(location.href).catch(() => {}); toast('Link to this view copied') }
+function showMap() { open.value = false; go({ view: 'map' }) }
 </script>
 
 <template>
@@ -38,6 +42,10 @@ function soon(label) { open.value = false; toast(`${label}: not part of this pro
           <Icon :name="t.icon" :size="18" /> {{ t.label }}
         </button>
       </div>
+      <hr />
+      <p class="acct__label">Prototype</p>
+      <button type="button" class="acct__item" role="menuitem" @click="copyLink"><Icon name="link" /> Copy link to this view</button>
+      <button type="button" class="acct__item" role="menuitem" @click="showMap"><Icon name="map" /> Prototype map</button>
       <hr />
       <button v-for="l in LINKS" :key="l.label" type="button" class="acct__item" role="menuitem" @click="soon(l.label)">
         <Icon :name="l.icon" /> {{ l.label }}
@@ -67,4 +75,5 @@ function soon(label) { open.value = false; toast(`${label}: not part of this pro
 .acct__theme.is-on { background: var(--pill); color: var(--pill-ink); }
 .acct__item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 40px; padding: 8px 10px; border: 0; border-radius: var(--r); background: none; text-align: left; cursor: pointer; }
 .acct__item:hover { background: var(--surface-3); }
+.acct__label { margin: 4px 10px 2px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
 </style>

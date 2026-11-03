@@ -1,22 +1,24 @@
 <script setup>
 // The three default Presto screens (landing, hotel listings, hotel details) in
 // a carousel, on desktop or phone. `view` is a project or a draft snapshot.
-import { nextTick, ref, watch } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 import Icon from '../Icon.vue'
 import PrestoScreen from './PrestoScreen.vue'
 
 const props = defineProps({
   view: { type: Object, required: true },
   device: { type: String, default: 'desktop' },
+  /** Optional v-model:screen ('landing' | 'listings' | 'details') — used by the viewer for deep links. */
+  screen: { type: String, default: '' },
 })
-const emit = defineEmits(['edit'])
+const emit = defineEmits(['edit', 'update:screen'])
 
 const SCREENS = [
   { id: 'landing', label: 'Landing page' },
   { id: 'listings', label: 'Hotel listings' },
   { id: 'details', label: 'Hotel details' },
 ]
-const index = ref(0)
+const index = ref(Math.max(0, SCREENS.findIndex((s) => s.id === props.screen)))
 const track = ref(null)
 function go(i) {
   index.value = (i + SCREENS.length) % SCREENS.length
@@ -26,6 +28,9 @@ function onScroll() {
   const el = track.value
   if (el) index.value = Math.round(el.scrollLeft / el.clientWidth)
 }
+watch(index, (i) => { if (props.screen && SCREENS[i].id !== props.screen) emit('update:screen', SCREENS[i].id) })
+watch(() => props.screen, (id) => { const i = SCREENS.findIndex((s) => s.id === id); if (i >= 0 && i !== index.value) go(i) })
+onMounted(() => nextTick(() => track.value?.scrollTo({ left: track.value.clientWidth * index.value })))
 watch(() => props.device, () => nextTick(() => track.value?.scrollTo({ left: track.value.clientWidth * index.value })))
 const uid = Math.random().toString(36).slice(2, 7)
 </script>
