@@ -1,11 +1,13 @@
 <script setup>
 // One spot on a Presto page (Banner 1, Skyscraper 2, Leaderboard…) and the ad
 // in it, at the spot's size. An empty spot offers "Fill this spot"; a filled
-// one has Edit (opens the ad below the row) and Delete (with Undo, below).
+// one has Edit (opens the ad below the row), Delete (with Undo, below) and
+// the Higgsfield model that made it, with "Try another model".
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { MODELS, modelById } from '../../imageModels.js'
 import Icon from '../Icon.vue'
 import AdPreview from './AdPreview.vue'
-import { AD_SIZES, PURPOSES, removeAd } from '../../ads.js'
+import { AD_SIZES, PURPOSES, removeAd, useModel } from '../../ads.js'
 
 const props = defineProps({
   project: { type: Object, required: true },
@@ -18,6 +20,10 @@ const W = computed(() => AD_SIZES[props.spot.size].width)
 const H = computed(() => AD_SIZES[props.spot.size].height)
 const state = computed(() => props.ad?.sizes[props.spot.size] || 'idle')
 const purpose = computed(() => PURPOSES.find((p) => p.id === props.ad?.purpose))
+const gen = computed(() => props.ad?.gen?.[props.spot.size])
+const models = ref(false)
+function pick(id) { models.value = false; useModel(props.project, props.ad, id) }
+function menuOut(e) { if (!e.currentTarget.contains(e.relatedTarget)) models.value = false }
 // Preview box: the spot's true proportions, scaled down to fit the card.
 const stage = ref(null)
 const avail = ref(320)
@@ -46,6 +52,18 @@ const box = computed(() => ({ maxWidth: Math.min(W.value, avail.value), maxHeigh
 
     <footer v-if="ad" class="sp__foot">
       <span class="sp__name"><b>{{ ad.name }}</b><small>{{ purpose?.label }}<template v-if="ad.overrides?.[spot.size]"> · own changes</template></small></span>
+      <span v-if="gen" class="sp__model" @focusout="menuOut" @keydown.esc="models = false">
+        <button type="button" class="sp__modelbtn" :aria-expanded="models" :title="`Made with ${modelById(gen.model).label}: ${gen.why}`" @click="models = !models">
+          <Icon name="spark" :size="14" /> {{ modelById(gen.model).label }} <Icon name="down" :size="14" />
+        </button>
+        <span v-if="models" class="sp__menu" role="menu" :aria-label="`Try another model for ${ad.name}`">
+          <small class="sp__menuhead">Try another model</small>
+          <button v-for="m in MODELS" :key="m.id" type="button" role="menuitemradio" :aria-checked="gen.model === m.id" :class="{ 'is-on': gen.model === m.id }" :disabled="state === 'working'" @click="pick(m.id)">
+            <b>{{ m.label }}</b><small>{{ m.note }}</small>
+          </button>
+          <button v-if="ad.model" type="button" role="menuitem" class="sp__menuauto" @click="pick(null)"><b>Let the agent pick</b><small>Best model for each size</small></button>
+        </span>
+      </span>
       <span class="sp__acts">
         <button type="button" class="sp__act" :class="{ 'is-on': open }" :aria-expanded="open" :aria-label="`Edit ${ad.name} in ${spot.label}`" @click="emit('edit')"><Icon name="pencil" :size="15" /> Edit</button>
         <button type="button" class="sp__act is-del" :aria-label="`Delete ${ad.name} from ${spot.label}`" @click="removeAd(project, ad)"><Icon name="x" :size="15" /> Delete</button>
@@ -78,6 +96,16 @@ const box = computed(() => ({ maxWidth: Math.min(W.value, avail.value), maxHeigh
 .sp__act:hover, .sp__act.is-on { border-color: var(--navy-900); }
 .sp__act.is-on { background: var(--navy-50); }
 .sp__act.is-del:hover { border-color: #b91c1c; color: #b91c1c; }
+.sp__model { position: relative; flex-basis: 100%; }
+.sp__modelbtn { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); color: var(--ink-2); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.sp__modelbtn:hover, .sp__modelbtn[aria-expanded='true'] { border-color: var(--navy-900); color: var(--ink); }
+.sp__menu { position: absolute; left: 0; top: calc(100% + 4px); z-index: 30; display: grid; width: min(300px, 80vw); padding: 6px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-overlay); }
+.sp__menuhead { padding: 4px 8px 6px; color: var(--ink-3); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.sp__menu button { display: grid; gap: 1px; padding: 7px 8px; border: 0; border-radius: var(--r); background: none; text-align: left; font: inherit; color: var(--ink); cursor: pointer; }
+.sp__menu button:hover, .sp__menu button.is-on { background: var(--selected); }
+.sp__menu button b { font-size: 13px; }
+.sp__menu button small { color: var(--ink-3); font-size: 12px; }
+.sp__menuauto { border-top: 1px solid var(--line) !important; border-radius: 0 0 var(--r) var(--r) !important; margin-top: 4px; }
 .sp__open { margin: 0; color: var(--ink-3); font-size: 13px; }
 @media (prefers-reduced-motion: reduce) { .sp__working, .sp__working span { animation: none; } }
 </style>

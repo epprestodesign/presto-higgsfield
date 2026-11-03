@@ -9,6 +9,7 @@ import { reactive } from 'vue'
 import { LANDING_SIZE } from './adSizes.js'
 import { AD_SIZES, AD_SLOTS, createPlacement } from '@bs/models/ads.js'
 import { SAMPLE_SPONSORS } from '@bs/data/sponsors.js'
+import { pickModel, mockGenerate, modelById } from './imageModels.js'
 
 export { AD_SIZES }
 
@@ -124,7 +125,9 @@ export function createAd(project, form) {
       : { background: '#0F172A', foreground: '#FFFFFF', accent: '#F59E0B' }),
     spot: form.spot || null, // the spot it fills (see spotsOf)
     upload: form.upload || null, // the uploaded ad (object URL) when how = 'upload'
-    artwork: {}, // { size: { src } } — re-fitted uploads
+    artwork: {}, // { size: { src } } — the finished image per size (generated, or a re-fitted upload)
+    gen: {}, // { size: { model, why, v } } — which Higgsfield model made each size, and why
+    model: null, // a model the person picked for this ad (else the agent picks per size)
     overrides: {}, // { size: { colors, tagline, cta } } — changes asked for on one size only
     sizes: {}, // { size: 'idle' | 'working' | 'ready' }
     created: Date.now(),
@@ -133,13 +136,37 @@ export function createAd(project, form) {
   return ad
 }
 
+/**
+ * Make one size's image: a re-fit of the upload, or a Higgsfield generation
+ * (mocked) of the whole ad, text included, with the model picked for that size.
+ */
+export async function paint(project, ad, size) {
+  if (ad.how === 'upload' && ad.upload) { ad.artwork[size] = { src: await refit(ad.upload, size) }; return }
+  const pick = pickModel(ad, size)
+  const v = (ad.gen[size]?.v ?? -1) + 1
+  const photo = project.selected?.src || project.brand.images[0]?.src
+  ad.artwork[size] = { src: await mockGenerate({ ad: adIn(ad, size), size, model: pick.id, photo, v }) }
+  ad.gen[size] = { model: pick.id, why: pick.why, v }
+}
+/** Images for every finished size (ads made ready without a design step: samples, the agent's own). */
+export const paintAll = (project, ad) => Promise.all(Object.keys(ad.sizes).filter((s) => ad.sizes[s] === 'ready').map((s) => paint(project, ad, s)))
+
 /** Higgsfield (simulated): design one size, or every size in the package. */
 export async function designSize(project, ad, size, delay = 1400) {
   ad.sizes[size] = 'working'
-  if (ad.how === 'upload' && ad.upload) ad.artwork[size] = { src: await refit(ad.upload, size) }
-  await wait(delay)
+  await Promise.all([paint(project, ad, size), wait(delay)])
   ad.sizes[size] = 'ready'
   project.updated = Date.now()
+}
+/** "Try another model": remake every size of the ad with it (null = back to the agent's picks). */
+export function useModel(project, ad, modelId) {
+  ad.model = modelId
+  return Promise.all(adSizes(project.ads, ad).map((s, i) => designSize(project, ad, s, 900 + i * 300)))
+}
+/** The model behind an ad (or "2 models" when its sizes differ). */
+export function modelsOf(ad) {
+  const ids = [...new Set(Object.values(ad.gen || {}).map((g) => g.model))]
+  return ids.length === 1 ? modelById(ids[0]).label : ids.length ? `${ids.length} models` : ''
 }
 export async function designPackage(project, ad, { speed = 1 } = {}) {
   const sizes = adSizes(project.ads, ad)
@@ -153,6 +180,9 @@ export const adIn = (ad, size) => ({ ...ad, ...(size && ad.overrides?.[size]) })
 /** What a quick change ("Darker", "Shorter line"…) does to an ad's look. */
 function changeFor(project, base, text) {
   const t = text.toLowerCase()
+  const HUE = { blue: '#1D4ED8', navy: '#1E3A8A', green: '#166534', red: '#B91C1C', orange: '#C2410C', purple: '#6D28D9', pink: '#BE185D', teal: '#0F766E', gold: '#A16207', black: '#0B0B0B' }
+  const hue = Object.keys(HUE).find((h) => new RegExp(`\\b${h}\\b`).test(t))
+  if (hue) return { colors: { ...base.colors, background: HUE[hue], foreground: '#FFFFFF' } }
   if (/dark/.test(t)) return { colors: { ...base.colors, background: '#0B1220', foreground: '#FFFFFF' } }
   if (/light|bright/.test(t)) return { colors: { ...base.colors, background: '#F8FAFC', foreground: '#0F172A' } }
   if (/event|our colou?r|brand/.test(t)) return { colors: { background: project.palette[0], foreground: '#FFFFFF', accent: project.palette[1] } }
@@ -249,7 +279,7 @@ export function prestoAds(ads) {
 /** A short key that changes whenever the ads on the pages would change. */
 export function adsKey(ads) {
   if (!ads) return ''
-  return `${ads.offers.join()}|${ads.items.map((a) => `${a.id}@${a.spot}:${readySizes(a).join('+')}:${a.colors.background}${a.colors.accent}:${a.tagline}:${a.cta}:${JSON.stringify(a.overrides || {})}`).join(',')}`
+  return `${ads.offers.join()}|${ads.items.map((a) => `${a.id}@${a.spot}:${readySizes(a).join('+')}:${a.colors.background}${a.colors.accent}:${a.tagline}:${a.cta}:${JSON.stringify(a.overrides || {})}:${Object.values(a.gen || {}).map((g) => `${g.model}${g.v}`).join('+')}`).join(',')}`
 }
 
 /**
@@ -265,6 +295,7 @@ export function seedAds(project) {
     if (adInSpot(project.ads, spot)) return
     const ad = createAd(project, { ...form, spot })
     adSizes(project.ads, ad).forEach((z) => { ad.sizes[z] = 'ready' })
+    paintAll(project, ad)
   }
   fill('landing-banners#1', sponsor(fire))
   fill('landing-banners#2', sponsor(fire))

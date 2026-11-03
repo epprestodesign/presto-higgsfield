@@ -12,6 +12,7 @@ import Icon from '../Icon.vue'
 import AdPreview from './AdPreview.vue'
 import { AD_SIZES, PURPOSES, adSizes, spotLabel, designSize, designPackage, reviseAd, removeSize, removeAd } from '../../ads.js'
 import { adsChat, editInChat, packageAds, state as agent } from '../../mockAgent.js'
+import { modelById } from '../../imageModels.js'
 
 const props = defineProps({
   project: { type: Object, required: true },
@@ -132,7 +133,7 @@ function pack() { packageAds(props.project, [props.ad], `Looks good, package ${p
           </span>
           <span v-if="undo && undo.size === s && state(s) === 'idle'" class="as__undo">Deleted · <button type="button" @click="restore">Undo</button></span>
         </div>
-        <small><b>{{ s.replace('x', '×') }}</b> {{ AD_SIZES[s].name }}<em v-if="ad.overrides?.[s]"> · own changes</em></small>
+        <small><b>{{ s.replace('x', '×') }}</b> {{ AD_SIZES[s].name }}<em v-if="ad.overrides?.[s]"> · own changes</em><template v-if="ad.gen?.[s] && state(s) === 'ready'"> · {{ modelById(ad.gen[s].model).label }}</template></small>
       </li>
     </ul>
 

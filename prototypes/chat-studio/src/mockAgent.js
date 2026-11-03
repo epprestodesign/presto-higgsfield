@@ -4,7 +4,8 @@
 import { reactive } from 'vue'
 import { BRANDS, brandFor } from './mockData.js'
 import { route, go } from './router.js'
-import { newAds, seedAds, createAd, purposeDefaults, readySizes, designSize, designPackage, AD_SIZES, adSizes, firstEmptySpot, spotsOf, pageLabel, offerById, PURPOSES } from './ads.js'
+import { newAds, seedAds, createAd, purposeDefaults, readySizes, designSize, designPackage, AD_SIZES, adSizes, firstEmptySpot, spotsOf, pageLabel, offerById, PURPOSES, paintAll } from './ads.js'
+import { pickModel, modelById } from './imageModels.js'
 
 export const state = reactive({
   projects: [],
@@ -476,6 +477,7 @@ export function chooseAdPlacements(p, offerIds, card) {
       if (!spot) break
       const ad = createAd(p, { purpose, how: 'package', ...purposeDefaults(purpose, p.brand), spot: spot.id })
       adSizes(p.ads, ad).forEach((z) => { ad.sizes[z] = 'ready' })
+      paintAll(p, ad)
       made.push({ ad, spot })
     }
     const openSpots = spots.filter((s) => !p.ads.items.some((a) => a.spot === s.id))
@@ -483,7 +485,7 @@ export function chooseAdPlacements(p, offerIds, card) {
     const pages = [...new Set(spots.map((s) => s.page))]
     const WHAT = { about: 'About page', faq: 'FAQ', sponsors: 'Sponsors page' }
     const ok = await agentTurn(p, {
-      steps: [`Setting up ${spots.length} ad spots`, ...made.map((m) => `Designing an ad for your ${WHAT[m.ad.purpose]} for ${m.spot.label}`)],
+      steps: [`Setting up ${spots.length} ad spots`, ...made.map((m) => `Generating your ${WHAT[m.ad.purpose]} ad for ${m.spot.label} with ${modelById(pickModel(m.ad, m.spot.size).id).label}`)],
       text: `That’s **${spots.length} ad spots** ${pages.length === 1 ? `on the ${pageLabel(pages[0]).toLowerCase().replace(/(?<!page)$/, ' page')}` : `across the ${and(pages.map((x) => pageLabel(x).toLowerCase()))}`}.${made.length ? ` I made ${and(made.map((m) => `your **${WHAT[m.ad.purpose]}** ad in **${m.spot.label}**`))}.` : ''}${open === 1 ? ` **${openSpots[0].label}** is open${promote.includes('sponsor') ? ' for a sponsor' : ''}: fill it below.` : open ? ` ${made.length ? 'The rest are' : 'They’re'} open${promote.includes('sponsor') ? ' for sponsors' : ''}: fill them below.` : ''}`,
       card: { type: 'adsSpots' },
       chips: ['Open Advertisements'],
@@ -492,12 +494,20 @@ export function chooseAdPlacements(p, offerIds, card) {
   })
 }
 
+/** "with Higgsfield Soul (it makes photo-real scenes…), and the 320×100 phone size with Ideogram 4 (…)". */
+export function modelSay(ad, spot) {
+  const a = pickModel(ad, spot.size)
+  const b = spot.mobile && pickModel(ad, spot.mobile)
+  const one = (s, m) => `${s.replace('x', '×')} with **${modelById(m.id).label}** (${m.why})`
+  return b ? `${one(spot.size, a)}, and the ${one(spot.mobile, b).replace(' with', ' phone size with')}` : one(spot.size, a)
+}
+
 /** Ads, 3 of 3: fill a spot from the chat with a house ad (About, FAQ, Sponsors page). */
 export function fillSpotInChat(p, spot, purpose) {
   if (state.working) return
   const ad = createAd(p, { purpose, how: 'package', ...purposeDefaults(purpose, p.brand), spot: spot.id })
   const what = { about: 'About page', faq: 'FAQ', sponsors: 'Sponsors page' }[purpose] || lower(PURPOSES.find((x) => x.id === purpose).label)
-  adsChat(p, `Put our ${what} in ${spot.label}`, `Designing **${ad.name}** for **${spot.label}** on the ${pageLabel(spot.page).toLowerCase()} (${spot.size.replace('x', '×')}${spot.mobile ? `, and ${spot.mobile.replace('x', '×')} for phones` : ''}).`, ad.id)
+  adsChat(p, `Put our ${what} in ${spot.label}`, `Generating **${ad.name}** for **${spot.label}** on the ${pageLabel(spot.page).toLowerCase()}: ${modelSay(ad, spot)}.`, ad.id)
   designPackage(p, ad)
 }
 
