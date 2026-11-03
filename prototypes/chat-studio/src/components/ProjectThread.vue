@@ -23,6 +23,7 @@ import AdPackageCard from './cards/AdPackageCard.vue'
 import AdsWhereCard from './cards/AdsWhereCard.vue'
 import AdsSizesCard from './cards/AdsSizesCard.vue'
 import AdsSpotsCard from './cards/AdsSpotsCard.vue'
+import AdsLooksCard from './cards/AdsLooksCard.vue'
 import AdsTab from './ads/AdsTab.vue'
 import AdPreview from './ads/AdPreview.vue'
 import { reply, state, stopWorking, stagesFor, draftView, toast, uploadLogo, adsChat, chatContext, clearChatContext, sizeName } from '../mockAgent.js'
@@ -31,7 +32,7 @@ import { route, link, go } from '../router.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
 const adOf = (r) => props.project.ads?.items.find((a) => a.id === r.adId)
-const CARDS = { brand: BrandCard, looks: LooksCard, banners: BannersCard, pages: PagesCard, export: ExportCard, ad: AdCard, ads: AdsStepCard, adPackage: AdPackageCard, adsWhere: AdsWhereCard, adsSizes: AdsSizesCard, adsSpots: AdsSpotsCard }
+const CARDS = { brand: BrandCard, looks: LooksCard, banners: BannersCard, pages: PagesCard, export: ExportCard, ad: AdCard, ads: AdsStepCard, adPackage: AdPackageCard, adsWhere: AdsWhereCard, adsSizes: AdsSizesCard, adsSpots: AdsSpotsCard, adsLooks: AdsLooksCard }
 
 // Tab and open draft live in the route, so they deep-link.
 const tab = computed({ get: () => route.tab, set: (t) => { route.tab = t; route.draft = 0; route.at = '' } })

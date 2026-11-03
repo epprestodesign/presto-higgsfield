@@ -9,7 +9,7 @@ import { reactive } from 'vue'
 import { LANDING_SIZE } from './adSizes.js'
 import { AD_SIZES, AD_SLOTS, createPlacement } from '@bs/models/ads.js'
 import { SAMPLE_SPONSORS } from '@bs/data/sponsors.js'
-import { pickModel, mockGenerate, modelById } from './imageModels.js'
+import { pickModel, mockGenerate, modelById, typeById } from './imageModels.js'
 
 export { AD_SIZES }
 
@@ -128,6 +128,7 @@ export function createAd(project, form) {
     artwork: {}, // { size: { src } } — the finished image per size (generated, or a re-fitted upload)
     gen: {}, // { size: { model, why, v } } — which Higgsfield model made each size, and why
     model: null, // a model the person picked for this ad (else the agent picks per size)
+    type: form.type || null, // the look (imageModels AD_TYPES): Event photo, Hotel deal…
     overrides: {}, // { size: { colors, tagline, cta } } — changes asked for on one size only
     sizes: {}, // { size: 'idle' | 'working' | 'ready' }
     created: Date.now(),
@@ -144,8 +145,9 @@ export async function paint(project, ad, size) {
   if (ad.how === 'upload' && ad.upload) { ad.artwork[size] = { src: await refit(ad.upload, size) }; return }
   const pick = pickModel(ad, size)
   const v = (ad.gen[size]?.v ?? -1) + 1
-  const photo = project.selected?.src || project.brand.images[0]?.src
-  ad.artwork[size] = { src: await mockGenerate({ ad: adIn(ad, size), size, model: pick.id, photo, v }) }
+  const b = project.brand
+  const info = { photo: project.selected?.src || b.images[0]?.src, photos: b.images.map((i) => i.src), dates: b.dates, place: b.place }
+  ad.artwork[size] = { src: await mockGenerate({ ad: adIn(ad, size), size, model: pick.id, type: ad.type, info, v }) }
   ad.gen[size] = { model: pick.id, why: pick.why, v }
 }
 /** Images for every finished size (ads made ready without a design step: samples, the agent's own). */
@@ -163,6 +165,13 @@ export function useModel(project, ad, modelId) {
   ad.model = modelId
   return Promise.all(adSizes(project.ads, ad).map((s, i) => designSize(project, ad, s, 900 + i * 300)))
 }
+/** "Change look": remake every size of the ad as another ad type. */
+export function useType(project, ad, typeId) {
+  ad.type = typeId
+  return Promise.all(adSizes(project.ads, ad).map((s, i) => designSize(project, ad, s, 900 + i * 300)))
+}
+export const typeLabel = (ad) => typeById(ad.type)?.label || ''
+
 /** The model behind an ad (or "2 models" when its sizes differ). */
 export function modelsOf(ad) {
   const ids = [...new Set(Object.values(ad.gen || {}).map((g) => g.model))]
@@ -297,10 +306,10 @@ export function seedAds(project) {
     adSizes(project.ads, ad).forEach((z) => { ad.sizes[z] = 'ready' })
     paintAll(project, ad)
   }
-  fill('landing-banners#1', sponsor(fire))
-  fill('landing-banners#2', sponsor(fire))
-  fill('browse-rail#1', sponsor(velo))
-  fill('details-bottom#1', { purpose: 'faq', how: 'package', ...purposeDefaults('faq', project.brand) })
+  fill('landing-banners#1', { ...sponsor(fire), type: 'product' })
+  fill('landing-banners#2', { ...sponsor(fire), type: 'product' })
+  fill('browse-rail#1', { ...sponsor(velo), type: 'spotlight' })
+  fill('details-bottom#1', { purpose: 'faq', how: 'package', ...purposeDefaults('faq', project.brand), type: 'bold' })
 }
 
 // ---------- Re-fitting an uploaded ad to another size (canvas) ----------

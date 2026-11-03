@@ -4,10 +4,10 @@
 // one has Edit (opens the ad below the row), Delete (with Undo, below) and
 // the Higgsfield model that made it, with "Try another model".
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { MODELS, modelById } from '../../imageModels.js'
+import { MODELS, modelById, AD_TYPES, typeById } from '../../imageModels.js'
 import Icon from '../Icon.vue'
 import AdPreview from './AdPreview.vue'
-import { AD_SIZES, PURPOSES, removeAd, useModel } from '../../ads.js'
+import { AD_SIZES, PURPOSES, removeAd, useModel, useType } from '../../ads.js'
 
 const props = defineProps({
   project: { type: Object, required: true },
@@ -22,8 +22,12 @@ const state = computed(() => props.ad?.sizes[props.spot.size] || 'idle')
 const purpose = computed(() => PURPOSES.find((p) => p.id === props.ad?.purpose))
 const gen = computed(() => props.ad?.gen?.[props.spot.size])
 const models = ref(false)
+const looks = ref(false)
 function pick(id) { models.value = false; useModel(props.project, props.ad, id) }
-function menuOut(e) { if (!e.currentTarget.contains(e.relatedTarget)) models.value = false }
+function look(id) { looks.value = false; useType(props.project, props.ad, id) }
+function menuOut(e) { if (!e.currentTarget.contains(e.relatedTarget)) { models.value = false; looks.value = false } }
+// The project's picked looks first in the menu.
+const lookList = computed(() => { const mine = props.project.ads.looks || []; return [...AD_TYPES].sort((a, b) => mine.includes(b.id) - mine.includes(a.id)) })
 // Preview box: the spot's true proportions, scaled down to fit the card.
 const stage = ref(null)
 const avail = ref(320)
@@ -52,8 +56,17 @@ const box = computed(() => ({ maxWidth: Math.min(W.value, avail.value), maxHeigh
 
     <footer v-if="ad" class="sp__foot">
       <span class="sp__name"><b>{{ ad.name }}</b><small>{{ purpose?.label }}<template v-if="ad.overrides?.[spot.size]"> · own changes</template></small></span>
-      <span v-if="gen" class="sp__model" @focusout="menuOut" @keydown.esc="models = false">
-        <button type="button" class="sp__modelbtn" :aria-expanded="models" :title="`Made with ${modelById(gen.model).label}: ${gen.why}`" @click="models = !models">
+      <span v-if="gen" class="sp__model" @focusout="menuOut" @keydown.esc="models = false; looks = false">
+        <button type="button" class="sp__modelbtn" :aria-expanded="looks" :aria-label="`Look: ${typeById(ad.type)?.label || 'none'}. Change look`" @click="looks = !looks; models = false">
+          <Icon name="palette" :size="14" /> {{ typeById(ad.type)?.label || 'Pick a look' }} <Icon name="down" :size="14" />
+        </button>
+        <span v-if="looks" class="sp__menu is-looks" role="menu" :aria-label="`Change the look of ${ad.name}`">
+          <small class="sp__menuhead">Change look</small>
+          <button v-for="t in lookList" :key="t.id" type="button" role="menuitemradio" :aria-checked="ad.type === t.id" :class="{ 'is-on': ad.type === t.id }" :disabled="state === 'working'" @click="look(t.id)">
+            <b>{{ t.label }}<em v-if="(project.ads.looks || []).includes(t.id)"> · your pick</em></b><small>{{ t.note }}</small>
+          </button>
+        </span>
+        <button type="button" class="sp__modelbtn" :aria-expanded="models" :title="`Made with ${modelById(gen.model).label}: ${gen.why}`" @click="models = !models; looks = false">
           <Icon name="spark" :size="14" /> {{ modelById(gen.model).label }} <Icon name="down" :size="14" />
         </button>
         <span v-if="models" class="sp__menu" role="menu" :aria-label="`Try another model for ${ad.name}`">
@@ -96,7 +109,9 @@ const box = computed(() => ({ maxWidth: Math.min(W.value, avail.value), maxHeigh
 .sp__act:hover, .sp__act.is-on { border-color: var(--navy-900); }
 .sp__act.is-on { background: var(--navy-50); }
 .sp__act.is-del:hover { border-color: #b91c1c; color: #b91c1c; }
-.sp__model { position: relative; flex-basis: 100%; }
+.sp__model { position: relative; flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px; }
+.sp__menu.is-looks { max-height: 320px; overflow-y: auto; }
+.sp__menu button b em { color: var(--ink-3); font-style: normal; font-weight: 400; }
 .sp__modelbtn { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); color: var(--ink-2); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
 .sp__modelbtn:hover, .sp__modelbtn[aria-expanded='true'] { border-color: var(--navy-900); color: var(--ink); }
 .sp__menu { position: absolute; left: 0; top: calc(100% + 4px); z-index: 30; display: grid; width: min(300px, 80vw); padding: 6px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-overlay); }

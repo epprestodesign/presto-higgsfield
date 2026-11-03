@@ -10,7 +10,8 @@ import Icon from '../Icon.vue'
 import AdSuite from './AdSuite.vue'
 import AdSpot from './AdSpot.vue'
 import { OFFERS, PAGES, AD_SIZES, PURPOSES, offerMobile, purposeDefaults, createAd, designPackage, restoreAd, spotsOf, adInSpot, spotLabel, pageLabel, adSizes, adsUi } from '../../ads.js'
-import { adsChat, packageAds, state } from '../../mockAgent.js'
+import { adsChat, packageAds, state, nextLook } from '../../mockAgent.js'
+import { AD_TYPES } from '../../imageModels.js'
 import { route } from '../../router.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
@@ -61,16 +62,19 @@ function shape(size) {
 const fillId = ref('')
 const fillSpot = computed(() => spots.value.find((s) => s.id === fillId.value) || null)
 const fillSizes = computed(() => (fillSpot.value ? [fillSpot.value.size, ...(fillSpot.value.mobile ? [fillSpot.value.mobile] : [])] : []))
+// Looks for the form: the project's picks first; the next one in turn is preselected.
+const lookList = computed(() => { const mine = ads.value.looks || []; return [...AD_TYPES].sort((a, b) => mine.includes(b.id) - mine.includes(a.id)) })
 function openFill(sp) {
   editId.value = ''
   fillId.value = fillId.value === sp.id ? '' : sp.id
+  form.type = nextLook(props.project)
   if (fillId.value) nextTick(() => document.querySelector('.ad__form')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }))
 }
 // "A sponsor…" in the chat opens this form on that spot.
 function takeFill() { const sp = spots.value.find((s) => s.id === adsUi.fill); adsUi.fill = ''; if (sp && !adInSpot(ads.value, sp.id)) { fillId.value = ''; openFill(sp) } }
 onMounted(takeFill)
 watch(() => adsUi.fill, (v) => { if (v) takeFill() })
-const form = reactive({ purpose: 'sponsor', how: 'package', name: '', tagline: '', cta: 'Learn more', url: '', logo: null, logoName: '', upload: null, uploadName: '' })
+const form = reactive({ type: '', purpose: 'sponsor', how: 'package', name: '', tagline: '', cta: 'Learn more', url: '', logo: null, logoName: '', upload: null, uploadName: '' })
 function pickPurpose(p) {
   form.purpose = p
   Object.assign(form, purposeDefaults(p, props.project.brand))
@@ -175,6 +179,12 @@ function preview(screen) {
                   <button v-for="p in PURPOSES" :key="p.id" type="button" role="radio" class="cs-tab cs-tab--sm" :class="{ 'is-on': form.purpose === p.id }" :aria-checked="form.purpose === p.id" @click="pickPurpose(p.id)">
                     <Icon :name="p.icon" :size="16" /> {{ p.label }}
                   </button>
+                </div>
+              </div>
+              <div v-if="form.how !== 'upload'" class="ad__field">
+                <span class="ad__label">Look</span>
+                <div class="cs-tabs" role="radiogroup" aria-label="The ad's look">
+                  <button v-for="t in lookList" :key="t.id" type="button" role="radio" class="cs-tab cs-tab--sm" :class="{ 'is-on': form.type === t.id }" :aria-checked="form.type === t.id" :title="t.note" @click="form.type = t.id">{{ t.label }}</button>
                 </div>
               </div>
               <div class="ad__field">
