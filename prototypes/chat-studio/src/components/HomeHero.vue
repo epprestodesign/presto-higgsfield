@@ -1,6 +1,7 @@
 <script setup>
 // New project: a big serif line, the composer, and starter prompts by topic.
-import { computed, ref } from 'vue'
+// Each starter is listed short and fills the composer with a full brief.
+import { computed, nextTick, ref } from 'vue'
 import Icon from './Icon.vue'
 import Composer from './Composer.vue'
 import { SUGGESTIONS } from '../mockData.js'
@@ -12,7 +13,12 @@ const tab = ref('Popular')
 const draft = ref('')
 const composer = ref(null)
 const credits = computed(() => (MODES.find((m) => m.id === composer.value?.mode) || MODES[3]).credits)
-function use(s) { draft.value = s; composer.value?.focus() }
+// Fill the composer with the brief and bring the whole box into view (focus
+// alone scrolls to the caret at the end, hiding the top on a phone).
+function use(s) {
+  draft.value = s
+  nextTick(() => { composer.value?.focus({ preventScroll: true }); composer.value?.$el?.scrollIntoView({ block: 'nearest' }) })
+}
 </script>
 
 <template>
@@ -30,10 +36,10 @@ function use(s) { draft.value = s; composer.value?.focus() }
       >{{ t }}</button>
     </div>
     <ul class="home__list" role="tabpanel">
-      <li v-for="s in SUGGESTIONS[tab]" :key="s">
-        <button type="button" class="home__sug" @click="use(s)">
+      <li v-for="s in SUGGESTIONS[tab]" :key="s.label">
+        <button type="button" class="home__sug" :aria-label="`${s.label}. Fills in a detailed brief you can edit.`" @click="use(s.prompt)">
           <svg class="cs-icon" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v7a4 4 0 0 0 4 4h10M15 11l4 4-4 4" /></svg>
-          {{ s }}
+          {{ s.label }}
         </button>
       </li>
     </ul>
@@ -47,6 +53,7 @@ function use(s) { draft.value = s; composer.value?.focus() }
 .home__title { margin: 0; text-align: center; font: 700 clamp(30px, 4vw, 44px)/1.15 var(--sans); color: var(--ink); }
 .home__sub { margin: 0 auto 20px; max-width: 600px; text-align: center; font-size: 17px; color: var(--ink-2); }
 .home__tabs { margin-top: 20px; }
+.home :deep(.comp--home) { scroll-margin-top: 72px; }
 .home__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0 24px; }
 .home__sug { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 4px; border: 0; background: none; text-align: left; font-size: 15px; cursor: pointer; }
 .home__sug svg { color: var(--ink-3); }

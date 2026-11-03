@@ -37,7 +37,7 @@ function grow() {
   const el = box.value
   if (!el) return
   el.style.height = 'auto'
-  el.style.height = `${Math.min(el.scrollHeight, 180)}px`
+  el.style.height = `${Math.min(el.scrollHeight, props.variant === 'home' ? 280 : 180)}px`
 }
 function send() {
   const t = text.value.trim()
@@ -104,7 +104,7 @@ function put(words) {
   nextTick(() => { grow(); const el = box.value; el?.focus(); el?.setSelectionRange(text.value.length, text.value.length) })
 }
 function menuOut(e) { if (!e.currentTarget.contains(e.relatedTarget)) menuFor.value = '' }
-defineExpose({ focus: () => box.value?.focus(), mode })
+defineExpose({ focus: (o) => box.value?.focus(o), mode })
 </script>
 
 <template>
