@@ -160,6 +160,26 @@ export function removeSize(project, ad, size) {
   }
 }
 
+/** Delete a whole ad. It's kept aside (by id) so the chat and the Advertisements tab can offer Undo. */
+export function removeAd(project, ad) {
+  const i = project.ads.items.indexOf(ad)
+  if (i < 0) return
+  project.ads.items.splice(i, 1)
+  project.ads.removed = { ...project.ads.removed, [ad.id]: { ad, i } }
+  project.updated = Date.now()
+}
+export function restoreAd(project, id) {
+  const r = project.ads.removed?.[id]
+  if (!r) return
+  project.ads.items.splice(Math.min(r.i, project.ads.items.length), 0, r.ad)
+  const { [id]: _, ...rest } = project.ads.removed
+  project.ads.removed = rest
+  project.updated = Date.now()
+}
+
+/** The size that best shows an ad as a thumbnail: the largest wide one (towers read poorly small). */
+export const thumbSize = (sizes) => [...sizes].sort((x, y) => (AD_SIZES[y].width >= AD_SIZES[y].height) - (AD_SIZES[x].width >= AD_SIZES[x].height) || AD_SIZES[y].width * AD_SIZES[y].height - AD_SIZES[x].width * AD_SIZES[x].height)[0]
+
 export const readySizes = (ad) => Object.keys(ad.sizes).filter((s) => ad.sizes[s] === 'ready')
 
 /** The ad as a Presto sponsor (what AdCreative / the Presto pages render); with `size`, as it looks in that size. */

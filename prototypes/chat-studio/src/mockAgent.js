@@ -4,7 +4,7 @@
 import { reactive } from 'vue'
 import { BRANDS, brandFor } from './mockData.js'
 import { route, go } from './router.js'
-import { newAds, seedAds, createAd, purposeDefaults, packageSizes, readySizes } from './ads.js'
+import { newAds, seedAds, createAd, purposeDefaults, packageSizes, readySizes, designSize, AD_SIZES } from './ads.js'
 
 export const state = reactive({
   projects: [],
@@ -373,6 +373,38 @@ export function adsChat(p, userText, agentText, adId, extra = {}) {
   p.messages.push(reactive({ id: nid('m'), role: 'agent', status: 'done', steps: [{ label: 'Designing with Higgsfield', done: true }], seconds: 2, text: agentText, card: { type: 'ad', adId }, chips: [], draft: p.drafts.length }))
   p.updated = Date.now()
 }
+
+// An ad attached to the chat box as context ("Edit" on an ad in the chat):
+// the next message changes that ad — one size, or every size.
+export const chatContext = reactive({ projectId: null, adId: null, size: null, every: false })
+export function editInChat(p, ad, size = null) { Object.assign(chatContext, { projectId: p.id, adId: ad.id, size, every: false }) }
+export function clearChatContext() { Object.assign(chatContext, { projectId: null, adId: null, size: null, every: false }) }
+
+/**
+ * "Looks good, package it" (one ad) or "Package all ads": design any sizes
+ * still missing, then hand the ads over as files for Presto, in the chat.
+ */
+export async function packageAds(p, ads, userText) {
+  if (state.working || !ads.length) return
+  const sizes = packageSizes(p.ads)
+  const todo = ads.flatMap((a) => sizes.filter((s) => a.sizes[s] !== 'ready').map((s) => [a, s]))
+  return run(async () => {
+    userMsg(p, userText)
+    const designing = Promise.all(todo.map(([a, s], i) => designSize(p, a, s, 700 + i * 260)))
+    const files = ads.reduce((n, a) => n + new Set([...sizes, ...readySizes(a)]).size, 0)
+    const one = ads.length === 1
+    await agentTurn(p, {
+      steps: [...(todo.length ? [`Designing ${todo.length} missing ${todo.length === 1 ? 'size' : 'sizes'} with Higgsfield`] : []), 'Sizing for each Presto placement', 'Packaging the files'],
+      text: one
+        ? `Packaged **${ads[0].name}** in ${files} sizes, ready for Presto.`
+        : `Packaged **${ads.length} ads**: ${files} files, ready for Presto.`,
+      card: { type: 'adPackage', adIds: ads.map((a) => a.id) },
+      chips: ['Open Advertisements'],
+    })
+    await designing
+  })
+}
+export const sizeName = (s) => `${s.replace('x', '×')} ${AD_SIZES[s]?.name || ''}`.trim()
 
 /** Send the go-ahead for the step a project is waiting on. */
 export function goAhead(p) {

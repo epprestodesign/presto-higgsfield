@@ -19,14 +19,16 @@ import PagesCard from './cards/PagesCard.vue'
 import ExportCard from './cards/ExportCard.vue'
 import AdCard from './cards/AdCard.vue'
 import AdsStepCard from './cards/AdsStepCard.vue'
+import AdPackageCard from './cards/AdPackageCard.vue'
 import AdsTab from './ads/AdsTab.vue'
 import AdPreview from './ads/AdPreview.vue'
-import { reply, state, stopWorking, stagesFor, draftView, toast, uploadLogo } from '../mockAgent.js'
+import { reply, state, stopWorking, stagesFor, draftView, toast, uploadLogo, adsChat, chatContext, clearChatContext, sizeName } from '../mockAgent.js'
+import { readySizes, reviseAd, thumbSize } from '../ads.js'
 import { route, link, go } from '../router.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
 const adOf = (r) => props.project.ads?.items.find((a) => a.id === r.adId)
-const CARDS = { brand: BrandCard, looks: LooksCard, banners: BannersCard, pages: PagesCard, export: ExportCard, ad: AdCard, ads: AdsStepCard }
+const CARDS = { brand: BrandCard, looks: LooksCard, banners: BannersCard, pages: PagesCard, export: ExportCard, ad: AdCard, ads: AdsStepCard, adPackage: AdPackageCard }
 
 // Tab and open draft live in the route, so they deep-link.
 const tab = computed({ get: () => route.tab, set: (t) => { route.tab = t; route.draft = 0; route.at = '' } })
@@ -71,8 +73,27 @@ function copyLink(at) {
   toast('Link copied')
 }
 
+// "Edit" on an ad in the chat attaches it to the chat box: the next message
+// changes that ad (the size picked, or every size).
+const composer = ref(null)
+const ctxAd = computed(() => (chatContext.projectId === props.project.id ? adOf(chatContext) : null))
+const ctxThumb = computed(() => ctxAd.value && (chatContext.size || thumbSize(readySizes(ctxAd.value))))
+watch(() => [chatContext.adId, chatContext.size], () => { if (ctxAd.value) nextTick(() => composer.value?.focus()) })
+function reviseInChat(text) {
+  const ad = ctxAd.value
+  const one = chatContext.every ? null : chatContext.size
+  adsChat(
+    props.project, text,
+    one ? `Updated **${ad.name}** in the ${sizeName(one)} only. The other sizes are unchanged.` : `Updated **${ad.name}** in every finished size.`,
+    ad.id, { adRef: { adId: ad.id, size: ctxThumb.value || null, every: !one } },
+  )
+  reviseAd(props.project, ad, text, one)
+  clearChatContext()
+}
+
 function ask(text, opts = {}) {
   if (state.working) return
+  if (ctxAd.value && text) { following.value = true; atBottom.value = true; reviseInChat(text); nextTick(() => toBottom()); return }
   if (route.tab !== 'chat') tab.value = 'chat'
   route.at = ''
   following.value = true
@@ -162,8 +183,8 @@ const lastAgent = computed(() => [...props.project.messages].reverse().find((m) 
                 <div v-if="m.role === 'user'" class="th__pill">
                   <figure v-if="m.image" class="th__upload"><img :src="m.image" :alt="m.fileName" /><figcaption>{{ m.fileName }}</figcaption></figure>
                   <figure v-else-if="m.adRef && adOf(m.adRef)" class="th__adref">
-                    <AdPreview :ad="adOf(m.adRef)" :size="m.adRef.size" :max-width="220" :max-height="90" />
-                    <figcaption>{{ adOf(m.adRef).name }} · {{ m.adRef.size.replace('x', '×') }}</figcaption>
+                    <AdPreview v-if="m.adRef.size" :ad="adOf(m.adRef)" :size="m.adRef.size" :max-width="220" :max-height="90" />
+                    <figcaption>{{ adOf(m.adRef).name }} · {{ m.adRef.every ? 'every size' : m.adRef.size.replace('x', '×') }}</figcaption>
                   </figure>
                   <p v-if="m.text">{{ m.text }}</p>
                 </div>
@@ -189,7 +210,16 @@ const lastAgent = computed(() => [...props.project.messages].reverse().find((m) 
 
       <div v-show="tab === 'chat'" class="th__dock">
         <button v-if="!atBottom" type="button" class="th__jump" aria-label="Jump to the latest" @click="toBottom()"><Icon name="down" :size="18" /></button>
-        <Composer :working="state.working" placeholder="Ask for changes…" @send="ask" @stop="stopWorking" />
+        <Composer ref="composer" :working="state.working" :placeholder="ctxAd ? `What should change in ${ctxAd.name}?` : 'Ask for changes…'" @send="ask" @stop="stopWorking">
+          <template v-if="ctxAd" #context>
+            <div class="th__ctx">
+              <span class="th__ctxthumb"><AdPreview v-if="ctxThumb" :ad="ctxAd" :size="ctxThumb" :max-width="112" :max-height="48" /><img v-else-if="ctxAd.logo" :src="ctxAd.logo" alt="" /></span>
+              <span class="th__ctxtext"><b>Editing {{ ctxAd.name }}<template v-if="chatContext.size"> · {{ sizeName(chatContext.size) }}</template></b><small>Attached as context: say what to change</small></span>
+              <label v-if="chatContext.size" class="th__every"><input v-model="chatContext.every" type="checkbox" /> Every size</label>
+              <button type="button" class="th__ctxx" aria-label="Stop editing this ad" @click="clearChatContext"><Icon name="x" :size="16" /></button>
+            </div>
+          </template>
+        </Composer>
       </div>
     </div>
 
@@ -218,6 +248,16 @@ const lastAgent = computed(() => [...props.project.messages].reverse().find((m) 
 .th__pill p { margin: 0; }
 .th__adref { display: grid; gap: 6px; margin: 2px 0 8px; }
 .th__adref figcaption { font-size: 12px; opacity: 0.8; }
+.th__ctx { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 8px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface-2); }
+.th__ctxthumb { display: grid; place-items: center; width: 120px; height: 52px; flex: none; border-radius: 2px; background: var(--surface-3); overflow: hidden; }
+.th__ctxthumb img { max-width: 40px; max-height: 40px; object-fit: contain; }
+.th__ctxtext { flex: 1; min-width: 0; display: grid; }
+.th__ctxtext b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.th__ctxtext small { font-size: 12px; color: var(--ink-3); }
+.th__every { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); white-space: nowrap; cursor: pointer; }
+.th__ctxx { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border: 0; border-radius: 50%; background: none; color: var(--ink-3); cursor: pointer; }
+.th__ctxx:hover { background: var(--surface-3); color: var(--ink); }
+@media (max-width: 640px) { .th__ctxthumb { width: 72px; } }
 .th__upload { display: grid; gap: 6px; margin: 2px 0 8px; }
 .th__upload img { width: 180px; max-height: 140px; padding: 12px; border-radius: var(--r); background: #fff; object-fit: contain; }
 .th__upload figcaption { font-size: 12px; opacity: 0.8; }

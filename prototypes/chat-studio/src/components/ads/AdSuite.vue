@@ -4,11 +4,14 @@
 // Changes are asked for in plain words underneath. Hover a finished size to
 // Edit it (it's attached to the ask box as context, and the change applies to
 // that size only unless you tick "every size") or Delete it (with Undo).
-import { computed, nextTick, ref } from 'vue'
+// The whole ad has Edit / Delete in its header too: in Advertisements, Edit
+// opens its details; in the chat (compact), it attaches the ad to the chat box,
+// and "Looks good, package it" designs what's missing and hands over the files.
+import { computed, nextTick, reactive, ref } from 'vue'
 import Icon from '../Icon.vue'
 import AdPreview from './AdPreview.vue'
-import { AD_SIZES, PURPOSES, packageSizes, designSize, designPackage, reviseAd, removeSize } from '../../ads.js'
-import { adsChat } from '../../mockAgent.js'
+import { AD_SIZES, PURPOSES, packageSizes, designSize, designPackage, reviseAd, removeSize, removeAd } from '../../ads.js'
+import { adsChat, editInChat, packageAds, state as agent } from '../../mockAgent.js'
 
 const props = defineProps({
   project: { type: Object, required: true },
@@ -65,6 +68,22 @@ function remove(s) {
   undo.value = { size: s, fn: removeSize(props.project, props.ad, s) }
 }
 function restore() { undo.value?.fn(); undo.value = null }
+
+// The whole ad: its details (Advertisements) or the chat box (chat); Delete; Package.
+const details = ref(null) // a copy being edited
+function editAd() {
+  if (props.compact) { editInChat(props.project, props.ad); return }
+  details.value = details.value ? null : reactive({ name: props.ad.name, tagline: props.ad.tagline, cta: props.ad.cta, url: props.ad.url })
+}
+function saveDetails() {
+  const d = details.value
+  if (!d.name.trim()) return
+  Object.assign(props.ad, { name: d.name.trim(), tagline: d.tagline.trim(), cta: d.cta.trim() || 'Learn more', url: d.url.trim() })
+  props.project.updated = Date.now()
+  details.value = null
+}
+function deleteAd() { removeAd(props.project, props.ad) }
+function pack() { packageAds(props.project, [props.ad], `Looks good, package ${props.ad.name}`) }
 </script>
 
 <template>
@@ -76,10 +95,26 @@ function restore() { undo.value?.fn(); undo.value = null }
         <small><span class="as__badge">{{ purpose?.label }}</span> {{ how }}<template v-if="ad.url"> · <a :href="ad.url" target="_blank" rel="noopener sponsored">{{ ad.url.replace(/^https?:\/\//, '') }}</a></template></small>
       </span>
       <span class="as__count">{{ ready }} of {{ sizes.length }} sizes</span>
-      <button v-if="idle.length" type="button" class="cs-btn-dark as__all" :disabled="working" @click="all">
+      <button v-if="idle.length && !compact" type="button" class="cs-btn-dark as__all" :disabled="working" @click="all">
         <Icon name="spark" :size="16" /> Design the whole package
       </button>
+      <span class="as__adacts">
+        <button type="button" class="as__act" :class="{ 'is-on': details }" :aria-expanded="compact ? undefined : !!details" :aria-label="compact ? `Edit ${ad.name} in the chat` : `Edit ${ad.name}'s details`" @click="editAd"><Icon name="pencil" :size="15" /> Edit</button>
+        <button type="button" class="as__act is-del" :aria-label="`Delete ${ad.name}`" @click="deleteAd"><Icon name="x" :size="15" /> Delete</button>
+      </span>
     </header>
+
+    <form v-if="details" class="as__details" @submit.prevent="saveDetails" @keydown.esc="details = null">
+      <label><span>{{ ad.purpose === 'sponsor' ? 'Sponsor name' : 'Headline' }}</span><input v-model="details.name" type="text" maxlength="40" required /></label>
+      <label><span>Short line</span><input v-model="details.tagline" type="text" maxlength="90" /></label>
+      <label><span>Button</span><input v-model="details.cta" type="text" maxlength="24" /></label>
+      <label><span>Link</span><input v-model="details.url" type="url" placeholder="https://" /></label>
+      <span class="as__detailsfoot">
+        <small>Finished sizes update straight away.</small>
+        <button type="button" class="cs-btn-ghost" @click="details = null">Cancel</button>
+        <button type="submit" class="cs-btn-dark" :disabled="!details.name.trim()">Save</button>
+      </span>
+    </form>
 
     <p v-if="!sizes.length" class="as__empty">Pick the banners you offer above to see this ad in each size.</p>
     <ul v-else class="as__grid">
@@ -90,8 +125,8 @@ function restore() { undo.value?.fn(); undo.value = null }
           <button v-else-if="!(undo && undo.size === s)" type="button" class="as__design" :disabled="working" @click="one(s)">
             <Icon name="spark" :size="18" /> Design this size
           </button>
-          <span v-if="state(s) === 'ready' && !compact" class="as__acts">
-            <button type="button" class="as__act" :aria-label="`Edit the ${sizeName(s)}`" @click="edit(s)"><Icon name="pencil" :size="15" /> Edit</button>
+          <span v-if="state(s) === 'ready'" class="as__acts">
+            <button type="button" class="as__act" :aria-label="compact ? `Edit the ${sizeName(s)} in the chat` : `Edit the ${sizeName(s)}`" @click="compact ? editInChat(project, ad, s) : edit(s)"><Icon name="pencil" :size="15" /> Edit</button>
             <button type="button" class="as__act is-del" :aria-label="`Delete the ${sizeName(s)}`" @click="remove(s)"><Icon name="x" :size="15" /> Delete</button>
           </span>
           <span v-if="undo && undo.size === s && state(s) === 'idle'" class="as__undo">Deleted · <button type="button" @click="restore">Undo</button></span>
@@ -99,6 +134,11 @@ function restore() { undo.value?.fn(); undo.value = null }
         <small><b>{{ s.replace('x', '×') }}</b> {{ AD_SIZES[s].name }}<em v-if="ad.overrides?.[s]"> · own changes</em></small>
       </li>
     </ul>
+
+    <footer v-if="compact && sizes.length" class="as__foot">
+      <button type="button" class="cs-btn-dark" :disabled="working || agent.working" @click="pack"><Icon name="check" :size="16" /> Looks good, package it</button>
+      <small v-if="idle.length">The {{ idle.length }} missing {{ idle.length === 1 ? 'size is' : 'sizes are' }} designed first.</small>
+    </footer>
 
     <div v-if="!compact && ready" class="as__ask">
       <div class="as__chips cs-tabs">
@@ -169,4 +209,15 @@ function restore() { undo.value?.fn(); undo.value = null }
 .as__send { display: grid; place-items: center; width: 40px; border: 0; border-radius: var(--r); background: var(--pill); color: var(--pill-ink); cursor: pointer; }
 .as__send:disabled { background: var(--surface-3); color: var(--ink-3); cursor: default; }
 .is-compact { padding: 14px; box-shadow: none; }
+.as__adacts { display: flex; gap: 6px; }
+.as__act.is-on { border-color: var(--navy-900); background: var(--navy-50); }
+.as__details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; padding: 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface-2); }
+.as__details label { display: grid; gap: 4px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.as__details input { min-height: 40px; padding: 8px 12px; border: 1px solid var(--line-bold); border-radius: var(--r); background: var(--surface); font: inherit; font-weight: 400; color: var(--ink); }
+.as__details input:focus { outline: none; border-color: var(--navy-900); box-shadow: 0 0 0 1px var(--navy-900); }
+.as__detailsfoot { grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.as__detailsfoot small { margin-right: auto; color: var(--ink-3); font-size: 13px; }
+.as__foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.as__foot small { color: var(--ink-3); font-size: 13px; }
+@media (max-width: 640px) { .as__details { grid-template-columns: 1fr; } }
 </style>

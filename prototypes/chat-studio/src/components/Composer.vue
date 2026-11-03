@@ -110,6 +110,7 @@ defineExpose({ focus: (o) => box.value?.focus(o), mode })
 <template>
   <div class="comp" :class="[`comp--${variant}`, { 'is-working': working }]">
     <div class="comp__box">
+      <slot name="context" />
       <div v-if="file" class="comp__file">
         <img :src="file.url" alt="" />
         <span>{{ file.name }}</span>

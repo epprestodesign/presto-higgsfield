@@ -7,13 +7,20 @@
 import { computed, reactive, ref } from 'vue'
 import Icon from '../Icon.vue'
 import AdSuite from './AdSuite.vue'
-import { OFFERS, PAGES, AD_SIZES, PURPOSES, offerMobile, packageSizes, purposeDefaults, createAd, designPackage, designSize } from '../../ads.js'
-import { adsChat, state } from '../../mockAgent.js'
+import { OFFERS, PAGES, AD_SIZES, PURPOSES, offerMobile, packageSizes, purposeDefaults, createAd, designPackage, designSize, restoreAd } from '../../ads.js'
+import { adsChat, packageAds, state } from '../../mockAgent.js'
 import { route } from '../../router.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
 const ads = computed(() => props.project.ads)
 const sizes = computed(() => packageSizes(ads.value))
+// Deleted ads, offered back (Undo) where they were.
+const removed = computed(() => Object.entries(ads.value.removed || {}).map(([id, r]) => ({ id, name: r.ad.name })))
+// Package every ad: designs what's missing, then the files land in the chat.
+function packageAll() {
+  packageAds(props.project, [...ads.value.items], `Looks good, package all ${ads.value.items.length} ads`)
+  route.tab = 'chat'
+}
 
 // ---- 1. Offered banners
 function toggleOffer(id) {
@@ -116,7 +123,10 @@ function preview(screen) {
       <section class="ad__sec" aria-labelledby="ad-items">
         <div class="ad__sechead">
           <h3 id="ad-items"><span>2</span> Ads <small>{{ ads.items.length }}</small></h3>
-          <button v-if="!formOpen" type="button" class="cs-btn-dark" @click="formOpen = true"><Icon name="plus" :size="18" /> New ad</button>
+          <span class="ad__secacts">
+            <button v-if="ads.items.length && sizes.length" type="button" class="cs-tab" :disabled="state.working" @click="packageAll"><Icon name="download" :size="18" /> Package all ads</button>
+            <button v-if="!formOpen" type="button" class="cs-btn-dark" @click="formOpen = true"><Icon name="plus" :size="18" /> New ad</button>
+          </span>
         </div>
 
         <form v-if="formOpen" class="ad__form" @submit.prevent="create">
@@ -160,6 +170,7 @@ function preview(screen) {
           </div>
         </form>
 
+        <p v-for="r in removed" :key="r.id" class="ad__gone" role="status"><b>{{ r.name }}</b> was deleted. <button type="button" @click="restoreAd(project, r.id)">Undo</button></p>
         <AdSuite v-for="a in ads.items" :key="a.id" :project="project" :ad="a" />
       </section>
     </div>
@@ -176,7 +187,10 @@ function preview(screen) {
 .ad__sec h3 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 18px; }
 .ad__sec h3 > span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--pill); color: var(--pill-ink); font-size: 13px; }
 .ad__sec h3 small { padding: 0 8px; border-radius: 999px; background: var(--surface-3); color: var(--ink-2); font-size: 13px; line-height: 22px; }
-.ad__sechead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ad__sechead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ad__secacts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ad__gone { margin: 0; padding: 12px 14px; border: 1px dashed var(--line-bold); border-radius: var(--r); color: var(--ink-2); font-size: 14px; }
+.ad__gone button { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .ad__hint { margin: -4px 0 4px; color: var(--ink-2); font-size: 14px; }
 .ad__pages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .ad__page { display: grid; gap: 8px; align-content: start; }
