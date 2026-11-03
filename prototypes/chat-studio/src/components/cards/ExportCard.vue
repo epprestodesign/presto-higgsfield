@@ -3,26 +3,26 @@ import { computed } from 'vue'
 import CardShell from './CardShell.vue'
 import LogoMark from '../LogoMark.vue'
 import Icon from '../Icon.vue'
-import { toast } from '../../mockAgent.js'
+import { toast, has } from '../../mockAgent.js'
 import { readySizes, AD_SIZES } from '../../ads.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
 const bg = computed(() => props.project.selected || { src: props.project.brand.images[0].src, filter: '' })
 const slug = computed(() => props.project.brand.id)
-// What's in the package follows what the project makes (Logo only · Banners ·
-// Ads · Full suite). Drafts have no mode, so they list logo + banners (+ ads).
-const mode = computed(() => props.project.mode || 'full')
+// What's in the package follows the steps the project has: its mode (Logo only
+// · Banners · Ads · Full suite) plus anything added after ("Add banners"…).
 const files = computed(() => {
   const out = []
-  if (mode.value !== 'ads') {
+  const p = props.project
+  if (has(p, 'logo') || has(p, 'banners')) {
     out.push({ kind: 'logo', name: `${slug.value}-logo-hero.png`, size: 'Landing banner · 2x' })
     out.push({ kind: 'logo', name: `${slug.value}-logo-listings.png`, size: 'Hotel pages · 2x' })
   }
-  if (mode.value === 'banners' || mode.value === 'full') {
+  if (has(p, 'banners')) {
     out.push({ kind: 'banner', name: `${slug.value}-banner-1440x400.jpg`, size: '1440 × 400', ratio: '1440 / 400' })
     out.push({ kind: 'banner', name: `${slug.value}-banner-1440x240.jpg`, size: '1440 × 240', ratio: '1440 / 240' })
   }
-  if (mode.value !== 'logo') {
+  if (has(p, 'ads')) {
     for (const a of props.project.ads?.items || []) {
       const sizes = readySizes(a)
       if (sizes.length) out.push({ kind: 'ad', name: `${slug.value}-ad-${a.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}.zip`, size: `${sizes.length} ${sizes.length === 1 ? 'size' : 'sizes'}: ${sizes.map((s) => s.replace('x', '×')).join(', ')}`, color: a.colors.background, logo: a.logo })

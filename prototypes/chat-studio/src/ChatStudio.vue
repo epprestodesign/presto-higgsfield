@@ -3,7 +3,7 @@
 // project, Banners / Logos / Pages, History); a project is one vertical
 // conversation on the right. Every view has a deep link (see router.js and
 // #/map). Standalone: mock data only, no auth, database or generation.
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import './styles.css'
 import ProjectRail from './components/ProjectRail.vue'
 import HomeHero from './components/HomeHero.vue'
@@ -20,17 +20,14 @@ const props = defineProps({
   openBrand: { type: String, default: '' },
   /** Send this as a new project on load (watch the agent work). */
   autoPrompt: { type: String, default: '' },
+  /** Kept for older stories; the prototype is light mode only. */
   theme: { type: String, default: 'light' },
   /** 1 = normal pacing, 0.4 = faster. */
   speed: { type: Number, default: 1 },
 })
 
-const theme = ref(props.theme)
-const dark = ref(false)
-let mq
-function syncSystem() { dark.value = mq?.matches }
-const resolved = computed(() => (theme.value === 'system' ? (dark.value ? 'dark' : 'light') : theme.value))
-watch(() => props.theme, (t) => { theme.value = t })
+// Light mode only.
+const resolved = 'light'
 
 const railOpen = ref(false)
 const project = computed(() => activeProject())
@@ -56,9 +53,6 @@ watch(() => [route.view, route.project, route.library, ready.value], () => {
 }, { immediate: true })
 
 onMounted(async () => {
-  mq = window.matchMedia?.('(prefers-color-scheme: dark)')
-  syncSystem()
-  mq?.addEventListener?.('change', syncSystem)
   await seed()
   state.speed = props.speed
   startRouter()
@@ -69,13 +63,12 @@ onMounted(async () => {
   }
   ready.value = true
 })
-onBeforeUnmount(() => mq?.removeEventListener?.('change', syncSystem))
 </script>
 
 <template>
   <div class="cs" :data-theme="resolved" :class="{ 'rail-open': railOpen }">
     <div class="cs__rail">
-      <ProjectRail :theme="theme" @theme="theme = $event" @navigate="railOpen = false" />
+      <ProjectRail @navigate="railOpen = false" />
     </div>
     <div v-if="railOpen" class="cs__scrim" @click="railOpen = false" />
 

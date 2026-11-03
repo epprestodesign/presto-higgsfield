@@ -134,7 +134,7 @@ const segments = computed(() => {
   }
   return out
 })
-const setupLine = computed(() => stagesFor(props.project).filter((s) => !['pages', 'files'].includes(s.id)).map((s) => ({ brand: 'Brand kit', logo: 'logo', banners: 'first banners', ads: 'ads' })[s.id]).join(', ').replace(/, ([^,]*)$/, ' and $1'))
+const setupLine = computed(() => stagesFor(props.project).filter((s) => !['pages', 'files'].includes(s.id)).map((s) => ({ brand: 'Brand kit', logo: 'logo', banners: 'first banners', ads: 'ads' })[s.id]).join(', ').replace(/, ([^,]*)$/, ' and $1').replace(/^./, (c) => c.toUpperCase()))
 const brandReady = computed(() => props.project.messages.some((m) => m.card?.type === 'brand'))
 function time(t) { return new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }
 

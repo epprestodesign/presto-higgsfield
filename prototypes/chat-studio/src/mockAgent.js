@@ -179,12 +179,25 @@ export const STAGES = [
 export const MODES = [
   { id: 'logo', label: 'Logo only', icon: 'spark', stages: ['brand', 'logo', 'files'], credits: 'About 1 credit for a logo clean-up.' },
   { id: 'banners', label: 'Banners', icon: 'image', stages: ['brand', 'banners', 'pages', 'files'], credits: 'About 6 credits for a first set of 3 banners.' },
-  { id: 'ads', label: 'Ads', icon: 'megaphone', stages: ['brand', 'ads', 'pages', 'files'], credits: 'About 1 credit per ad size (4 sizes for the standard placements).' },
+  { id: 'ads', label: 'Ads', icon: 'megaphone', stages: ['ads', 'pages', 'files'], credits: 'About 1 credit per ad spot (6 spots for the standard placements).' },
   { id: 'full', label: 'Full suite', icon: 'layers', stages: ['brand', 'logo', 'banners', 'pages', 'ads', 'files'], credits: 'About 11 credits: logo clean-up, 3 banners and an ad package.' },
 ]
-// In the mode's own order (Ads: brand → ads → pages → files).
+// In the mode's own order (Ads starts on the ads: ads → pages → files).
 export const modeOf = (p) => MODES.find((x) => x.id === p.mode) || MODES[3]
-export const stagesFor = (p) => modeOf(p).stages.map((id) => STAGES.find((s) => s.id === id))
+// Steps added later ("Tweak the logo", "Add banners", "Add ads") go in before
+// the files, so the go-ahead after them remakes the files with them in.
+export const stagesFor = (p) => {
+  const extras = p.extras || []
+  const base = modeOf(p).stages.filter((id) => id !== 'files' && !extras.includes(id))
+  return [...base, ...extras, 'files'].map((id) => STAGES.find((s) => s.id === id))
+}
+export const has = (p, id) => stagesFor(p).some((s) => s.id === id)
+// What a project that started small can still add, to grow into a full suite.
+const GROW = { logo: 'Tweak the logo', banners: 'Add banners', ads: 'Add ads' }
+export function growChips(p) {
+  const missing = Object.keys(GROW).filter((id) => !has(p, id))
+  return [...missing.map((id) => GROW[id]), ...(missing.length > 1 ? ['Make it a full suite'] : [])]
+}
 
 const STEP = {
   brand: (p) => ({
@@ -225,20 +238,28 @@ const STEP = {
   // Ads, in the chat, a step at a time: which pages → which placements (the
   // sizes) → the spots on each page, filled one by one. See chooseAdPages /
   // chooseAdPlacements / fillSpotInChat.
-  ads: () => ({
-    steps: ['Checking the ad placements Presto approves'],
-    text: 'Where should ads run? Pick the pages, and I’ll show you the placements and sizes on each.',
-    card: { type: 'adsWhere' },
-    chips: [],
-  }),
+  // In Ads mode this is the first step: the brand is read quietly from the
+  // website (no brand kit or logo questions), and it goes straight to the ads.
+  ads: (p) => {
+    const first = stagesFor(p)[0].id === 'ads' && !p.ads.offers.length
+    return {
+      steps: [...(first ? ['Reading your brief', `Looking up ${p.brand.website} for the logo and colours`] : []), 'Checking the ad placements Presto approves'],
+      text: first
+        ? `Let’s make the ads for **${p.brand.name}**. I’ll use the logo and colours from ${p.brand.website}. Where should they run, and what should they promote?`
+        : 'Where should ads run, and what should they promote? Pick both, and I’ll show you the placements and sizes on each page.',
+      card: { type: 'adsWhere' },
+      chips: [],
+    }
+  },
   files: (p) => ({
     steps: [
-      p.mode === 'ads' ? 'Exporting each ad size' : 'Sizing the logo for the Presto pages',
-      ...(p.mode === 'logo' ? [] : p.mode === 'ads' ? ['Packing the ads by placement'] : ['Cropping banners to 1440×400 and 1440×240']),
+      ...(has(p, 'logo') || has(p, 'banners') ? ['Sizing the logo for the Presto pages'] : []),
+      ...(has(p, 'banners') ? ['Cropping banners to 1440×400 and 1440×240'] : []),
+      ...(has(p, 'ads') ? ['Packing the ads by spot'] : []),
     ],
-    text: 'All done. Your files are sized for Presto. You can keep changing things; I’ll remake the files when you ask.',
+    text: `All done. Your files are sized for Presto. You can keep changing things; I’ll remake the files when you ask.${growChips(p).length ? ' You can also add what this project skipped, below.' : ''}`,
     card: { type: 'export' },
-    chips: p.mode === 'logo' ? ['Add a new logo'] : p.mode === 'ads' ? ['Open Advertisements'] : ['Try another banner', 'Edit the text'],
+    chips: [...(has(p, 'banners') ? ['Try another banner', 'Edit the text'] : has(p, 'ads') ? ['Open Advertisements'] : ['Add a new logo']), ...growChips(p)],
   }),
 }
 const GO = {
@@ -265,8 +286,9 @@ async function runStage(p, i) {
   if (!st) return false
   p.stage = i
   const ok = await agentTurn(p, STEP[st.id](p))
-  // While it asks where ads go, the go-ahead is a way to skip them.
-  if (ok) p.messages.at(-1).next = st.id === 'ads' ? { label: 'Skip ads for now', say: 'Continue without ads' } : nextFor(p)
+  // While it asks where ads go, the go-ahead is a way to skip them (not in Ads
+  // mode, where the ads are the point).
+  if (ok) p.messages.at(-1).next = st.id === 'ads' ? (i > 0 ? { label: 'Skip ads for now', say: 'Continue without ads' } : null) : nextFor(p)
   return ok
 }
 
@@ -305,6 +327,15 @@ export async function reply(p, text) {
       return runStage(p, i)
     }
     p.stalled = false
+    // "Tweak the logo" / "Add banners" / "Add ads" / "Make it a full suite": add
+    // the missing steps and run the first; their go-aheads lead on to the files.
+    const add = /^make it a full suite/.test(t)
+      ? Object.keys(GROW).filter((id) => !has(p, id))
+      : Object.keys(GROW).filter((id) => t === GROW[id].toLowerCase() && !has(p, id))
+    if (add.length) {
+      p.extras = [...(p.extras || []), ...add]
+      return runStage(p, stagesFor(p).findIndex((s) => s.id === add[0]))
+    }
     const turn = (opts) => agentTurn(p, opts).then((ok) => { if (ok) p.messages.at(-1).next = nextFor(p); return ok })
     if (/\bads?\b|advert|sponsor/.test(t)) {
       if (!p.ads.offers.length) return turn({ ...STEP.ads(p), steps: ['Opening your ads'] })
@@ -395,7 +426,7 @@ export async function packageAds(p, ads, userText) {
         ? `Packaged **${ads[0].name}** in ${files} sizes, ready for Presto.`
         : `Packaged **${ads.length} ads**: ${files} files, ready for Presto.`,
       card: { type: 'adPackage', adIds: ads.map((a) => a.id) },
-      chips: ['Open Advertisements'],
+      chips: ['Open Advertisements', ...growChips(p)],
     })
     await designing
   })
@@ -406,12 +437,17 @@ export const sizeName = (s) => `${s.replace('x', '×')} ${AD_SIZES[s]?.name || '
 const lower = (t) => t.charAt(0).toLowerCase() + t.slice(1)
 const and = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`)
 
-/** Ads, 1 of 3: the pages picked ("Landing page", "Hotel browse"…). Next: their placements. */
-export function chooseAdPages(p, pages, card) {
-  if (state.working || !pages.length) return
-  if (card) card.picked = [...pages]
+const PROMOTE_SAY = { about: 'our About page', faq: 'our FAQ', sponsors: 'our Sponsors page', sponsor: 'sponsors' }
+/**
+ * Ads, 1 of 3: the pages picked ("Landing page", "Hotel browse"…) and what the
+ * ads promote (About, FAQ, Sponsors page, sponsors). Next: their placements.
+ */
+export function chooseAdPages(p, pages, card, promote = ['about', 'sponsor']) {
+  if (state.working || !pages.length || !promote.length) return
+  if (card) { card.picked = [...pages]; card.promote = [...promote] }
+  p.ads.promote = [...promote]
   return run(async () => {
-    userMsg(p, `Ads on the ${and(pages.map((x) => pageLabel(x).toLowerCase()))}`)
+    userMsg(p, `Ads on the ${and(pages.map((x) => pageLabel(x).toLowerCase()))}, for ${and(promote.map((x) => PROMOTE_SAY[x]))}`)
     await agentTurn(p, {
       steps: [`Finding the approved placements on ${pages.length === 1 ? 'that page' : `those ${pages.length} pages`}`],
       text: 'Here are the approved placements and sizes. I ticked the usual ones; change them, then confirm.',
@@ -430,13 +466,25 @@ export function chooseAdPlacements(p, offerIds, card) {
     const said = and(offerIds.map((id) => offerById(id).say))
     userMsg(p, said.charAt(0).toUpperCase() + said.slice(1))
     const spots = spotsOf(p.ads)
-    const spot = p.ads.items.some((a) => a.purpose === 'about') ? null : firstEmptySpot(p.ads)
-    const ad = spot && createAd(p, { purpose: 'about', how: 'package', ...purposeDefaults('about', p.brand), spot: spot.id })
-    if (ad) adSizes(p.ads, ad).forEach((z) => { ad.sizes[z] = 'ready' })
+    // One ad for each of your own pages picked (About, FAQ, Sponsors page), in
+    // the first open spots; sponsors get the rest.
+    const promote = p.ads.promote || ['about', 'sponsor']
+    const made = []
+    for (const purpose of promote.filter((x) => x !== 'sponsor')) {
+      if (p.ads.items.some((a) => a.purpose === purpose && spots.some((s) => s.id === a.spot))) continue
+      const spot = firstEmptySpot(p.ads)
+      if (!spot) break
+      const ad = createAd(p, { purpose, how: 'package', ...purposeDefaults(purpose, p.brand), spot: spot.id })
+      adSizes(p.ads, ad).forEach((z) => { ad.sizes[z] = 'ready' })
+      made.push({ ad, spot })
+    }
+    const openSpots = spots.filter((s) => !p.ads.items.some((a) => a.spot === s.id))
+    const open = openSpots.length
     const pages = [...new Set(spots.map((s) => s.page))]
+    const WHAT = { about: 'About page', faq: 'FAQ', sponsors: 'Sponsors page' }
     const ok = await agentTurn(p, {
-      steps: [`Setting up ${spots.length} ad spots`, ...(ad ? [`Designing an ad for your About page for ${spot.label}`] : [])],
-      text: `That’s **${spots.length} ad spots** ${pages.length === 1 ? `on the ${pageLabel(pages[0]).toLowerCase().replace(/(?<!page)$/, ' page')}` : `across the ${and(pages.map((x) => pageLabel(x).toLowerCase()))}`}.${ad ? ` I put an ad for your **About page** in **${spot.label}**.` : ''} Each spot holds its own ad: fill the others with your FAQ, your Sponsors page or a sponsor.`,
+      steps: [`Setting up ${spots.length} ad spots`, ...made.map((m) => `Designing an ad for your ${WHAT[m.ad.purpose]} for ${m.spot.label}`)],
+      text: `That’s **${spots.length} ad spots** ${pages.length === 1 ? `on the ${pageLabel(pages[0]).toLowerCase().replace(/(?<!page)$/, ' page')}` : `across the ${and(pages.map((x) => pageLabel(x).toLowerCase()))}`}.${made.length ? ` I made ${and(made.map((m) => `your **${WHAT[m.ad.purpose]}** ad in **${m.spot.label}**`))}.` : ''}${open === 1 ? ` **${openSpots[0].label}** is open${promote.includes('sponsor') ? ' for a sponsor' : ''}: fill it below.` : open ? ` ${made.length ? 'The rest are' : 'They’re'} open${promote.includes('sponsor') ? ' for sponsors' : ''}: fill them below.` : ''}`,
       card: { type: 'adsSpots' },
       chips: ['Open Advertisements'],
     })
@@ -487,7 +535,7 @@ export async function seed() {
     while (p.stage < stagesFor(p).length - 1 && stagesFor(p)[p.stage].id !== upTo) {
       // At the ads step, answer its questions the usual way: every page, the usual placements.
       if (stagesFor(p)[p.stage].id === 'ads' && !p.ads.offers.length) {
-        await chooseAdPages(p, ['landing', 'browse', 'details'], p.messages.at(-1).card)
+        await chooseAdPages(p, ['landing', 'browse', 'details'], p.messages.at(-1).card, ['about', 'sponsor'])
         await chooseAdPlacements(p, ['landing-banners', 'browse-rail', 'details-bottom'], p.messages.at(-1).card)
       }
       await reply(p, nextFor(p).say)

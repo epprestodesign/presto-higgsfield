@@ -10,8 +10,7 @@ import { route, go } from '../router.js'
 import epLogo from '../assets/brand/eventpipe-logo.svg'
 import epLogoWhite from '../assets/brand/eventpipe-logo-fff.svg'
 
-defineProps({ theme: { type: String, default: 'system' } })
-const emit = defineEmits(['theme', 'navigate'])
+const emit = defineEmits(['navigate'])
 
 const LINKS = [
   { id: 'banners', label: 'Banners', icon: 'image' },
@@ -59,10 +58,7 @@ function fresh() { newChat(); emit('navigate') }
       </li>
     </ul>
 
-    <button type="button" class="rail__map" :class="{ 'is-active': route.view === 'map' }" @click="go({ view: 'map' }); emit('navigate')">
-      <Icon name="map" :size="18" /> Prototype map · links
-    </button>
-    <AccountMenu :theme="theme" @theme="emit('theme', $event)" />
+    <AccountMenu class="rail__acct" />
   </nav>
 </template>
 
@@ -87,6 +83,5 @@ function fresh() { newChat(); emit('navigate') }
 .rail__item { display: block; width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid transparent; border-radius: var(--r); background: none; font-size: 15px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 .rail__item:hover { background: var(--surface-3); }
 .rail__item.is-active { background: var(--selected); border-color: var(--line); font-weight: 700; }
-.rail__map { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 6px 12px; border: 1px dashed var(--line-bold); border-radius: var(--r); background: none; color: var(--ink-2); font-size: 13px; cursor: pointer; }
-.rail__map:hover, .rail__map.is-active { background: var(--selected); color: var(--ink); }
+.rail__acct { margin-top: auto; }
 </style>

@@ -1,5 +1,6 @@
 <script setup>
-// Ads in the chat, 1 of 3: which Presto pages should carry ads.
+// Ads in the chat, 1 of 3: which Presto pages should carry ads, and what the
+// ads promote (your About page, FAQ, Sponsors page, and/or sponsors).
 import { computed, ref } from 'vue'
 import CardShell from './CardShell.vue'
 import Icon from '../Icon.vue'
@@ -16,11 +17,22 @@ const done = computed(() => !!props.card.picked)
 const picked = ref(props.card.picked ? [...props.card.picked] : [])
 const on = (id) => (done.value ? props.card.picked : picked.value).includes(id)
 function toggle(id) { if (!done.value) picked.value = on(id) ? picked.value.filter((x) => x !== id) : [...picked.value, id] }
+const PROMOTE = [
+  { id: 'about', label: 'Your About page', icon: 'help' },
+  { id: 'faq', label: 'Your FAQ', icon: 'chat' },
+  { id: 'sponsors', label: 'Your Sponsors page', icon: 'grid' },
+  { id: 'sponsor', label: 'Sponsors’ own ads', icon: 'users' },
+]
+const promote = ref(props.card.promote ? [...props.card.promote] : ['about', 'sponsor'])
+const pOn = (id) => (done.value ? props.card.promote || [] : promote.value).includes(id)
+function pToggle(id) { if (!done.value) promote.value = pOn(id) ? promote.value.filter((x) => x !== id) : [...promote.value, id] }
+function confirm() { chooseAdPages(props.project, PAGES.filter((p) => picked.value.includes(p.id)).map((p) => p.id), props.card, PROMOTE.filter((x) => promote.value.includes(x.id)).map((x) => x.id)) }
 const count = (id) => OFFERS.filter((o) => o.page === id).length
 </script>
 
 <template>
   <CardShell kicker="Advertisements" title="Where should ads run?" :aside="done ? 'Confirmed' : `${picked.length} of ${PAGES.length} pages`">
+    <p class="aw__q">Which pages?</p>
     <div class="aw" role="group" aria-label="Pages with ads">
       <button
         v-for="pg in PAGES" :key="pg.id" type="button" class="aw__page" :class="{ 'is-on': on(pg.id) }"
@@ -31,16 +43,25 @@ const count = (id) => OFFERS.filter((o) => o.page === id).length
         <span class="aw__check"><Icon v-if="on(pg.id)" name="check" :size="16" /></span>
       </button>
     </div>
+    <p class="aw__q">What should the ads promote?</p>
+    <div class="cs-tabs" role="group" aria-label="What the ads promote">
+      <button
+        v-for="x in PROMOTE" :key="x.id" type="button" class="cs-tab" :class="{ 'is-on': pOn(x.id) }"
+        :aria-pressed="pOn(x.id)" :disabled="done" @click="pToggle(x.id)"
+      ><Icon :name="pOn(x.id) ? 'check' : x.icon" :size="16" /> {{ x.label }}</button>
+    </div>
     <div v-if="!done" class="aw__foot">
-      <button type="button" class="cs-btn-dark" :disabled="!picked.length || state.working" @click="chooseAdPages(project, PAGES.filter((p) => picked.includes(p.id)).map((p) => p.id), card)">
-        <Icon name="check" :size="16" /> Confirm {{ picked.length === 1 ? 'this page' : picked.length ? `these ${picked.length} pages` : 'pages' }}
+      <button type="button" class="cs-btn-dark" :disabled="!picked.length || !promote.length || state.working" @click="confirm">
+        <Icon name="check" :size="16" /> Confirm
       </button>
-      <small class="aw__hint">Pick one or more.</small>
+      <small class="aw__hint">{{ !picked.length ? 'Pick at least one page.' : !promote.length ? 'Pick what the ads promote.' : `${picked.length} ${picked.length === 1 ? 'page' : 'pages'} · ${promote.length} ${promote.length === 1 ? 'kind of ad' : 'kinds of ad'}` }}</small>
     </div>
   </CardShell>
 </template>
 
 <style scoped>
+.aw__q { margin: 0 0 8px; font-size: 14px; font-weight: 700; color: var(--ink-2); }
+.aw + .aw__q { margin-top: 18px; }
 .aw__foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
 .aw { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .aw__page { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); text-align: left; font: inherit; color: var(--ink); cursor: pointer; }
