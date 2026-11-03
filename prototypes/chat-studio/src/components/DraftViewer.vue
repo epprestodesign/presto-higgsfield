@@ -48,13 +48,17 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key))
             <button type="button" role="radio" :aria-checked="device === 'desktop'" :class="{ 'is-on': device === 'desktop' }" @click="device = 'desktop'"><Icon name="monitor" :size="16" /> Desktop</button>
             <button type="button" role="radio" :aria-checked="device === 'mobile'" :class="{ 'is-on': device === 'mobile' }" @click="device = 'mobile'"><Icon name="phone" :size="16" /> Mobile</button>
           </div>
-          <button v-if="draft.snap && !readonly" type="button" class="cs-btn-dark" :disabled="state.working" @click="restore"><Icon name="refresh" :size="16" /> Restore this draft</button>
           <button type="button" class="dv__icon" aria-label="Close" @click="emit('close')"><Icon name="x" :size="18" /></button>
         </div>
       </header>
       <div class="dv__body">
         <ScreensCarousel :key="draft.id" v-model:screen="screen" :view="view" :device="device" />
       </div>
+      <!-- Restoring sits at the bottom, after you've looked the draft over. -->
+      <footer v-if="draft.snap && !readonly" class="dv__foot">
+        <p>Bring this draft back as the current one. Your newer drafts stay in Concepts.</p>
+        <button type="button" class="cs-btn-dark" :disabled="state.working" @click="restore"><Icon name="refresh" :size="16" /> Restore this draft</button>
+      </footer>
     </section>
   </div>
 </template>
@@ -75,5 +79,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key))
 .dv__seg button { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 10px; border: 0; border-radius: 2px; background: none; color: var(--ink-2); font-size: 13px; font-weight: 700; cursor: pointer; }
 .dv__seg button.is-on { background: var(--pill); color: var(--pill-ink); }
 .dv__body { padding: 18px 28px 24px; }
-@media (max-width: 640px) { .dv { padding: 0; } .dv__panel { border-radius: 0; height: 100%; } .dv__body { padding: 14px; } }
+.dv__foot { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 14px 18px; border-top: 1px solid var(--line); background: var(--surface); }
+.dv__foot p { flex: 1; margin: 0; font-size: 14px; color: var(--ink-2); }
+@media (max-width: 640px) { .dv { padding: 0; } .dv__panel { border-radius: 0; height: 100%; } .dv__body { padding: 14px; } .dv__foot p { display: none; } .dv__foot .cs-btn-dark { flex: 1; justify-content: center; } }
 </style>
