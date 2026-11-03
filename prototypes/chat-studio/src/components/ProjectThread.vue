@@ -17,11 +17,13 @@ import LooksCard from './cards/LooksCard.vue'
 import BannersCard from './cards/BannersCard.vue'
 import PagesCard from './cards/PagesCard.vue'
 import ExportCard from './cards/ExportCard.vue'
+import AdCard from './cards/AdCard.vue'
+import AdsTab from './ads/AdsTab.vue'
 import { reply, state, stopWorking, stagesFor, draftView, toast, uploadLogo } from '../mockAgent.js'
 import { route, link, go } from '../router.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
-const CARDS = { brand: BrandCard, looks: LooksCard, banners: BannersCard, pages: PagesCard, export: ExportCard }
+const CARDS = { brand: BrandCard, looks: LooksCard, banners: BannersCard, pages: PagesCard, export: ExportCard, ad: AdCard }
 
 // Tab and open draft live in the route, so they deep-link.
 const tab = computed({ get: () => route.tab, set: (t) => { route.tab = t; route.draft = 0; route.at = '' } })
@@ -171,6 +173,7 @@ const lastAgent = computed(() => [...props.project.messages].reverse().find((m) 
       </div>
 
       <ConceptsTab v-if="tab === 'concepts'" :project="project" @open="viewing = $event" @chat="tab = 'chat'" />
+      <AdsTab v-if="tab === 'ads'" :project="project" />
 
       <div v-show="tab === 'chat'" class="th__dock">
         <button v-if="!atBottom" type="button" class="th__jump" aria-label="Jump to the latest" @click="toBottom()"><Icon name="down" :size="18" /></button>

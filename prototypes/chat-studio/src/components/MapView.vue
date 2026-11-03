@@ -19,6 +19,7 @@ const general = computed(() => [
   { label: 'Banners', ...L({ view: 'library', library: 'banners' }) },
   { label: 'Logos', ...L({ view: 'library', library: 'logos' }) },
   { label: 'Pages', ...L({ view: 'library', library: 'pages' }) },
+  { label: 'Advertisements', ...L({ view: 'library', library: 'ads' }) },
 ])
 const starts = computed(() => SUGGESTIONS.Popular.slice(0, 4).map((p) => ({ label: `New project: “${p}”`, ...L({ view: 'new', prompt: p }) })))
 const projects = computed(() => [...state.projects].sort((a, b) => b.updated - a.updated).map((p) => ({
@@ -28,6 +29,7 @@ const projects = computed(() => [...state.projects].sort((a, b) => b.updated - a
     { label: 'Chat · Setup', ...L({ view: 'project', project: p.slug, at: 'setup' }) },
     ...p.drafts.map((d) => ({ label: `Chat · Draft ${d.n}`, ...L({ view: 'project', project: p.slug, at: `draft-${d.n}` }) })),
     { label: 'Concepts', ...L({ view: 'project', project: p.slug, tab: 'concepts' }) },
+    { label: 'Advertisements', ...L({ view: 'project', project: p.slug, tab: 'ads' }) },
     { label: 'Banners (this project)', ...L({ view: 'library', library: 'banners', filter: p.slug }) },
   ],
   drafts: p.drafts.map((d) => ({

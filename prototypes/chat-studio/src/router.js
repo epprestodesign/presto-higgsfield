@@ -11,7 +11,8 @@
 //   #/project/heartland/concepts                Concepts tab
 //   #/project/heartland/concepts/draft/2?device=mobile&screen=browse
 //                                               A draft, full size
-//   #/library/banners?project=heartland         Banners / Logos / Pages libraries
+//   #/project/heartland/ads                     Advertisements (offered banners + ads)
+//   #/library/banners?project=heartland         Banners / Logos / Pages / Ads libraries
 //   #/library/pages/heartland/draft/2?screen=details   A project's pages, full size
 //   …/draft/3?sheet=export                      A draft with Export graphics open
 //   #/map                                       Every link, for this prototype
@@ -20,7 +21,7 @@ import { reactive, watch } from 'vue'
 const DEFAULTS = Object.freeze({
   view: 'home', // home | new | project | library | map
   project: '', // project slug
-  tab: 'chat', // chat | concepts
+  tab: 'chat', // chat | concepts | ads
   draft: 0, // open in the viewer (0 = closed)
   device: 'desktop',
   screen: 'landing',
@@ -49,6 +50,7 @@ export function parse(hash) {
     r.project = a
     let rest = parts.slice(2)
     if (rest[0] === 'concepts') { r.tab = 'concepts'; rest = rest.slice(1) }
+    else if (rest[0] === 'ads') { r.tab = 'ads'; rest = rest.slice(1) }
     if (rest[0] === 'draft') r.draft = Number(rest[1]) || 0
     r.at = q.get('at') || ''
   } else if (head === 'library' && a) {
@@ -76,7 +78,7 @@ export function format(r) {
     if (r.prompt) q.set('prompt', r.prompt)
     if (r.mode !== 'full') q.set('mode', r.mode)
   } else if (r.view === 'project') {
-    path = `/project/${r.project}${r.tab === 'concepts' ? '/concepts' : ''}${r.draft ? `/draft/${r.draft}` : ''}`
+    path = `/project/${r.project}${r.tab === 'concepts' ? '/concepts' : r.tab === 'ads' ? '/ads' : ''}${r.draft ? `/draft/${r.draft}` : ''}`
     if (r.at && r.tab === 'chat' && !r.draft) q.set('at', r.at)
   } else if (r.view === 'library') {
     path = `/library/${r.library}${r.library === 'pages' && r.project ? `/${r.project}${r.draft ? `/draft/${r.draft}` : ''}` : ''}`

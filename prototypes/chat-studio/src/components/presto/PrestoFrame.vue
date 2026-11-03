@@ -8,6 +8,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { connectPreviewFrame, previewHostUrl } from '@bs/preview/bridge.js'
 import { toPresto } from '../../presto/toPresto.js'
 import { lookedLogo } from '../../presto/logoLooks.js'
+import { adsKey } from '../../ads.js'
 
 const props = defineProps({
   view: { type: Object, required: true },
@@ -44,7 +45,7 @@ watch(frame, (el) => {
 function onMessage(e) {
   if (e.source === frame.value?.contentWindow && e.data?.type === 'bs-preview:ready') setTimeout(() => { ready.value = true }, 250)
 }
-watch(() => [JSON.stringify(props.view.copy), props.view.selected?.key, props.view.palette.join(), props.view.look, props.view.font, props.view.logo, lookedLogo(props.view), props.page], () => link?.send())
+watch(() => [JSON.stringify(props.view.copy), props.view.selected?.key, props.view.palette.join(), props.view.look, props.view.font, props.view.logo, lookedLogo(props.view), adsKey(props.view.ads), props.page], () => link?.send())
 
 onMounted(() => {
   window.addEventListener('message', onMessage)

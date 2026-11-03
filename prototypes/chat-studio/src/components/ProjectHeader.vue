@@ -93,6 +93,9 @@ function replaceLogo(e) {
         <button type="button" role="tab" class="ph__chip" :class="{ 'is-on': tab === 'concepts' }" :aria-selected="tab === 'concepts'" @click="emit('update:tab', 'concepts')">
           <Icon name="layers" :size="20" /> Concepts <span class="ph__count">{{ project.drafts.length }}</span>
         </button>
+        <button type="button" role="tab" class="ph__chip" :class="{ 'is-on': tab === 'ads' }" :aria-selected="tab === 'ads'" @click="emit('update:tab', 'ads')">
+          <Icon name="megaphone" :size="20" /> Advertisements <span class="ph__count">{{ project.ads.items.length }}</span>
+        </button>
       </div>
     </div>
   </header>

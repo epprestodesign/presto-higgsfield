@@ -8,13 +8,16 @@ import LogoMark from './LogoMark.vue'
 import DraftStack from './presto/DraftStack.vue'
 import DraftViewer from './DraftViewer.vue'
 import { state, openProject, draftView, LOGO_LOOKS, projectBySlug, logoOf } from '../mockAgent.js'
-import { route } from '../router.js'
+import { route, go } from '../router.js'
+import AdPreview from './ads/AdPreview.vue'
+import { readySizes, AD_SIZES, PURPOSES } from '../ads.js'
 
 const props = defineProps({ kind: { type: String, required: true } })
 const COPY = {
   banners: { title: 'Banners', sub: 'Every banner you’ve generated, newest first.', icon: 'image' },
   logos: { title: 'Logos', sub: 'Each project’s logo, cleaned up, and the look it uses on the pages.', icon: 'spark' },
   pages: { title: 'Pages', sub: 'Each project’s Presto pages, with earlier drafts behind.', icon: 'layers' },
+  ads: { title: 'Advertisements', sub: 'Every ad across your events: sponsors, and links to each event’s own pages.', icon: 'megaphone' },
 }
 
 // Filter and open project live in the route (deep links).
@@ -34,7 +37,10 @@ const viewing = computed({
 })
 const viewingDraft = computed(() => viewing.value && (viewing.value.drafts[route.draft - 1] || viewing.value.drafts.at(-1)))
 const lookLabel = (p) => LOGO_LOOKS.find((l) => l.id === p.look)?.label
-const count = computed(() => ({ banners: banners.value.length, logos: inScope.value.length, pages: pages.value.length })[props.kind])
+// Ads: every ad with at least one finished size, shown at its largest finished size.
+const adList = computed(() => inScope.value.flatMap((p) => p.ads.items.filter((a) => readySizes(a).length).map((a) => ({ a, p, size: readySizes(a).sort((x, y) => AD_SIZES[y].width * AD_SIZES[y].height - AD_SIZES[x].width * AD_SIZES[x].height)[0] }))))
+const purposeLabel = (id) => PURPOSES.find((x) => x.id === id)?.label
+const count = computed(() => ({ banners: banners.value.length, logos: inScope.value.length, pages: pages.value.length, ads: adList.value.length })[props.kind])
 </script>
 
 <template>
@@ -78,6 +84,19 @@ const count = computed(() => ({ banners: banners.value.length, logos: inScope.va
         </li>
       </ul>
 
+      <!-- Advertisements -->
+      <ul v-else-if="kind === 'ads'" class="lib__grid">
+        <li v-for="x in adList" :key="x.a.id">
+          <button type="button" class="lib__card lib__ad" :aria-label="`${x.a.name} on ${x.p.name}`" @click="go({ view: 'project', project: x.p.slug, tab: 'ads' })">
+            <AdPreview :ad="x.a" :size="x.size" :max-width="300" :max-height="170" />
+          </button>
+          <div class="lib__meta">
+            <span class="lib__mark"><img :src="logoOf(x.p)" alt="" /></span>
+            <span><b>{{ x.a.name }}</b><small>{{ purposeLabel(x.a.purpose) }} · {{ x.p.name }} · {{ readySizes(x.a).length }} {{ readySizes(x.a).length === 1 ? 'size' : 'sizes' }}</small></span>
+          </div>
+        </li>
+      </ul>
+
       <!-- Pages -->
       <ul v-else class="lib__grid is-pages">
         <li v-for="p in pages" :key="p.id">
@@ -113,6 +132,7 @@ const count = computed(() => ({ banners: banners.value.length, logos: inScope.va
 .lib__banner { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 .lib__logo { display: grid; place-items: center; aspect-ratio: 1; background: #fff; }
 .lib__stack { padding: 6% 4% 0; }
+.lib__ad { display: grid; place-items: center; aspect-ratio: 16 / 10; padding: 16px; }
 .lib__meta { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .lib__meta b { display: block; font-size: 16px; }
 .lib__meta small { color: var(--ink-3); font-size: 13px; }

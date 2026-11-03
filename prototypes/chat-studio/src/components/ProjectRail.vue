@@ -17,6 +17,7 @@ const LINKS = [
   { id: 'banners', label: 'Banners', icon: 'image' },
   { id: 'logos', label: 'Logos', icon: 'spark' },
   { id: 'pages', label: 'Pages', icon: 'layers' },
+  { id: 'ads', label: 'Advertisements', icon: 'megaphone' },
 ]
 const history = computed(() => [...state.projects].sort((a, b) => b.updated - a.updated))
 

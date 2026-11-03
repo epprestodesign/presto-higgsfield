@@ -4,6 +4,7 @@
 import { reactive } from 'vue'
 import { BRANDS, brandFor } from './mockData.js'
 import { route, go } from './router.js'
+import { newAds, seedAds } from './ads.js'
 
 export const state = reactive({
   projects: [],
@@ -60,6 +61,7 @@ function newProject(brand, prompt) {
     look: 'badge',
     font: brand.fonts.display, // heading font on the Presto pages
     logo: null, // an uploaded logo (object URL); null = the brand kit's
+    ads: newAds(), // Advertisements: offered placements + ads (event-wide, shared by every draft)
     logoName: '',
     mode: 'full',
     stage: 0, // index into stagesFor(p)
@@ -79,6 +81,7 @@ export function snapshot(p) {
     look: p.look,
     font: p.font,
     logo: p.logo,
+    ads: p.ads, // event-wide, not frozen per draft
     palette: [...p.palette],
     selected: p.selected ? { ...p.selected } : null,
     copy: JSON.parse(JSON.stringify(p.copy)),
@@ -321,6 +324,13 @@ export async function uploadLogo(p, file, text = '') {
   })
 }
 
+/** Advertisements activity, echoed into the chat (no new draft: ads are event-wide). */
+export function adsChat(p, userText, agentText, adId) {
+  userMsg(p, userText)
+  p.messages.push(reactive({ id: nid('m'), role: 'agent', status: 'done', steps: [{ label: 'Designing with Higgsfield', done: true }], seconds: 2, text: agentText, card: { type: 'ad', adId }, chips: [], draft: p.drafts.length }))
+  p.updated = Date.now()
+}
+
 /** Send the go-ahead for the step a project is waiting on. */
 export function goAhead(p) {
   const nx = nextFor(p)
@@ -358,6 +368,7 @@ export async function seed() {
       select(p, projectBanners(p)[i % 2 ? 1 : 0])
     }
     p.drafts.forEach((d, i) => { d.at = Date.now() - ago - (p.drafts.length - 1 - i) * 18 * 6e4 })
+    if (p.brand.id === 'heartland') seedAds(p)
     p.updated = Date.now() - ago
   }
   state.speed = speed

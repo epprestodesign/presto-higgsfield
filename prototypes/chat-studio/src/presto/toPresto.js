@@ -6,6 +6,7 @@
 import { toPrestoProject } from '@bs/banner-lab/studioProjects.js'
 import { logoOnDarkOf } from '../mockAgent.js'
 import { lookedLogo } from './logoLooks.js'
+import { prestoAds } from '../ads.js'
 
 const FONT_IDS = { Oswald: 'oswald', 'Barlow Condensed': 'barlow-condensed', 'Playfair Display': 'playfair', Montserrat: 'montserrat', 'PT Sans': 'pt-sans' }
 const abs = (src) => (src ? new URL(src, window.location.href).href : src)
@@ -26,5 +27,8 @@ export function toPresto(view) {
     selectedBannerId: `proto-${sel.key}`,
     copy: JSON.parse(JSON.stringify(view.copy)),
   }
-  return toPrestoProject(lab)
+  const presto = toPrestoProject(lab)
+  // Advertisements: the offered placements filled with the event's ads.
+  presto.ads = prestoAds(view.ads)
+  return presto
 }
