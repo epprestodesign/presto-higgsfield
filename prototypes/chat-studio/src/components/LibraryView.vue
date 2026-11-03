@@ -66,6 +66,17 @@ const bannerGroups = computed(() => {
   return [...by.values()]
 })
 const setsOf = (g) => new Set(g.items.map((b) => b.set)).size
+// Logos: every version tried, as a stack — each look, on the logo in use and
+// (after an upload) on the logo from the website. The look in use is in front.
+function logoVersions(p) {
+  const sources = p.logo ? [{ view: p, from: p.logoName ? `Uploaded · ${p.logoName}` : 'Uploaded' }, { view: { brand: p.brand, logo: null }, from: `From ${p.brand.website}` }] : [{ view: p, from: `From ${p.brand.website}` }]
+  const bg = p.selected?.src || p.brand.images[0].src
+  return sources.flatMap((s, si) => LOGO_LOOKS.map((l) => ({
+    key: `${si}-${l.id}`, view: s.view, look: l.id, bg, inUse: si === 0 && l.id === p.look,
+    caption: `${l.label}${si === 0 && l.id === p.look ? ' · on the pages' : ''} · ${s.from}`,
+  })))
+}
+const logoStart = (p) => Math.max(0, LOGO_LOOKS.findIndex((l) => l.id === p.look))
 const logos = computed(() => props.kind === 'logos' ? shown.value.map((x) => x.project) : [])
 const pages = computed(() => props.kind === 'pages' ? shown.value.map((x) => x.project) : [])
 const adList = computed(() => props.kind === 'ads' ? shown.value : [])
@@ -107,13 +118,20 @@ const filtered = computed(() => tags.value.length || !!route.q)
       </ul>
 
       <!-- Logos -->
-      <ul v-else-if="kind === 'logos'" class="lib__grid is-logos">
+      <ul v-else-if="kind === 'logos'" class="lib__grid is-pages">
         <li v-for="p in logos" :key="p.id">
-          <button type="button" class="lib__card lib__logo" :aria-label="`Open ${p.name}`" @click="openProject(p.id)">
-            <LogoMark :project="p" look="original" :size="130" />
-          </button>
+          <BannerStack :banners="logoVersions(p)" :start="logoStart(p)" :label="`${p.name} logo`" @open="openProject(p.id)">
+            <template #default="{ item }">
+              <span class="lib__lv" :class="`is-${item.look}`">
+                <img v-if="item.look === 'badge' || item.look === 'white'" class="lib__lvbg" :src="item.bg" alt="" />
+                <LogoMark :project="item.view" :look="item.look" :size="item.look === 'white' ? 92 : 84" />
+                <em v-if="item.inUse">On the pages</em>
+              </span>
+            </template>
+          </BannerStack>
           <div class="lib__meta">
-            <span><b>{{ p.brand.name }}</b><small>Shown as: {{ lookLabel(p) }}</small></span>
+            <span class="lib__mark"><img :src="logoOf(p)" alt="" /></span>
+            <span><b>{{ p.brand.name }}</b><small>{{ logoVersions(p).length }} versions · on the pages: {{ lookLabel(p) }}</small></span>
           </div>
         </li>
       </ul>
@@ -167,7 +185,11 @@ const filtered = computed(() => tags.value.length || !!route.q)
 .lib__grid.is-pages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .lib__card { display: block; width: 100%; padding: 0; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface-3); overflow: hidden; cursor: pointer; }
 .lib__card:hover { box-shadow: var(--shadow-overlay); border-color: var(--line-bold); }
-.lib__logo { display: grid; place-items: center; aspect-ratio: 1; background: #fff; }
+.lib__lv { position: relative; display: grid; place-items: center; width: 100%; height: 100%; background: #fff; }
+.lib__lv.is-dark { background: #1f2937; }
+.lib__lvbg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.55); }
+.lib__lv > :deep(.lm) { position: relative; }
+.lib__lv em { position: absolute; top: 8px; left: 8px; padding: 0 8px; border-radius: 999px; background: #dcfce7; color: #15803d; font-style: normal; font-size: 11px; font-weight: 700; line-height: 20px; }
 .lib__stack { padding: 6% 4% 0; }
 .lib__ad { display: grid; place-items: center; aspect-ratio: 16 / 10; padding: 16px; }
 .lib__meta { display: flex; align-items: center; gap: 10px; margin-top: 10px; }

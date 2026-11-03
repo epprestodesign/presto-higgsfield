@@ -2,16 +2,18 @@
 // One project's landing-page banners as a stack (newest in front, like the
 // Pages stacks). Hover and the back ones lift so you can peek at them; move
 // across the card to flip through, or use the arrows / ← →. Click the front one
-// to open the project.
+// to open the project. The Logos library reuses it: pass `caption` on each item
+// and draw the layer in the default slot.
 import { computed, ref, watch } from 'vue'
 import Icon from './Icon.vue'
 
 const props = defineProps({
-  banners: { type: Array, required: true }, // newest first: { key, src, filter, set, mood, kind }
+  banners: { type: Array, required: true }, // newest first: { key, src, filter, set, mood, kind } or { key, caption }
   label: { type: String, required: true },
+  start: { type: Number, default: 0 }, // which one is in front to begin with
 })
 const emit = defineEmits(['open'])
-const at = ref(0)
+const at = ref(props.start)
 const hover = ref(false)
 const n = computed(() => props.banners.length)
 watch(n, () => { if (at.value >= n.value) at.value = 0 })
@@ -41,7 +43,7 @@ function scrub(e) {
 function key(e) {
   if (e.key === 'ArrowRight') { e.preventDefault(); step(1) } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1) }
 }
-const caption = computed(() => front.value && [`Set ${front.value.set}`, front.value.mood, front.value.kind].filter(Boolean).join(' · '))
+const caption = computed(() => front.value && (front.value.caption || [`Set ${front.value.set}`, front.value.mood, front.value.kind].filter(Boolean).join(' · ')))
 </script>
 
 <template>
@@ -52,7 +54,7 @@ const caption = computed(() => front.value && [`Set ${front.value.set}`, front.v
     >
       <span
         v-for="(b, i) in banners" :key="b.key" class="bs__layer" :class="{ 'is-front': i === at }" :style="style(i)"
-      ><img :src="b.src" alt="" :style="{ filter: b.filter || undefined }" /></span>
+      ><slot :item="b" :front="i === at"><img :src="b.src" alt="" :style="{ filter: b.filter || undefined }" /></slot></span>
     </button>
 
     <template v-if="n > 1">
