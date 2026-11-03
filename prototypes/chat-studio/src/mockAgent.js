@@ -212,7 +212,7 @@ const STEP = {
   pages: (p) => (p.mode === 'ads'
     ? {
         steps: ['Placing your ads in the Presto pages'],
-        text: 'Here are your ads on the Presto pages: the right rail on hotel browse, the billboard below the landing page description, and the leaderboard at the bottom of hotel details.',
+        text: 'Here are your ads on the Presto pages: the right rail on hotel browse, the three banners below the landing page description, and the leaderboard at the bottom of hotel details.',
         card: { type: 'pages', screen: 'browse' },
         chips: ['Open Advertisements'],
       }
@@ -225,7 +225,7 @@ const STEP = {
   ads: (p) => {
     // The standard approved placements, and a first ad pointing at the event's
     // About page, made in every size they need. Sponsors are added in Advertisements.
-    if (!p.ads.offers.length) p.ads.offers.push('landing-billboard', 'browse-rail', 'details-bottom')
+    if (!p.ads.offers.length) p.ads.offers.push('landing-banners', 'browse-rail', 'details-bottom')
     const ad = createAd(p, { purpose: 'about', how: 'package', ...purposeDefaults('about', p.brand) })
     packageSizes(p.ads).forEach((z) => { ad.sizes[z] = 'ready' })
     return {
@@ -368,8 +368,8 @@ export async function uploadLogo(p, file, text = '') {
 }
 
 /** Advertisements activity, echoed into the chat (no new draft: ads are event-wide). */
-export function adsChat(p, userText, agentText, adId) {
-  userMsg(p, userText)
+export function adsChat(p, userText, agentText, adId, extra = {}) {
+  userMsg(p, userText, extra) // extra.adRef = { adId, size }: the banner it's about, shown with the message
   p.messages.push(reactive({ id: nid('m'), role: 'agent', status: 'done', steps: [{ label: 'Designing with Higgsfield', done: true }], seconds: 2, text: agentText, card: { type: 'ad', adId }, chips: [], draft: p.drafts.length }))
   p.updated = Date.now()
 }

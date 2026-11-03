@@ -13,7 +13,7 @@ const props = defineProps({
 })
 const dims = computed(() => AD_SIZES[props.size])
 const scale = computed(() => Math.min(1, props.maxWidth / dims.value.width, props.maxHeight / dims.value.height))
-const sponsor = computed(() => asSponsor(props.ad))
+const sponsor = computed(() => asSponsor(props.ad, props.size))
 </script>
 
 <template>

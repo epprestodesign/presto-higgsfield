@@ -6,6 +6,7 @@
 // Higgsfield" one size at a time or as a package (simulated), or re-fitted
 // from an uploaded ad (drawn on a canvas, per size).
 import { reactive } from 'vue'
+import { LANDING_SIZE } from './adSizes.js'
 import { AD_SIZES, AD_SLOTS, createPlacement } from '@bs/models/ads.js'
 import { SAMPLE_SPONSORS } from '@bs/data/sponsors.js'
 
@@ -13,8 +14,8 @@ export { AD_SIZES }
 
 /** The approved placements an event can offer (from the preset layouts). */
 export const OFFERS = [
+  { id: 'landing-banners', page: 'landing', slot: 'landing.afterContent', size: LANDING_SIZE, count: 3, label: '3 banners (340×215) below the event description' },
   { id: 'landing-billboard', page: 'landing', slot: 'landing.afterContent', size: '970x250', count: 1, label: 'Billboard below the event description' },
-  { id: 'landing-rects', page: 'landing', slot: 'landing.afterContent', size: '300x250', count: 3, label: '3 medium rectangles below the event description' },
   { id: 'browse-top', page: 'browse', slot: 'browse.top', size: '970x90', count: 1, label: 'Leaderboard above the results' },
   { id: 'browse-rail', page: 'browse', slot: 'browse.rail', size: '160x600', count: 2, label: 'Right rail · 2 skyscrapers' },
   { id: 'browse-bottom', page: 'browse', slot: 'browse.bottom', size: '970x250', count: 1, label: 'Billboard below the results' },
@@ -93,6 +94,7 @@ export function createAd(project, form) {
       : { background: '#0F172A', foreground: '#FFFFFF', accent: '#F59E0B' }),
     upload: form.upload || null, // the uploaded ad (object URL) when how = 'upload'
     artwork: {}, // { size: { src } } — re-fitted uploads
+    overrides: {}, // { size: { colors, tagline, cta } } — changes asked for on one size only
     sizes: {}, // { size: 'idle' | 'working' | 'ready' }
     created: Date.now(),
   })
@@ -114,33 +116,65 @@ export async function designPackage(project, ad, { speed = 1 } = {}) {
   await Promise.all(sizes.map((s, i) => designSize(project, ad, s, (900 + i * 450) * speed)))
 }
 
-/** Quick changes asked for in an ad's "Ask for changes" box. */
-export async function reviseAd(project, ad, text) {
+/** The ad as it looks in one size (its own changes on top of the ad's). */
+export const adIn = (ad, size) => ({ ...ad, ...(size && ad.overrides?.[size]) })
+
+/** What a quick change ("Darker", "Shorter line"…) does to an ad's look. */
+function changeFor(project, base, text) {
   const t = text.toLowerCase()
-  if (/dark/.test(t)) ad.colors = { ...ad.colors, background: '#0B1220', foreground: '#FFFFFF' }
-  else if (/light|bright/.test(t)) ad.colors = { ...ad.colors, background: '#F8FAFC', foreground: '#0F172A' }
-  else if (/event|our colou?r|brand/.test(t)) ad.colors = { background: project.palette[0], foreground: '#FFFFFF', accent: project.palette[1] }
-  else if (/short/.test(t)) ad.tagline = ad.tagline.split(/[.!]/)[0]
-  else if (/button|cta/.test(t)) ad.cta = ad.cta === 'Learn more' ? 'Find out more' : 'Learn more'
-  else ad.colors = { ...ad.colors, accent: ad.colors.background === '#0F172A' ? '#38BDF8' : '#F59E0B' }
+  if (/dark/.test(t)) return { colors: { ...base.colors, background: '#0B1220', foreground: '#FFFFFF' } }
+  if (/light|bright/.test(t)) return { colors: { ...base.colors, background: '#F8FAFC', foreground: '#0F172A' } }
+  if (/event|our colou?r|brand/.test(t)) return { colors: { background: project.palette[0], foreground: '#FFFFFF', accent: project.palette[1] } }
+  if (/short/.test(t)) return { tagline: base.tagline.split(/[.!]/)[0] }
+  if (/button|cta/.test(t)) return { cta: base.cta === 'Learn more' ? 'Find out more' : 'Learn more' }
+  return { colors: { ...base.colors, accent: base.colors.background === '#0F172A' ? '#38BDF8' : '#F59E0B' } }
+}
+
+/**
+ * Changes asked for in an ad's "Ask for changes" box. With `size`, only that
+ * size changes (it keeps its own look); otherwise every finished size does.
+ */
+export async function reviseAd(project, ad, text, size = null) {
+  if (size) {
+    ad.overrides[size] = { ...ad.overrides[size], ...changeFor(project, adIn(ad, size), text) }
+    return designSize(project, ad, size, 900)
+  }
+  Object.assign(ad, changeFor(project, ad, text))
+  ad.overrides = {}
   const ready = Object.keys(ad.sizes).filter((s) => ad.sizes[s] === 'ready')
   await Promise.all(ready.map((s, i) => designSize(project, ad, s, 700 + i * 200)))
 }
 
+/** Take one size off an ad (it goes back to "Design this size"). Returns an undo. */
+export function removeSize(project, ad, size) {
+  const before = { state: ad.sizes[size], artwork: ad.artwork[size], override: ad.overrides[size] }
+  ad.sizes[size] = 'idle'
+  delete ad.artwork[size]
+  delete ad.overrides[size]
+  project.updated = Date.now()
+  return () => {
+    ad.sizes[size] = before.state
+    if (before.artwork) ad.artwork[size] = before.artwork
+    if (before.override) ad.overrides[size] = before.override
+    project.updated = Date.now()
+  }
+}
+
 export const readySizes = (ad) => Object.keys(ad.sizes).filter((s) => ad.sizes[s] === 'ready')
 
-/** The ad as a Presto sponsor (what AdCreative / the Presto pages render). */
-export function asSponsor(ad) {
+/** The ad as a Presto sponsor (what AdCreative / the Presto pages render); with `size`, as it looks in that size. */
+export function asSponsor(ad, size = null) {
   const abs = (src) => (src ? new URL(src, window.location.href).href : null)
   const artwork = {}
-  for (const [size, a] of Object.entries(ad.artwork)) if (ad.sizes[size] === 'ready') artwork[size] = { id: `${ad.id}-${size}`, src: a.src, kind: 'photo' }
+  for (const [sz, a] of Object.entries(ad.artwork)) if (ad.sizes[sz] === 'ready') artwork[sz] = { id: `${ad.id}-${sz}`, src: a.src, kind: 'photo' }
+  const v = adIn(ad, size)
   return {
-    id: ad.id,
-    name: ad.name,
-    tagline: ad.tagline,
-    cta: ad.cta,
+    id: size && ad.overrides?.[size] ? `${ad.id}@${size}` : ad.id,
+    name: v.name,
+    tagline: v.tagline,
+    cta: v.cta,
     url: ad.url,
-    colors: { ...ad.colors },
+    colors: { ...v.colors },
     logo: ad.logo ? { id: `${ad.id}-logo`, src: abs(ad.logo), alt: ad.name, kind: 'logo' } : null,
     artwork,
   }
@@ -149,12 +183,13 @@ export function asSponsor(ad) {
 /** The project's ads in the Presto project shape (models/project.js `ads`). */
 export function prestoAds(ads) {
   const live = (ads?.items || []).filter((a) => readySizes(a).length)
-  const sponsors = live.map(asSponsor)
-  const ids = sponsors.map((s) => s.id)
+  // One sponsor per ad, plus a variant for each size that has its own changes.
+  const sponsors = live.flatMap((a) => [asSponsor(a), ...Object.keys(a.overrides || {}).map((sz) => asSponsor(a, sz))])
+  const idFor = (a, size) => (a.overrides?.[size] ? `${a.id}@${size}` : a.id)
   const placements = { landing: [], browse: [], details: [] }
   for (const oid of ads?.offers || []) {
     const o = offerById(oid)
-    if (o) placements[o.page].push(createPlacement({ slot: o.slot, size: o.size, count: o.count, sponsorIds: ids }))
+    if (o) placements[o.page].push(createPlacement({ slot: o.slot, size: o.size, count: o.count, sponsorIds: live.map((a) => idFor(a, o.size)) }))
   }
   return { enabled: !!(sponsors.length && ads.offers.length), sponsors, placements, railMode: 'auto', presets: {} }
 }
@@ -162,12 +197,12 @@ export function prestoAds(ads) {
 /** A short key that changes whenever the ads on the pages would change. */
 export function adsKey(ads) {
   if (!ads) return ''
-  return `${ads.offers.join()}|${ads.items.map((a) => `${a.id}:${readySizes(a).join('+')}:${a.colors.background}${a.colors.accent}:${a.tagline}:${a.cta}`).join(',')}`
+  return `${ads.offers.join()}|${ads.items.map((a) => `${a.id}:${readySizes(a).join('+')}:${a.colors.background}${a.colors.accent}:${a.tagline}:${a.cta}:${JSON.stringify(a.overrides || {})}`).join(',')}`
 }
 
 /** Seed ads for a sample project (Heartland): sponsors from brand-studio + an FAQ house ad. */
 export function seedAds(project) {
-  for (const o of ['landing-billboard', 'browse-rail', 'details-bottom']) if (!project.ads.offers.includes(o)) project.ads.offers.push(o)
+  for (const o of ['landing-banners', 'browse-rail', 'details-bottom']) if (!project.ads.offers.includes(o)) project.ads.offers.push(o)
   const sizes = packageSizes(project.ads)
   const spn = SAMPLE_SPONSORS.slice(0, 2)
   for (const s of [...spn].reverse()) {

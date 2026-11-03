@@ -20,10 +20,12 @@ import ExportCard from './cards/ExportCard.vue'
 import AdCard from './cards/AdCard.vue'
 import AdsStepCard from './cards/AdsStepCard.vue'
 import AdsTab from './ads/AdsTab.vue'
+import AdPreview from './ads/AdPreview.vue'
 import { reply, state, stopWorking, stagesFor, draftView, toast, uploadLogo } from '../mockAgent.js'
 import { route, link, go } from '../router.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
+const adOf = (r) => props.project.ads?.items.find((a) => a.id === r.adId)
 const CARDS = { brand: BrandCard, looks: LooksCard, banners: BannersCard, pages: PagesCard, export: ExportCard, ad: AdCard, ads: AdsStepCard }
 
 // Tab and open draft live in the route, so they deep-link.
@@ -159,6 +161,10 @@ const lastAgent = computed(() => [...props.project.messages].reverse().find((m) 
               <li v-for="m in seg.messages" :key="m.id" :data-mid="m.id" :class="`th__msg th__msg--${m.role}`">
                 <div v-if="m.role === 'user'" class="th__pill">
                   <figure v-if="m.image" class="th__upload"><img :src="m.image" :alt="m.fileName" /><figcaption>{{ m.fileName }}</figcaption></figure>
+                  <figure v-else-if="m.adRef && adOf(m.adRef)" class="th__adref">
+                    <AdPreview :ad="adOf(m.adRef)" :size="m.adRef.size" :max-width="220" :max-height="90" />
+                    <figcaption>{{ adOf(m.adRef).name }} · {{ m.adRef.size.replace('x', '×') }}</figcaption>
+                  </figure>
                   <p v-if="m.text">{{ m.text }}</p>
                 </div>
                 <template v-else>
@@ -210,6 +216,8 @@ const lastAgent = computed(() => [...props.project.messages].reverse().find((m) 
 .th__msg--user { justify-items: end; }
 .th__pill { margin: 0; max-width: 78%; padding: 10px 16px; border-radius: 8px 8px 2px 8px; background: var(--pill); color: var(--pill-ink); font-size: 16px; }
 .th__pill p { margin: 0; }
+.th__adref { display: grid; gap: 6px; margin: 2px 0 8px; }
+.th__adref figcaption { font-size: 12px; opacity: 0.8; }
 .th__upload { display: grid; gap: 6px; margin: 2px 0 8px; }
 .th__upload img { width: 180px; max-height: 140px; padding: 12px; border-radius: var(--r); background: #fff; object-fit: contain; }
 .th__upload figcaption { font-size: 12px; opacity: 0.8; }

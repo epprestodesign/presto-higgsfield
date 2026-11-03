@@ -12,6 +12,7 @@ import 'quasar/src/css/index.sass'
 import '@lib/css/app.scss'
 import '@bs/styles/studio.scss'
 import PreviewHost from '@bs/components/preview/PreviewHost.vue'
+import './src/adSizes.js' // the landing page's 340×215 banners
 
 const app = createApp(PreviewHost)
 app.use(createPinia())
