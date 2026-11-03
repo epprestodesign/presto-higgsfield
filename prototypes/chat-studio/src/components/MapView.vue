@@ -14,7 +14,7 @@ const L = (r) => ({ hash: format({ ...DEFAULTS, ...r }), url: link(r) })
 const general = computed(() => [
   { label: 'Home', ...L({ view: 'home' }) },
   { label: 'Home · From your team', ...L({ view: 'home', at: 'team' }) },
-  { label: 'From your team · Sports, pages', ...L({ view: 'home', at: 'team', theme: 'Sports', show: 'pages' }) },
+  { label: 'From your team · Sports', ...L({ view: 'home', at: 'team', theme: 'Sports' }) },
   { label: 'From your team · a teammate’s work, mobile', ...L({ view: 'home', open: 'lakeshore-0', device: 'mobile' }) },
   { label: 'Banners', ...L({ view: 'library', library: 'banners' }) },
   { label: 'Logos', ...L({ view: 'library', library: 'logos' }) },

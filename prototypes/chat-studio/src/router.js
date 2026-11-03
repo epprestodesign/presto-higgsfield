@@ -3,7 +3,7 @@
 // components read and write `route`, and the URL follows (Back / Forward work).
 //
 //   #/                                          Home
-//   #/home/team?theme=Sports&show=pages         Home, scrolled to From your team
+//   #/home/team?theme=Sports                    Home, scrolled to From your team
 //   #/home/team?open=heartland-0                … with a teammate's work open
 //   #/new?prompt=Half%20marathon…               Start a project (watch the agent)
 //   #/project/heartland                         A project's chat
@@ -29,7 +29,6 @@ const DEFAULTS = Object.freeze({
   filter: 'all', // library: project slug
   at: '', // home: 'team' · chat: 'draft-2' | 'setup'
   theme: 'All', // team feed
-  show: 'banners', // team feed: banners | logos | pages
   open: '', // team feed: item id
   prompt: '', // new
   mode: 'full', // new
@@ -60,7 +59,7 @@ export function parse(hash) {
     if (c === 'draft') r.draft = Number(parts[4]) || 0
     r.filter = q.get('project') || 'all'
   } else if (head === 'map') r.view = 'map'
-  for (const k of ['device', 'screen', 'theme', 'show', 'open', 'sheet']) if (q.get(k)) r[k] = q.get(k)
+  for (const k of ['device', 'screen', 'theme', 'open', 'sheet']) if (q.get(k)) r[k] = q.get(k)
   return r
 }
 
@@ -69,9 +68,8 @@ export function format(r) {
   const viewer = (r.view === 'project' && r.draft) || (r.view === 'library' && r.library === 'pages' && r.project)
   let path = '/'
   if (r.view === 'home') {
-    if (r.at === 'team' || r.open || r.theme !== 'All' || r.show !== 'banners') path = '/home/team'
+    if (r.at === 'team' || r.open || r.theme !== 'All') path = '/home/team'
     if (r.theme !== 'All') q.set('theme', r.theme)
-    if (r.show !== 'banners') q.set('show', r.show)
     if (r.open) q.set('open', r.open)
   } else if (r.view === 'new') {
     path = '/new'
