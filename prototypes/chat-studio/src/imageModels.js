@@ -37,9 +37,13 @@ function load(src) {
   if (!cache.has(src)) cache.set(src, new Promise((resolve) => { const i = new Image(); i.onload = () => resolve(i); i.onerror = () => resolve(null); i.src = src }))
   return cache.get(src)
 }
+// Fill the box with the image (cropped to the box).
 function cover(ctx, img, x, y, w, h) {
   const k = Math.max(w / img.naturalWidth, h / img.naturalHeight)
+  ctx.save()
+  ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip()
   ctx.drawImage(img, x + (w - img.naturalWidth * k) / 2, y + (h - img.naturalHeight * k) / 2, img.naturalWidth * k, img.naturalHeight * k)
+  ctx.restore()
 }
 function contain(ctx, img, x, y, w, h) {
   const k = Math.min(w / img.naturalWidth, h / img.naturalHeight)
@@ -82,45 +86,92 @@ const STYLE = {
 }
 // "OVERLAND PARK, KS" → "Overland Park"
 const town = (place) => (place ? place.split(',')[0].toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) : '')
-const SERIF = (s) => `700 ${s}px Georgia, 'Playfair Display', serif`
+const SANS = (w) => (s) => `${w} ${s}px Inter, system-ui, sans-serif`
+const SERIF = (s) => `600 ${s}px Georgia, 'Playfair Display', serif`
+const CONDENSED = (s) => `900 ${s}px Oswald, Impact, 'Arial Narrow', sans-serif`
+const HAND = (s) => `700 ${s}px 'Marker Felt', 'Comic Sans MS', 'Chalkboard SE', cursive`
+const SCRIPT = (s) => `italic 700 ${s}px 'Snell Roundhand', 'Brush Script MT', Georgia, cursive`
+
+// Reference images for the looks card: real Higgsfield generations (Ideogram
+// 4.5 / Recraft 4.1, Nov 2026) made for a youth soccer event, deliberately far
+// apart, so people pick from looks that really differ.
+const refs = import.meta.glob('./assets/looks/*.webp', { eager: true, query: '?url', import: 'default' })
+const ref = (name) => refs[`./assets/looks/${name}.webp`]
 
 /**
- * Ad types: the inspiration people pick from (a few, spread across the
- * spots). Each sets the look (`art`), the copy (`copy`), extras (a price
- * badge, a map pin, a big logo) and the model the agent leans on.
+ * Ad looks: the inspiration people pick a few of (spread across the spots).
+ * Each has a reference image, whether it carries the logo, the model the
+ * agent leans on, its own colours / lettering (`look`) and its own copy for
+ * a house ad (`copy`), written for getting guests booked near the event.
  */
 export const AD_TYPES = [
-  { id: 'photo', label: 'Event photo', note: 'A real-feel scene of the venue', model: 'higgsfield-ai/soul/standard', art: 'photo' },
-  { id: 'bold', label: 'Bold type', note: 'One huge headline, little else', model: 'ideogram/v4.0', art: 'type', noLine: true },
-  { id: 'minimal', label: 'Clean & minimal', note: 'Flat colour and lots of space', model: 'recraft/v4.1/text-to-image', art: 'minimal' },
-  { id: 'date', label: 'Date-led', note: 'The dates are the hero', model: 'ideogram/v4.0', art: 'type', copy: (a, i) => ({ name: i.dates || a.name, tagline: a.name }) },
-  { id: 'countdown', label: 'Countdown', note: '“30 days to go”', model: 'ideogram/v4.0', art: 'type', copy: (a) => ({ name: '30 days to go', tagline: a.name }) },
-  { id: 'deal', label: 'Hotel deal', note: 'Team rates, with a price badge', model: 'recraft/v4.1/text-to-image', art: 'graphic', badge: 'From $119/night', copy: (a, i) => (a.purpose === 'about' ? { name: 'Team hotel rates', tagline: `Book near ${town(i.place) || 'the event'} before they sell out.` } : {}) },
-  { id: 'near', label: 'Near the venue', note: 'A map pin: hotels minutes away', model: 'recraft/v4.1/text-to-image', art: 'graphic', pin: true, copy: (a, i) => ({ name: a.name, tagline: `Hotels 5 minutes from ${town(i.place) || 'the venue'}` }) },
-  { id: 'spotlight', label: 'Sponsor spotlight', note: 'The logo is the star', model: 'recraft/v4.1-pro/text-to-image', art: 'minimal', bigLogo: true, noLine: true },
-  { id: 'product', label: 'Food & product', note: 'A hero shot of what they sell', model: 'marketing-studio/image/flare', art: 'flare' },
-  { id: 'neon', label: 'Night & neon', note: 'Glow, lights, after-dark energy', model: 'marketing-studio/image/flare', art: 'neon' },
-  { id: 'illustrated', label: 'Illustrated', note: 'A flat illustration of the event', model: 'recraft/v4.1/text-to-image', art: 'illustrated' },
-  { id: 'retro', label: 'Retro poster', note: 'A vintage event-poster look', model: 'recraft/v4.1-pro/text-to-image', art: 'cream', font: SERIF, upper: true },
-  { id: 'collage', label: 'Photo collage', note: 'A grid of moments from the event', model: 'higgsfield-ai/soul/standard', art: 'collage' },
-  { id: 'elegant', label: 'Elegant', note: 'Serif type, gold and cream', model: 'recraft/v4.1-pro/text-to-image', art: 'cream', font: SERIF },
-  { id: 'playful', label: 'Playful', note: 'Bright and rounded, for families', model: 'ideogram/v4.0', art: 'playful' },
+  { id: 'split', label: 'Photo split', note: 'Match photo beside a brand panel', logo: true, model: 'ideogram/v4.0', ref: ref('photo-split'),
+    copy: () => ({ name: 'Team hotels near the venue' }) },
+  { id: 'map', label: 'Map & pins', note: 'Hotels plotted around the venue', logo: false, model: 'recraft/v4.1/text-to-image', ref: ref('map'),
+    copy: () => ({ name: '12 hotels within 10 minutes' }) },
+  { id: 'brutal', label: 'Brutalist', note: 'Loud acid type on black', logo: false, model: 'ideogram/v4.0', ref: ref('brutalist'),
+    copy: () => ({ name: 'Stay 5 min from the venue' }) },
+  { id: 'swiss', label: 'Swiss type', note: 'A giant headline on white, strict grid', logo: false, model: 'ideogram/v4.0', ref: ref('swiss'),
+    copy: (a, i) => ({ name: i.short || a.name }) },
+  { id: 'cinematic', label: 'Cinematic photo', note: 'Just the scene and a tiny caption', logo: false, model: 'higgsfield-ai/soul/standard', ref: ref('cinematic') },
+  { id: 'retro', label: 'Retro badge', note: '’70s sunburst and script', logo: false, model: 'recraft/v4.1-pro/text-to-image', ref: ref('retro-badge'),
+    copy: (a, i) => ({ name: `${i.short || a.name} ’${(i.dates || '').match(/20(\d\d)/)?.[1] || '27'}` }) },
+  { id: 'riso', label: 'Risograph', note: 'Hand-drawn, two-ink print', logo: false, model: 'recraft/v4.1/text-to-image', ref: ref('risograph'),
+    copy: () => ({ name: 'Team hotels near the venue!' }) },
+  { id: 'ticket', label: 'Ticket stub', note: 'An admission ticket, gold foil', logo: false, model: 'ideogram/v4.0', ref: ref('ticket'),
+    copy: (a, i) => ({ name: 'Admit one team', tagline: i.name || a.name }) },
+  { id: 'editorial', label: 'Editorial', note: 'Serif headline, a portrait, white space', logo: true, model: 'ideogram/v4.0', ref: ref('editorial'),
+    copy: () => ({ name: 'The weekend of the year' }) },
+  { id: 'clay', label: '3D clay', note: 'A toy-like 3D scene, pastel', logo: false, model: 'recraft/v4.1-pro/text-to-image', ref: ref('clay'),
+    copy: () => ({ name: 'Kick off. Check in.' }) },
+  { id: 'bauhaus', label: 'Bauhaus', note: 'Geometric colour blocks, the dates', logo: false, model: 'recraft/v4.1/text-to-image', ref: ref('bauhaus'),
+    copy: (a, i) => ({ name: (i.dates || a.name).replace(/,? ?20\d\d/, ''), tagline: `${i.short || a.name} · book your hotel` }) },
+  { id: 'chalk', label: 'Chalkboard', note: 'A coach’s game plan', logo: false, model: 'ideogram/v4.0', ref: ref('chalkboard'),
+    copy: () => ({ name: 'Your game plan: book early' }) },
+  { id: 'luxe', label: 'Black & gold', note: 'Quiet luxury, lots of space', logo: true, model: 'recraft/v4.1-pro/text-to-image', ref: ref('black-gold'),
+    copy: (a, i) => ({ name: i.name || a.name, tagline: `Official hotels · ${i.dates || ''}`.replace(/ · $/, '') }) },
+  { id: 'scrapbook', label: 'Scrapbook', note: 'Polaroids, tape and stickers', logo: false, model: 'higgsfield-ai/soul/standard', ref: ref('scrapbook'),
+    copy: () => ({ name: 'Memories start at check-in' }) },
+  { id: 'neon', label: 'Neon sign', note: 'Glowing tube lettering at night', logo: false, model: 'marketing-studio/image/flare', ref: ref('neon'),
+    copy: () => ({ name: '30 days to kickoff', tagline: 'Book your hotel' }) },
 ]
 export const typeById = (id) => AD_TYPES.find((t) => t.id === id) || null
-/** Three looks to start from, for an event (ticked on the looks card). */
+/** Three looks to start from, for an event (ticked on the looks card): one safe, one useful, one bold. */
 export function suggestTypes(brandId) {
   return ({
-    heartland: ['photo', 'deal', 'near'], lakeshore: ['photo', 'date', 'near'], 'music-festival': ['neon', 'photo', 'deal'],
-    golf: ['photo', 'elegant', 'deal'], wedding: ['elegant', 'photo', 'near'], esports: ['neon', 'bold', 'countdown'],
-    fintech: ['minimal', 'date', 'near'], corporate: ['minimal', 'date', 'deal'],
-  })[brandId] || ['photo', 'deal', 'near']
+    heartland: ['split', 'map', 'chalk'], lakeshore: ['cinematic', 'map', 'swiss'], 'music-festival': ['neon', 'riso', 'scrapbook'],
+    golf: ['luxe', 'editorial', 'map'], wedding: ['editorial', 'luxe', 'scrapbook'], esports: ['neon', 'brutal', 'bauhaus'],
+    fintech: ['swiss', 'bauhaus', 'map'], corporate: ['swiss', 'editorial', 'map'],
+  })[brandId] || ['split', 'map', 'swiss']
+}
+
+// Each look's palette and lettering (brand colours where the look allows).
+function lookOf(id, brand) {
+  const b = { bg: brand.background, fg: brand.foreground, ac: brand.accent }
+  return ({
+    split: { bg: b.bg, fg: '#FFFFFF', ac: b.ac, font: SANS(700) },
+    map: { bg: '#A9C2B6', fg: b.bg, ac: b.ac, font: SANS(600) },
+    brutal: { bg: '#050505', fg: '#C8FF1E', ac: '#C8FF1E', font: CONDENSED, upper: true },
+    swiss: { bg: '#FFFFFF', fg: '#0A0A0A', ac: b.ac, font: SANS(900) },
+    cinematic: { bg: '#0B1220', fg: '#FFFFFF', ac: '#FFFFFF', font: SANS(500) },
+    retro: { bg: '#F3E6C8', fg: '#6B3E26', ac: '#D9622B', font: SCRIPT },
+    riso: { bg: '#FFF6E9', fg: '#FF5FA2', ac: '#00A6A6', font: HAND },
+    ticket: { bg: b.bg, fg: '#D9B45A', ac: '#D9B45A', font: SERIF, upper: true },
+    editorial: { bg: '#F7F4EE', fg: '#111111', ac: b.bg, font: SERIF },
+    clay: { bg: '#CFEBDD', fg: '#FFFFFF', ac: '#F6D77A', font: SANS(900) },
+    bauhaus: { bg: b.bg, fg: '#F5F0E6', ac: b.ac, font: SANS(800), upper: true },
+    chalk: { bg: '#24432F', fg: '#F4F1E8', ac: '#F4F1E8', font: HAND },
+    luxe: { bg: '#111111', fg: '#C9A44C', ac: '#C9A44C', font: SERIF },
+    scrapbook: { bg: '#D9BE95', fg: '#1F1A14', ac: '#E9564B', font: SCRIPT },
+    neon: { bg: '#121212', fg: '#4BFF6E', ac: '#F2C744', font: HAND, glow: true, upper: true },
+  })[id]
 }
 
 /**
  * A stand-in for one Higgsfield generation: the whole ad at `size`, text
- * included. The ad's type sets the look and copy; the model sets the
- * lettering (and the look, when there's no type). `v` varies the composition.
- * `info`: { photo, photos, dates, place } from the event. Returns a data URL.
+ * included. With a look (`type`) it follows that look's composition; without
+ * one, the model's own style. `v` varies the composition. `info`: { photo,
+ * photos, dates, place, name, short } from the event. Returns a data URL.
  */
 export async function mockGenerate({ ad, size, model, type = null, info = {}, v = 0 }) {
   const { width: W, height: H } = AD_SIZES[size]
@@ -130,168 +181,170 @@ export async function mockGenerate({ ad, size, model, type = null, info = {}, v 
   c.height = H * k
   const ctx = c.getContext('2d')
   ctx.scale(k, k)
-  const st = STYLE[model] || STYLE[MODELS[0].id]
+  const brand = ad.colors || { background: '#0F172A', foreground: '#FFFFFF', accent: '#F59E0B' }
   const T = typeById(type)
-  const art = T?.art || st.art
-  const font = T?.font || st.font
-  const upper = T?.upper ?? st.upper
-  let col = ad.colors || { background: '#0F172A', foreground: '#FFFFFF', accent: '#F59E0B' }
-  if (art === 'cream') col = { background: '#F6EFDF', foreground: '#2B2418', accent: col.accent === '#FFFFFF' ? '#B08D3C' : col.accent }
-  if (art === 'neon') col = { background: '#0A0A1F', foreground: '#FFFFFF', accent: col.accent }
-  if (art === 'minimal' && T?.bigLogo) col = { ...col, background: '#FFFFFF', foreground: '#111827' }
-  const copy = { name: ad.name, tagline: ad.tagline, ...(T?.copy ? T.copy(ad, info) : {}) }
-  if (T?.noLine) copy.tagline = ''
-  const usesPhoto = ['photo', 'flare', 'collage'].includes(art)
-  const photos = art === 'collage' ? (info.photos || []).slice(0, 4) : []
-  const [img, logo, ...grid] = await Promise.all([load(usesPhoto ? info.photo : null), load(ad.logo), ...photos.map(load)])
+  const st = STYLE[model] || STYLE[MODELS[0].id]
+  const L = T ? lookOf(T.id, brand) : { bg: brand.background, fg: brand.foreground, ac: brand.accent, font: st.font, upper: st.upper }
+  const copy = { name: ad.name, tagline: ad.tagline, ...(T?.copy && ad.purpose === 'about' ? T.copy(ad, info) : {}) }
+  if (T?.copy && ad.purpose !== 'about' && ['luxe', 'ticket'].includes(T.id)) Object.assign(copy, T.copy(ad, { ...info, name: ad.name }))
+  const showLogo = T ? T.logo : true
+  const photo = T ? ['split', 'cinematic', 'editorial', 'scrapbook'].includes(T.id) : ['photo', 'flare'].includes(st.art)
+  const [img, logo, ...grid] = await Promise.all([load(photo ? info.photo : null), load(showLogo ? ad.logo : null), ...(T?.id === 'scrapbook' ? (info.photos || []).slice(0, 4).map(load) : [])])
   const flip = v % 2 === 1
-
-  // --- Background
-  ctx.fillStyle = col.background
-  ctx.fillRect(0, 0, W, H)
-  if (art === 'collage' && grid.filter(Boolean).length) {
-    const g = grid.filter(Boolean)
-    const n = W > H ? Math.min(g.length, 4) : Math.min(g.length, 3)
-    for (let i = 0; i < n; i++) {
-      if (W > H) cover(ctx, g[i], (W / n) * i + 1, 0, W / n - 2, H)
-      else cover(ctx, g[i], 0, (H / n) * i + 1, W, H / n - 2)
-    }
-    ctx.fillStyle = `${col.background}B3`
-    ctx.fillRect(0, 0, W, H)
-  } else if (img) {
-    cover(ctx, img, 0, 0, W, H)
-    const g = ctx.createLinearGradient(flip ? W : 0, 0, flip ? 0 : W * 0.9, H)
-    g.addColorStop(0, `${col.background}F0`)
-    g.addColorStop(0.55, `${col.background}99`)
-    g.addColorStop(1, `${col.background}10`)
-    ctx.fillStyle = g
-    ctx.fillRect(0, 0, W, H)
-  }
-  if (art === 'graphic' || art === 'graphic-pro') {
-    ctx.fillStyle = `${col.accent}${art === 'graphic-pro' ? '55' : '40'}`
-    ctx.beginPath(); ctx.arc(flip ? W * 0.12 : W * 0.88, H * 0.85, Math.max(W, H) * 0.42, 0, Math.PI * 2); ctx.fill()
-    ctx.fillStyle = `${col.foreground}14`
-    ctx.beginPath(); ctx.moveTo(W * (flip ? 0.2 : 0.55), 0); ctx.lineTo(W, 0); ctx.lineTo(W, H * 0.6); ctx.closePath(); ctx.fill()
-    if (art === 'graphic-pro') { ctx.strokeStyle = `${col.accent}AA`; ctx.lineWidth = 1.5; ctx.strokeRect(6, 6, W - 12, H - 12) }
-  } else if (art === 'type') {
-    ctx.fillStyle = col.accent
-    ctx.fillRect(0, flip ? 0 : H * 0.82, W, H * 0.18)
-  } else if (art === 'flare' || art === 'neon') {
-    const g = ctx.createRadialGradient(W * (flip ? 0.25 : 0.75), H * 0.3, 2, W * (flip ? 0.25 : 0.75), H * 0.3, Math.max(W, H) * 0.7)
-    g.addColorStop(0, `${col.accent}${art === 'neon' ? '99' : 'CC'}`)
-    g.addColorStop(0.35, `${col.accent}33`)
-    g.addColorStop(1, '#00000000')
-    ctx.fillStyle = g
-    ctx.fillRect(0, 0, W, H)
-    if (art === 'neon') { ctx.strokeStyle = col.accent; ctx.lineWidth = 2; ctx.shadowColor = col.accent; ctx.shadowBlur = 12; ctx.strokeRect(5, 5, W - 10, H - 10); ctx.shadowBlur = 0 }
-  } else if (art === 'cream') {
-    ctx.strokeStyle = col.accent; ctx.lineWidth = 1.5; ctx.strokeRect(5, 5, W - 10, H - 10); ctx.strokeRect(9, 9, W - 18, H - 18)
-  } else if (art === 'illustrated') {
-    ctx.fillStyle = `${col.accent}CC`
-    ctx.beginPath(); ctx.arc(W * (flip ? 0.2 : 0.8), H * 0.32, Math.min(W, H) * 0.16, 0, Math.PI * 2); ctx.fill()
-    for (const [y0, a] of [[0.72, '33'], [0.84, '55']]) {
-      ctx.fillStyle = `${col.foreground}${a}`
-      ctx.beginPath(); ctx.moveTo(0, H)
-      for (let x = 0; x <= W; x += W / 8) ctx.lineTo(x, H * y0 + Math.sin(x / W * Math.PI * 2 + y0 * 9) * H * 0.05)
-      ctx.lineTo(W, H); ctx.closePath(); ctx.fill()
-    }
-  } else if (art === 'playful') {
-    for (let i = 0; i < 26; i++) {
-      const x = (Math.sin(i * 12.9898 + v) * 43758.5453 % 1 + 1) % 1
-      const y = (Math.sin(i * 78.233 + v) * 12345.678 % 1 + 1) % 1
-      ctx.fillStyle = i % 3 ? `${col.accent}AA` : `${col.foreground}55`
-      ctx.beginPath(); ctx.arc(x * W, y * H, 2 + (i % 4), 0, Math.PI * 2); ctx.fill()
-    }
-  }
-
-  // --- Copy (on the type style the button sits on the accent band, so it takes the text colour)
-  const button = art === 'type' ? { bg: col.foreground, fg: col.background } : { bg: col.accent, fg: art === 'cream' ? '#FFFFFF' : '#111827' }
-  const glow = art === 'neon' ? () => { ctx.shadowColor = col.accent; ctx.shadowBlur = 10 } : () => {}
-  const name = upper ? copy.name.toUpperCase() : copy.name
   const tall = W / H < 0.7
   const strip = H <= 110 || W / H > 3
   const pad = Math.max(8, Math.min(W, H) * 0.08)
-  ctx.fillStyle = col.foreground
-  if (T?.bigLogo && logo && !strip) {
-    // Spotlight: the logo big in the middle, the name and button under it.
-    const lh = H * (tall ? 0.3 : 0.42)
-    contain(ctx, logo, pad, pad * 1.4, W - pad * 2, lh)
-    const hs = Math.max(12, Math.min(22, H * 0.09))
-    ctx.font = font(hs); ctx.textAlign = 'center'; ctx.fillStyle = col.foreground
-    ctx.fillText(lines(ctx, name, W - pad * 2, 1)[0], W / 2, pad * 1.4 + lh + hs * 1.5)
+  const name = L.upper ? copy.name.toUpperCase() : copy.name
+  const button = { bg: L.ac, fg: ['#FFFFFF', '#F4F1E8', '#C8FF1E', '#F2C744', '#F6D77A', '#C9A44C', '#D9B45A'].includes(L.ac) ? '#111111' : '#FFFFFF' }
+
+  // ---------- Background and decoration, per look ----------
+  ctx.fillStyle = L.bg
+  ctx.fillRect(0, 0, W, H)
+  let textX = pad
+  let textW = W - pad * 2
+  const id = T?.id || `model:${st.art}`
+  if (id === 'split' && img && !strip) {
+    if (tall) { cover(ctx, img, 0, 0, W, H * 0.45); textX = pad } else { const half = W * 0.5; cover(ctx, img, flip ? half : 0, 0, half, H); textX = flip ? pad : half + pad; textW = half - pad * 2 }
+  } else if (id === 'cinematic' && img) {
+    cover(ctx, img, 0, 0, W, H)
+    const g = ctx.createLinearGradient(0, H * 0.5, 0, H); g.addColorStop(0, '#00000000'); g.addColorStop(1, '#000000B0'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H)
+  } else if (id === 'editorial' && img && !strip) {
+    const pw = tall ? W : W * 0.38
+    if (tall) cover(ctx, img, 0, H * 0.55, W, H * 0.45)
+    else { cover(ctx, img, W - pw, 0, pw, H); textW = W - pw - pad * 2 }
+  } else if (id === 'map') {
+    ctx.fillStyle = `${L.fg}`
+    const cx = W * (flip ? 0.3 : 0.66), cy = H * 0.58, R = Math.min(W, H) * (strip ? 0.5 : 0.38)
+    ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.ellipse(cx, cy, R * 1.5, R, 0.2, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1
+    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 1; for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.moveTo(cx - R * 1.5, cy - R + i * R / 3); ctx.lineTo(cx + R * 1.5, cy - R * 0.6 + i * R / 3.4); ctx.stroke() }
+    ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(cx, cy, R * 0.6, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([])
+    for (let i = 0; i < 9; i++) { const a = i * 0.7 + v, r = R * (0.35 + (i % 3) * 0.18); const x = cx + Math.cos(a) * r * 1.3, y = cy + Math.sin(a) * r * 0.8; const pr = Math.max(3, R * 0.07); ctx.fillStyle = L.ac; ctx.beginPath(); ctx.arc(x, y - pr, pr, Math.PI, 0); ctx.lineTo(x, y + pr * 0.6); ctx.closePath(); ctx.fill() }
+    ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(cx, cy, Math.max(4, R * 0.1), 0, Math.PI * 2); ctx.fill()
+    if (!strip && !tall) textW = W * 0.5
+  } else if (id === 'brutal') {
+    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 1.5; ctx.strokeRect(pad * 0.6, pad * 0.6, W - pad * 1.2, H - pad * 1.2)
+  } else if (id === 'swiss') {
+    ctx.fillStyle = L.ac; ctx.fillRect(0, H * 0.55, W, 2)
+  } else if (id === 'retro') {
+    const cx = W / 2, cy = H * (tall ? 0.4 : 0.5)
+    for (let i = 0; i < 18; i++) { ctx.fillStyle = i % 2 ? '#D9622B' : '#F2B705'; ctx.globalAlpha = 0.55; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, Math.max(W, H), (i / 18) * Math.PI * 2, ((i + 1) / 18) * Math.PI * 2); ctx.closePath(); ctx.fill() }
+    ctx.globalAlpha = 1; ctx.fillStyle = L.bg; ctx.beginPath(); ctx.arc(cx, cy, Math.min(W, H) * 0.36, 0, Math.PI * 2); ctx.fill()
+    ctx.strokeStyle = '#D9622B'; ctx.lineWidth = 3; ctx.stroke()
+  } else if (id === 'riso') {
+    for (let i = 0; i < 40; i++) { ctx.fillStyle = i % 2 ? '#FF5FA233' : '#00A6A633'; ctx.fillRect(((i * 97) % W), ((i * 53) % H), 2, 2) }
+    ctx.strokeStyle = '#00A6A6'; ctx.lineWidth = 2; for (let i = 0; i < 3; i++) { const x = W * (0.55 + i * 0.13), y = H * 0.78; ctx.beginPath(); ctx.arc(x, y - H * 0.12, H * 0.05, 0, Math.PI * 2); ctx.moveTo(x, y - H * 0.07); ctx.lineTo(x, y + H * 0.05); ctx.moveTo(x - H * 0.06, y); ctx.lineTo(x + H * 0.06, y - H * 0.02); ctx.stroke() }
+  } else if (id === 'ticket') {
+    const stub = W * (strip ? 0.82 : 0.74)
+    ctx.setLineDash([3, 4]); ctx.strokeStyle = L.ac; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(stub, 6); ctx.lineTo(stub, H - 6); ctx.stroke(); ctx.setLineDash([])
+    ctx.strokeRect(6, 6, W - 12, H - 12)
+    ctx.fillStyle = '#F2EEE4'; for (let i = 0; i < 26; i++) ctx.fillRect(pad + i * 3.2, H - pad - H * 0.14, i % 3 ? 1.4 : 2.4, H * 0.12)
+    textW = stub - pad * 2
+  } else if (id === 'clay') {
+    ctx.fillStyle = '#F6D77A'; ctx.fillRect(0, H * 0.72, W, H * 0.28)
+    const r = Math.min(W, H) * 0.24; const bx = W * (flip ? 0.28 : 0.7), by = H * 0.5
+    const g = ctx.createRadialGradient(bx - r * 0.3, by - r * 0.3, r * 0.1, bx, by, r); g.addColorStop(0, '#FFFFFF'); g.addColorStop(1, '#E4574B'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#F3B7C5'; ctx.beginPath(); ctx.roundRect(bx + r * 0.7, by - r * 0.6, r * 1.2, r * 1.4, r * 0.15); ctx.fill()
+  } else if (id === 'bauhaus') {
+    const u = Math.min(W, H) * 0.32
+    ctx.fillStyle = L.ac; ctx.beginPath(); ctx.arc(0, 0, u, 0, Math.PI / 2); ctx.lineTo(0, 0); ctx.fill()
+    ctx.fillStyle = '#F5F0E6'; ctx.beginPath(); ctx.arc(W, H, u, Math.PI, Math.PI * 1.5); ctx.lineTo(W, H); ctx.fill()
+    ctx.fillStyle = '#1C1C1C'; ctx.beginPath(); ctx.arc(W * 0.82, u * 0.5, u * 0.4, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = L.ac; ctx.fillRect(W * 0.86, H * 0.4, u * 0.4, u * 0.4)
+  } else if (id === 'chalk') {
+    ctx.strokeStyle = '#F4F1E8AA'; ctx.lineWidth = 1.5
+    for (let i = 0; i < 5; i++) { const x = W * (0.6 + (i % 3) * 0.12), y = H * (0.25 + Math.floor(i / 2) * 0.22); ctx.beginPath(); ctx.moveTo(x - 4, y - 4); ctx.lineTo(x + 4, y + 4); ctx.moveTo(x + 4, y - 4); ctx.lineTo(x - 4, y + 4); ctx.stroke() }
+    ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(W * 0.6, H * 0.75); ctx.quadraticCurveTo(W * 0.75, H * 0.4, W * 0.9, H * 0.2); ctx.stroke(); ctx.setLineDash([])
+    ctx.strokeStyle = '#8A6B3D'; ctx.lineWidth = 5; ctx.strokeRect(2.5, 2.5, W - 5, H - 5)
+    if (!strip && !tall) textW = W * 0.55
+  } else if (id === 'luxe') {
+    ctx.fillStyle = L.ac; ctx.fillRect(W * 0.3, H * 0.5, W * 0.4, 0.8)
+  } else if (id === 'scrapbook') {
+    const g = grid.filter(Boolean)
+    g.forEach((im, i) => {
+      if (strip && i > 2) return
+      const pw = strip ? H * 0.8 : Math.min(W, H) * (tall ? 0.6 : 0.36), ph = pw * 0.9
+      const x = strip ? W * 0.45 + i * pw * 0.9 : tall ? (W - pw) / 2 + (i % 2 ? 6 : -6) : W * 0.42 + (i % 2) * pw * 0.85, y = strip ? (H - ph) / 2 : tall ? H * 0.35 + i * ph * 0.45 : H * 0.18 + Math.floor(i / 2) * ph * 0.75
+      ctx.save(); ctx.translate(x + pw / 2, y + ph / 2); ctx.rotate(((i % 2 ? 1 : -1) * (4 + i * 2) * Math.PI) / 180)
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(-pw / 2, -ph / 2, pw, ph); cover(ctx, im, -pw / 2 + 3, -ph / 2 + 3, pw - 6, ph * 0.78)
+      ctx.fillStyle = '#F2C74499'; ctx.fillRect(-pw * 0.15, -ph / 2 - 4, pw * 0.3, 8); ctx.restore()
+    })
+    if (!strip && !tall) textW = W * 0.4
+  } else if (id === 'neon') {
+    ctx.fillStyle = '#1C1C1C'; for (let y = 0; y < H; y += 8) for (let x = (y / 8) % 2 ? 0 : 10; x < W; x += 20) ctx.fillRect(x, y, 18, 6)
+  } else if (!T) {
+    // No look: the model's own simple style (older ads).
+    if (img) { cover(ctx, img, 0, 0, W, H); const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, `${L.bg}F0`); g.addColorStop(1, `${L.bg}20`); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H) }
+  }
+
+  // ---------- Copy ----------
+  const glow = () => { if (L.glow) { ctx.shadowColor = L.fg; ctx.shadowBlur = 12 } }
+  const noGlow = () => { ctx.shadowBlur = 0 }
+  ctx.fillStyle = L.fg
+  if (id === 'cinematic') {
+    // Almost no text: a small caption, bottom right.
+    const cs = Math.max(9, Math.min(13, H * 0.06))
+    ctx.font = SANS(600)(cs); ctx.textAlign = 'right'; ctx.fillStyle = '#FFFFFF'
+    ctx.fillText(`${copy.name} · ${ad.cta}`, W - pad, H - pad * 0.8); ctx.textAlign = 'left'
+    return c.toDataURL('image/jpeg', 0.9)
+  }
+  if (id === 'luxe' && !strip) {
+    // Centred, small and quiet.
+    ctx.textAlign = 'center'
+    let y = H * 0.32
+    if (logo) { const lh = Math.min(H * 0.14, 30); contain(ctx, logo, W / 2 - lh, y - lh, lh * 2, lh); y += 6 }
+    const hs = Math.max(12, Math.min(24, H * 0.1)); ctx.font = L.font(hs); ctx.fillStyle = L.fg
+    ctx.fillText(lines(ctx, name, W * 0.8, 1)[0], W / 2, H * 0.46)
+    ctx.font = SANS(600)(Math.max(8, hs * 0.42)); ctx.fillText((copy.tagline || '').toUpperCase(), W / 2, H * 0.6)
+    ctx.font = SANS(500)(Math.max(8, hs * 0.42)); ctx.fillText(`${ad.cta} →`, W / 2, H * 0.74)
     ctx.textAlign = 'left'
-    const btn = Math.max(10, Math.min(14, hs * 0.6))
-    ctx.font = `700 ${btn}px Inter, system-ui, sans-serif`
-    const bw = ctx.measureText(ad.cta).width + btn * 1.8
-    pill(ctx, (W - bw) / 2, H - pad - btn * 2.1, ad.cta, { size: btn, ...button })
-  } else if (strip) {
-    // One row: logo · headline (· line) · button
-    let x = pad
+    return c.toDataURL('image/jpeg', 0.9)
+  }
+  if (strip) {
+    // One row: (logo ·) headline (· line) · button
+    let x = textX
     if (logo) { contain(ctx, logo, x, H * 0.18, H * 0.64, H * 0.64); x += H * 0.64 + pad * 0.8 }
     const btn = Math.max(9, Math.min(14, H * 0.16))
-    ctx.font = `700 ${btn}px Inter, system-ui, sans-serif`
+    ctx.font = SANS(700)(btn)
     const bw = ctx.measureText(ad.cta).width + btn * 1.8
-    const textW = W - x - bw - pad * 2
-    const hs = Math.max(11, Math.min(upper ? 30 : 24, H * (upper ? 0.32 : 0.26)))
-    ctx.font = font(hs)
-    ctx.fillStyle = col.foreground
-    const hl = lines(ctx, name, textW, H > 80 ? 2 : 1)
-    const showLine = W > 600 && copy.tagline
-    const block = hl.length * hs * 1.1 + (showLine ? hs * 0.9 : 0)
-    let y = (H - block) / 2 + hs * 0.85
-    glow()
-    for (const l of hl) { ctx.fillText(l, x, y); y += hs * 1.1 }
-    ctx.shadowBlur = 0
-    if (showLine) { ctx.font = `400 ${hs * 0.6}px Inter, system-ui, sans-serif`; ctx.globalAlpha = 0.85; ctx.fillText(lines(ctx, copy.tagline, textW, 1)[0], x, y - hs * 0.2); ctx.globalAlpha = 1 }
+    const tw = (id === 'map' || id === 'scrapbook' ? W * 0.42 : W) - x - bw - pad * 2
+    const hs = Math.max(11, Math.min(L.upper ? 30 : 26, H * (L.upper ? 0.34 : 0.3)))
+    ctx.font = L.font(hs); ctx.fillStyle = L.fg
+    const hl = lines(ctx, name, tw, H > 80 ? 2 : 1)
+    let y = (H - hl.length * hs * 1.1) / 2 + hs * 0.85
+    glow(); for (const l of hl) { ctx.fillText(l, x, y); y += hs * 1.1 } noGlow()
     pill(ctx, W - pad - bw, (H - btn * 2.1) / 2, ad.cta, { size: btn, ...button })
-  } else {
-    const w = W - pad * 2
-    let y = pad
-    if (logo) { const lh = Math.min(H * (tall ? 0.12 : 0.2), 56); contain(ctx, logo, pad, y, tall ? w : lh * 1.6, lh); y += lh + pad * 0.6 }
-    const hs = Math.max(14, Math.min(upper ? 40 : 30, (tall ? W * 0.15 : H * 0.13)))
-    ctx.font = font(hs)
-    ctx.fillStyle = col.foreground
-    if (tall) ctx.textAlign = 'center'
-    const tx = tall ? W / 2 : pad
-    glow()
-    for (const l of lines(ctx, name, w, tall ? 4 : 2)) { y += hs; ctx.fillText(l, tx, y); y += hs * 0.12 }
-    ctx.shadowBlur = 0
-    if (copy.tagline) {
-      const ts = Math.max(10, hs * 0.45)
-      ctx.font = `400 ${ts}px Inter, system-ui, sans-serif`
-      ctx.globalAlpha = 0.88
-      y += ts * 0.6
-      let tx2 = tx
-      if (T?.pin && !tall) {
-        // A map pin before the line.
-        const r = ts * 0.55
-        ctx.globalAlpha = 1; ctx.fillStyle = col.accent
-        ctx.beginPath(); ctx.arc(tx + r, y + ts * 0.55, r, Math.PI, 0); ctx.lineTo(tx + r, y + ts * 1.5); ctx.closePath(); ctx.fill()
-        ctx.fillStyle = col.foreground; ctx.globalAlpha = 0.88
-        tx2 = tx + r * 2.6
-      }
-      for (const l of lines(ctx, copy.tagline, w - (tx2 - tx), tall ? 5 : 2)) { y += ts * 1.2; ctx.fillText(l, tx2, y) }
-      ctx.globalAlpha = 1
-    }
-    ctx.textAlign = 'left'
-    const btn = Math.max(10, Math.min(15, hs * 0.5))
-    ctx.font = `700 ${btn}px Inter, system-ui, sans-serif`
-    const bw = ctx.measureText(ad.cta).width + btn * 1.8
-    pill(ctx, tall ? (W - bw) / 2 : pad, H - pad - btn * 2.1, ad.cta, { size: btn, ...button })
+    return c.toDataURL('image/jpeg', 0.9)
   }
-  // A price badge (Hotel deal), top right.
-  if (T?.badge && !strip) {
-    const r = Math.min(W, H) * (tall ? 0.22 : 0.2)
-    const cx = W - r - pad * 0.6
-    const cy = r + pad * 0.6
-    ctx.fillStyle = col.accent
-    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill()
-    ctx.fillStyle = '#111827'; ctx.textAlign = 'center'
-    const [a, b] = T.badge.split('/')
-    ctx.font = `600 ${r * 0.28}px Inter, system-ui, sans-serif`; ctx.fillText(a.split(' ')[0], cx, cy - r * 0.32)
-    ctx.font = `900 ${r * 0.5}px Inter, system-ui, sans-serif`; ctx.fillText(a.split(' ')[1], cx, cy + r * 0.16)
-    ctx.font = `600 ${r * 0.24}px Inter, system-ui, sans-serif`; ctx.fillText(`/${b}`, cx, cy + r * 0.5)
-    ctx.textAlign = 'left'
+  // Box and tall sizes.
+  const big = ['brutal', 'swiss', 'bauhaus', 'neon', 'retro', 'riso'].includes(id)
+  let y = tall && id === 'split' ? H * 0.45 + pad : pad
+  if (logo) { const lh = Math.min(H * (tall ? 0.1 : 0.18), 48); contain(ctx, logo, textX, y, Math.min(textW, lh * 1.6), lh); y += lh + pad * 0.5 }
+  const center = tall || id === 'retro' || id === 'neon' || id === 'bauhaus'
+  const hs = Math.max(14, Math.min(big ? (tall ? W * 0.2 : H * 0.24) : 30, big ? 64 : (tall ? W * 0.14 : H * 0.14)))
+  ctx.font = L.font(hs); ctx.fillStyle = L.fg
+  ctx.textAlign = center ? 'center' : 'left'
+  const tx = center ? (id === 'retro' ? W / 2 : textX + textW / 2) : textX
+  const hl = lines(ctx, name, center && id === 'retro' ? Math.min(W, H) * 0.66 : textW, tall ? 5 : big ? 3 : 2)
+  if (id === 'retro' || id === 'neon' || id === 'bauhaus') y = (H - hl.length * hs * 1.05) / 2 - (copy.tagline ? hs * 0.3 : 0)
+  if (id === 'swiss') y = Math.max(pad * 0.4, H * 0.55 - hl.length * hs * 1.03 - 6)
+  glow()
+  for (const l of hl) { y += hs * (big ? 0.95 : 1); ctx.fillText(l, tx, y); y += hs * 0.08 }
+  noGlow()
+  if (copy.tagline && !['brutal'].includes(id)) {
+    const ts = Math.max(9, Math.min(16, hs * (big ? 0.28 : 0.45)))
+    ctx.font = id === 'neon' ? L.font(ts * 1.4) : SANS(500)(ts)
+    ctx.fillStyle = id === 'neon' ? L.ac : L.fg
+    ctx.globalAlpha = id === 'neon' ? 1 : 0.85
+    y += ts * (id === 'swiss' ? 1.6 : 0.8)
+    for (const l of lines(ctx, copy.tagline, center ? W * 0.8 : textW, tall ? 4 : 2)) { y += ts * 1.25; ctx.fillText(l, tx, y) }
+    ctx.globalAlpha = 1
   }
+  ctx.textAlign = 'left'
+  const btn = Math.max(10, Math.min(15, H * 0.06))
+  ctx.font = SANS(700)(btn)
+  const bw = ctx.measureText(ad.cta).width + btn * 1.8
+  const bx = center ? (W - bw) / 2 : id === 'swiss' ? W - pad - bw : textX
+  if (!['ticket', 'retro'].includes(id)) pill(ctx, bx, H - pad - btn * 2.1, ad.cta, { size: btn, ...button })
+  else { ctx.font = SANS(700)(btn); ctx.fillStyle = L.ac; ctx.textAlign = id === 'retro' ? 'center' : 'left'; ctx.fillText(`${ad.cta} →`, id === 'retro' ? W / 2 : textX + (id === 'ticket' ? 26 * 3.2 + 10 : 0), H - pad * (id === 'ticket' ? 1.3 : 1)); ctx.textAlign = 'left' }
   return c.toDataURL('image/jpeg', 0.9)
 }

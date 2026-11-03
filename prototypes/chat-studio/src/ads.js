@@ -146,7 +146,7 @@ export async function paint(project, ad, size) {
   const pick = pickModel(ad, size)
   const v = (ad.gen[size]?.v ?? -1) + 1
   const b = project.brand
-  const info = { photo: project.selected?.src || b.images[0]?.src, photos: b.images.map((i) => i.src), dates: b.dates, place: b.place }
+  const info = { photo: project.selected?.src || b.images[0]?.src, photos: b.images.map((i) => i.src), dates: b.dates, place: b.place, name: b.name, short: b.short }
   ad.artwork[size] = { src: await mockGenerate({ ad: adIn(ad, size), size, model: pick.id, type: ad.type, info, v }) }
   ad.gen[size] = { model: pick.id, why: pick.why, v }
 }
@@ -306,10 +306,10 @@ export function seedAds(project) {
     adSizes(project.ads, ad).forEach((z) => { ad.sizes[z] = 'ready' })
     paintAll(project, ad)
   }
-  fill('landing-banners#1', { ...sponsor(fire), type: 'product' })
-  fill('landing-banners#2', { ...sponsor(fire), type: 'product' })
-  fill('browse-rail#1', { ...sponsor(velo), type: 'spotlight' })
-  fill('details-bottom#1', { purpose: 'faq', how: 'package', ...purposeDefaults('faq', project.brand), type: 'bold' })
+  fill('landing-banners#1', { ...sponsor(fire), type: 'retro' })
+  fill('landing-banners#2', { ...sponsor(fire), type: 'retro' })
+  fill('browse-rail#1', { ...sponsor(velo), type: 'swiss' })
+  fill('details-bottom#1', { purpose: 'faq', how: 'package', ...purposeDefaults('faq', project.brand), type: 'brutal' })
 }
 
 // ---------- Re-fitting an uploaded ad to another size (canvas) ----------
