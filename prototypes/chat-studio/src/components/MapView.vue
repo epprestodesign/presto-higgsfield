@@ -8,7 +8,7 @@ import { state, toast } from '../mockAgent.js'
 import { format, link, DEFAULTS } from '../router.js'
 import { SUGGESTIONS } from '../mockData.js'
 
-const SCREENS = [['landing', 'Landing'], ['listings', 'Listings'], ['details', 'Details']]
+const SCREENS = [['landing', 'Landing'], ['browse', 'Browse'], ['details', 'Details']]
 const L = (r) => ({ hash: format({ ...DEFAULTS, ...r }), url: link(r) })
 
 const general = computed(() => [

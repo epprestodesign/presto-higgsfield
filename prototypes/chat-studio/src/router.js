@@ -9,7 +9,7 @@
 //   #/project/heartland                         A project's chat
 //   #/project/heartland?at=draft-2              … scrolled to Draft 2
 //   #/project/heartland/concepts                Concepts tab
-//   #/project/heartland/concepts/draft/2?device=mobile&screen=listings
+//   #/project/heartland/concepts/draft/2?device=mobile&screen=browse
 //                                               A draft, full size
 //   #/library/banners?project=heartland         Banners / Logos / Pages libraries
 //   #/library/pages/heartland/draft/2?screen=details   A project's pages, full size

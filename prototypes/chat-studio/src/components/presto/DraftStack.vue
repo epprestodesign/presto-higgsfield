@@ -2,7 +2,7 @@
 // A stack of Presto landing pages: the newest design in front and earlier
 // ones fanned out behind it, so you can see how a project got here.
 // `views` is newest-first (a project's drafts, or one draft's look). With a
-// single view, its three screens (landing, listings, details) are stacked.
+// single view, its three screens (landing, browse, details) are stacked.
 import { computed } from 'vue'
 import PrestoScreen from './PrestoScreen.vue'
 
@@ -14,7 +14,7 @@ const props = defineProps({
 const layers = computed(() => {
   const v = props.views.slice(0, 3)
   if (props.small) return [{ view: v[0], screen: 'landing' }]
-  if (v.length === 1) return [{ view: v[0], screen: 'details' }, { view: v[0], screen: 'listings' }, { view: v[0], screen: 'landing' }]
+  if (v.length === 1) return [{ view: v[0], screen: 'details' }, { view: v[0], screen: 'browse' }, { view: v[0], screen: 'landing' }]
   return v.reverse().map((view) => ({ view, screen: 'landing' }))
 })
 const pos = computed(() => ({ 1: ['is-only'], 2: ['is-mid', 'is-front'], 3: ['is-back', 'is-mid', 'is-front'] })[layers.value.length])
@@ -23,7 +23,8 @@ const pos = computed(() => ({ 1: ['is-only'], 2: ['is-mid', 'is-front'], 3: ['is
 <template>
   <div class="ds" :class="{ 'is-small': small }" aria-hidden="true">
     <div v-for="(l, i) in layers" :key="i" class="ds__layer" :class="pos[i]">
-      <PrestoScreen :project="l.view" :screen="l.screen" device="desktop" :chrome="false" />
+      <img v-if="small" class="ds__thumb" :src="(l.view.selected || l.view.brand.images[0]).src" alt="" />
+      <PrestoScreen v-else :project="l.view" :screen="l.screen" device="desktop" :chrome="false" />
     </div>
   </div>
 </template>
@@ -35,7 +36,7 @@ const pos = computed(() => ({ 1: ['is-only'], 2: ['is-mid', 'is-front'], 3: ['is
 .ds__layer.is-back { top: 2%; width: 68%; }
 .ds__layer.is-mid { top: 16%; width: 76%; }
 .ds__layer.is-front { top: 32%; width: 84%; }
-.ds.is-small { aspect-ratio: 1440 / 552; }
+.ds.is-small { aspect-ratio: 1440 / 400; }
+.ds__thumb { display: block; width: 100%; aspect-ratio: 1440 / 400; object-fit: cover; }
 .ds__layer.is-only { top: 0; width: 100%; border-radius: 3px; box-shadow: none; }
-.ds__layer.is-only :deep(.ps-bare) { aspect-ratio: 1440 / 552; }
 </style>

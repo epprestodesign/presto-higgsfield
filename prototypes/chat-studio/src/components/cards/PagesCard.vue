@@ -1,6 +1,6 @@
 <script setup>
 // The default Presto screens with today's picks, in a carousel: landing page,
-// hotel listings, hotel details. Desktop / Mobile switches the frame, and the
+// hotel browse, hotel details. Desktop / Mobile switches the frame, and the
 // page text is edited right here (click any line on a banner, or "Edit text").
 import { computed, ref } from 'vue'
 import CardShell from './CardShell.vue'

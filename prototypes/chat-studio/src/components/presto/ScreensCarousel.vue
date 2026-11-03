@@ -1,5 +1,5 @@
 <script setup>
-// The three default Presto screens (landing, hotel listings, hotel details) in
+// The three default Presto screens (landing, hotel browse, hotel details) in
 // a carousel, on desktop or phone. `view` is a project or a draft snapshot.
 import { nextTick, onMounted, ref, watch } from 'vue'
 import Icon from '../Icon.vue'
@@ -8,14 +8,14 @@ import PrestoScreen from './PrestoScreen.vue'
 const props = defineProps({
   view: { type: Object, required: true },
   device: { type: String, default: 'desktop' },
-  /** Optional v-model:screen ('landing' | 'listings' | 'details') — used by the viewer for deep links. */
+  /** Optional v-model:screen ('landing' | 'browse' | 'details') — used by the viewer for deep links. */
   screen: { type: String, default: '' },
 })
 const emit = defineEmits(['edit', 'update:screen'])
 
 const SCREENS = [
   { id: 'landing', label: 'Landing page' },
-  { id: 'listings', label: 'Hotel listings' },
+  { id: 'browse', label: 'Hotel browse' },
   { id: 'details', label: 'Hotel details' },
 ]
 const index = ref(Math.max(0, SCREENS.findIndex((s) => s.id === props.screen)))
@@ -30,6 +30,8 @@ function onScroll() {
 }
 watch(index, (i) => { if (props.screen && SCREENS[i].id !== props.screen) emit('update:screen', SCREENS[i].id) })
 watch(() => props.screen, (id) => { const i = SCREENS.findIndex((s) => s.id === id); if (i >= 0 && i !== index.value) go(i) })
+// Clicking through inside a page (e.g. a hotel card → details) follows along.
+function onNavigate(page) { const i = SCREENS.findIndex((s) => s.id === page); if (i >= 0 && i !== index.value) go(i) }
 onMounted(() => nextTick(() => track.value?.scrollTo({ left: track.value.clientWidth * index.value })))
 watch(() => props.device, () => nextTick(() => track.value?.scrollTo({ left: track.value.clientWidth * index.value })))
 const uid = Math.random().toString(36).slice(2, 7)
@@ -46,7 +48,7 @@ const uid = Math.random().toString(36).slice(2, 7)
     <div class="sc__carousel" :class="`is-${device}`">
       <div :id="`sc-${uid}-panel`" ref="track" class="sc__track" role="tabpanel" :aria-labelledby="`sc-${uid}-${SCREENS[index].id}`" @scroll.passive="onScroll">
         <div v-for="(s, i) in SCREENS" :key="s.id" class="sc__slide" :aria-hidden="index !== i">
-          <PrestoScreen :project="view" :screen="s.id" :device="device" @edit="emit('edit')" />
+          <PrestoScreen :project="view" :screen="s.id" :device="device" @navigate="onNavigate" />
         </div>
       </div>
       <button type="button" class="sc__arrow is-prev" :aria-label="`Previous: ${SCREENS[(index + 2) % 3].label}`" @click="go(index - 1)"><Icon name="left" :size="20" /></button>
