@@ -30,7 +30,11 @@ function restore() { restoreDraft(props.project, props.draft); emit('restored') 
 // Logo: the look applies to the draft you're looking at (the live project for
 // the current draft). A new logo goes through the chat and becomes a new draft,
 // which the viewer then shows.
-function setLook(id) { view.value.look = id }
+const logoOpen = ref(false)
+const logoBox = ref(null)
+const currentLook = computed(() => LOGO_LOOKS.find((l) => l.id === view.value.look))
+function setLook(id) { view.value.look = id; logoOpen.value = false }
+function outside(e) { if (logoOpen.value && logoBox.value && !logoBox.value.contains(e.target)) logoOpen.value = false }
 const picker = ref(null)
 function onLogoFile(e) {
   const f = e.target.files?.[0]
@@ -44,12 +48,12 @@ const banner = computed(() => (view.value.selected || view.value.brand.images[0]
 // Export graphics (?sheet=export).
 const exporting = computed({ get: () => route.sheet === 'export', set: (v) => { route.sheet = v ? 'export' : '' } })
 function key(e) {
-  if (e.key === 'Escape') { if (exporting.value) exporting.value = false; else emit('close') }
+  if (e.key === 'Escape') { if (logoOpen.value) logoOpen.value = false; else if (exporting.value) exporting.value = false; else emit('close') }
   if (e.key === 'ArrowLeft' && e.altKey && i.value > 0) emit('go', props.project.drafts[i.value - 1])
   if (e.key === 'ArrowRight' && e.altKey && i.value < props.project.drafts.length - 1) emit('go', props.project.drafts[i.value + 1])
 }
-onMounted(() => { document.addEventListener('keydown', key); dialog.value?.focus() })
-onBeforeUnmount(() => document.removeEventListener('keydown', key))
+onMounted(() => { document.addEventListener('keydown', key); document.addEventListener('pointerdown', outside); dialog.value?.focus() })
+onBeforeUnmount(() => { document.removeEventListener('keydown', key); document.removeEventListener('pointerdown', outside) })
 </script>
 
 <template>
@@ -81,19 +85,28 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key))
       </div>
       <!-- Actions sit at the bottom, after you've looked the draft over. -->
       <footer class="dv__foot">
-        <div v-if="!readonly" class="dv__logo">
-          <span class="dv__label">Logo</span>
-          <div class="cs-tabs" role="radiogroup" aria-label="Logo look">
+        <!-- Logo: one dropdown (opens upward) with the looks and a new upload. -->
+        <div v-if="!readonly" ref="logoBox" class="dv__logo">
+          <button type="button" class="cs-tab" :class="{ 'is-on': logoOpen }" aria-haspopup="true" :aria-expanded="logoOpen" @click="logoOpen = !logoOpen">
+            <span class="dv__stage" :style="{ backgroundImage: `url(${banner})` }"><LogoMark :project="view" :size="20" /></span>
+            Logo: {{ currentLook?.label }} <Icon name="down" :size="16" class="dv__chev" :class="{ 'is-open': logoOpen }" />
+          </button>
+          <div v-if="logoOpen" class="dv__menu" role="radiogroup" aria-label="Logo look">
             <button
-              v-for="l in LOGO_LOOKS" :key="l.id" type="button" role="radio" class="cs-tab cs-tab--sm" :class="{ 'is-on': view.look === l.id }"
-              :aria-checked="view.look === l.id" :title="l.note" @click="setLook(l.id)"
+              v-for="l in LOGO_LOOKS" :key="l.id" type="button" role="radio" class="dv__opt" :class="{ 'is-on': view.look === l.id }"
+              :aria-checked="view.look === l.id" @click="setLook(l.id)"
             >
-              <span class="dv__stage" :style="{ backgroundImage: `url(${banner})` }"><LogoMark :project="view" :look="l.id" :size="20" /></span>
-              {{ l.label }}
+              <span class="dv__optstage" :style="{ backgroundImage: `url(${banner})` }"><LogoMark :project="view" :look="l.id" :size="30" /></span>
+              <span><b>{{ l.label }}</b><small>{{ l.note }}</small></span>
+              <Icon v-if="view.look === l.id" name="check" :size="18" class="dv__tick" />
             </button>
-            <button type="button" class="cs-tab cs-tab--sm" :disabled="state.working" @click="picker.click()"><Icon name="clip" :size="16" /> Add a new logo</button>
-            <input ref="picker" type="file" accept="image/*" hidden aria-label="Choose a logo file" @change="onLogoFile" />
+            <hr />
+            <button type="button" class="dv__opt" :disabled="state.working" @click="logoOpen = false; picker.click()">
+              <span class="dv__opticon"><Icon name="clip" :size="18" /></span>
+              <span><b>Add a new logo</b><small>Upload a file; it becomes a new draft</small></span>
+            </button>
           </div>
+          <input ref="picker" type="file" accept="image/*" hidden aria-label="Choose a logo file" @change="onLogoFile" />
         </div>
         <div class="dv__actions">
           <button v-if="draft.snap && !readonly" type="button" class="cs-btn-ghost dv__restore" :disabled="state.working" title="Bring this draft back as the current one. Newer drafts stay in Concepts." @click="restore">
@@ -131,9 +144,22 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key))
 .dv__icon:disabled { opacity: 0.4; cursor: default; }
 .dv__body { padding: 18px 28px 24px; }
 .dv__foot { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; padding: 12px 18px; border-top: 1px solid var(--line); background: var(--surface); }
-.dv__logo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
-.dv__label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.dv__logo { position: relative; }
 .dv__stage { display: grid; place-items: center; width: 34px; height: 24px; margin-left: -6px; border-radius: 999px; background: center / cover; }
+.dv__chev { transition: transform 0.15s; }
+.dv__chev.is-open { transform: rotate(180deg); }
+.dv__menu { position: absolute; left: 0; bottom: calc(100% + 8px); z-index: 30; width: 300px; padding: 6px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-overlay); display: grid; gap: 2px; }
+.dv__menu hr { width: 100%; border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+.dv__opt { display: flex; align-items: center; gap: 10px; padding: 8px; border: 0; border-radius: var(--r); background: none; text-align: left; cursor: pointer; }
+.dv__opt:hover:not(:disabled) { background: var(--surface-3); }
+.dv__opt.is-on { background: var(--selected); }
+.dv__opt:disabled { opacity: 0.5; cursor: default; }
+.dv__opt > span:nth-child(2) { flex: 1; }
+.dv__opt b { display: block; font-size: 14px; }
+.dv__opt small { color: var(--ink-3); font-size: 12px; }
+.dv__optstage { display: grid; place-items: center; width: 56px; height: 40px; flex: none; border-radius: var(--r); background: center / cover; }
+.dv__opticon { display: grid; place-items: center; width: 56px; height: 40px; flex: none; border: 1px dashed var(--line-bold); border-radius: var(--r); color: var(--ink-2); }
+.dv__tick { color: var(--accent); }
 .dv__actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .dv__restore { min-height: 44px; }
 .dv__sheet { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; padding: 24px; background: rgba(3, 10, 38, 0.45); }
