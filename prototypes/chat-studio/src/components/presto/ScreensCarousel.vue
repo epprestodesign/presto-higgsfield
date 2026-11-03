@@ -45,6 +45,7 @@ const uid = Math.random().toString(36).slice(2, 7)
         :class="{ 'is-on': index === i }" :aria-selected="index === i" :aria-controls="`sc-${uid}-panel`" @click="go(i)"
       >{{ i + 1 }}. {{ s.label }}</button>
     </div>
+    <div v-if="$slots.toolbar" class="sc__toolbar"><slot name="toolbar" /></div>
     <div class="sc__carousel" :class="`is-${device}`">
       <div :id="`sc-${uid}-panel`" ref="track" class="sc__track" role="tabpanel" :aria-labelledby="`sc-${uid}-${SCREENS[index].id}`" @scroll.passive="onScroll">
         <div v-for="(s, i) in SCREENS" :key="s.id" class="sc__slide" :aria-hidden="index !== i">
@@ -64,6 +65,7 @@ const uid = Math.random().toString(36).slice(2, 7)
 .sc__tab:hover { color: var(--ink); }
 .sc__tab.is-on { color: var(--ink); }
 .sc__tab.is-on::after { content: ''; position: absolute; left: 6px; right: 6px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--pill); }
+.sc__toolbar { display: flex; align-items: center; gap: 8px; margin: -2px 0 14px; }
 .sc__carousel { position: relative; }
 .sc__track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; border-radius: var(--r-card); }
 .sc__track::-webkit-scrollbar { display: none; }
