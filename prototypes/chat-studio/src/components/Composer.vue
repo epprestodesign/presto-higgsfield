@@ -1,9 +1,12 @@
 <script setup>
 // The one input. On Home it's the big box with modes; in a project it docks
 // at the bottom ("Ask for changes…") and glows while the agent is working.
-import { nextTick, ref, watch } from 'vue'
+// On Home, while it's empty, it types out example prompts for the picked mode
+// (what's possible: a website link, an upload, a mood…). Tab or "Try it" uses one.
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import Icon from './Icon.vue'
 import { MODES } from '../mockAgent.js'
+import { PROMPT_IDEAS } from '../mockData.js'
 
 const props = defineProps({
   variant: { type: String, default: 'dock' }, // 'home' | 'dock'
@@ -43,7 +46,45 @@ function send() {
 }
 function key(e) {
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send() }
+  else if (e.key === 'Tab' && !e.shiftKey && idle.value && idea.value) { e.preventDefault(); tryIdea() }
 }
+
+// ---------- Example prompts (Home) ----------
+const ideas = computed(() => (props.variant === 'home' ? PROMPT_IDEAS[mode.value] || [] : []))
+const at = ref(0)
+const idea = computed(() => ideas.value[at.value % (ideas.value.length || 1)])
+const typed = ref('')
+const idle = computed(() => !!ideas.value.length && !text.value && !file.value)
+const still = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+let run = 0
+const wait = (ms) => new Promise((r) => setTimeout(r, ms))
+async function cycle() {
+  const me = ++run
+  const live = () => me === run
+  while (live()) {
+    if (!idle.value) { await wait(400); continue }
+    const t = idea.value?.text || ''
+    if (still) typed.value = t
+    else for (let i = 1; i <= t.length && live() && idle.value; i++) { typed.value = t.slice(0, i); await wait(32) }
+    await wait(still ? 4200 : 2600)
+    if (!live()) return
+    if (!still) while (typed.value && live() && idle.value) { typed.value = typed.value.slice(0, -2); await wait(10) }
+    if (live() && idle.value) { at.value++; await wait(250) }
+  }
+}
+function next() { at.value++; cycle() }
+function tryIdea() {
+  const it = idea.value
+  if (!it) return
+  text.value = it.text
+  run++ // stop typing
+  nextTick(() => { grow(); const el = box.value; el?.focus(); el?.setSelectionRange(it.text.length, it.text.length) })
+  if (it.attach) picker.value?.click()
+}
+watch(mode, () => { at.value = 0; typed.value = ''; if (ideas.value.length) cycle() })
+watch(idle, (v) => { if (v) { typed.value = ''; cycle() } })
+if (props.variant === 'home') cycle()
+onBeforeUnmount(() => { run++ })
 defineExpose({ focus: () => box.value?.focus(), mode })
 </script>
 
@@ -55,14 +96,26 @@ defineExpose({ focus: () => box.value?.focus(), mode })
         <span>{{ file.name }}</span>
         <button type="button" aria-label="Remove the logo" @click="file = null"><Icon name="x" :size="16" /></button>
       </div>
+      <div v-if="ideas.length" class="comp__idea" :class="{ 'is-hidden': !idle }">
+        <span class="comp__tag"><Icon :name="idea.icon" :size="14" /> {{ idea.tag }}</span>
+        <span class="comp__hint">
+          <button type="button" class="comp__try" :tabindex="idle ? 0 : -1" :aria-label="`Try this example: ${idea.text}`" @click="tryIdea">
+            Try it <kbd>Tab</kbd>
+          </button>
+          <button type="button" class="comp__next" :tabindex="idle ? 0 : -1" aria-label="Show another example" @click="next"><Icon name="right" :size="16" /></button>
+        </span>
+      </div>
       <div class="comp__row">
         <button v-if="variant === 'dock'" type="button" class="comp__round" aria-label="Attach a logo or image" @click="picker.click()">
           <Icon name="clip" :size="18" />
         </button>
-        <textarea
-          ref="box" v-model="text" rows="1" :placeholder="placeholder" :aria-label="placeholder"
-          @input="grow" @keydown="key"
-        />
+        <div class="comp__field">
+          <textarea
+            ref="box" v-model="text" rows="1" :placeholder="ideas.length ? '' : placeholder" :aria-label="placeholder"
+            @input="grow" @keydown="key"
+          />
+          <span v-if="idle" class="comp__ghost" aria-hidden="true">{{ typed }}<i v-if="!still" /></span>
+        </div>
         <button
           v-if="variant === 'dock'" type="button" class="comp__send" :class="{ 'is-stop': working }"
           :aria-label="working ? 'Stop' : 'Send'" :disabled="!working && !text.trim() && !file" @click="working ? emit('stop') : send()"
@@ -98,9 +151,22 @@ defineExpose({ focus: () => box.value?.focus(), mode })
 .comp--dock { box-shadow: var(--shadow-overlay); }
 .comp--home .comp__box { padding: 16px 14px 12px 18px; }
 .comp__row { display: flex; align-items: center; gap: 8px; }
+.comp__field { position: relative; flex: 1; min-width: 0; display: flex; }
 .comp textarea { flex: 1; min-width: 0; resize: none; border: 0; outline: none; background: none; padding: 8px 0; font: inherit; font-size: 16px; color: var(--ink); line-height: 1.45; }
 .comp--home textarea { font-size: 18px; min-height: 30px; }
 .comp textarea::placeholder { color: var(--ink-3); }
+.comp__ghost { position: absolute; inset: 0; padding: 8px 0; font-size: 18px; line-height: 1.45; color: var(--ink-3); pointer-events: none; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.comp__ghost i { display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: -0.15em; background: var(--ink-3); animation: caret 1s steps(1) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+.comp__idea { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 26px; }
+.comp__idea.is-hidden { visibility: hidden; }
+.comp__tag { display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: 999px; background: var(--navy-50); color: var(--navy-900); font-size: 12px; font-weight: 700; line-height: 24px; }
+.comp__hint { display: inline-flex; align-items: center; gap: 4px; }
+.comp__try { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border: 0; border-radius: var(--r); background: none; color: var(--ink-2); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.comp__try kbd { padding: 0 5px; border: 1px solid var(--line-bold); border-radius: 3px; background: var(--surface-2); font: 600 11px/18px var(--sans); color: var(--ink-3); }
+.comp__try:hover, .comp__next:hover { background: var(--surface-3); color: var(--ink); }
+@media (hover: none) { .comp__try kbd { display: none; } }
+.comp__next { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: var(--r); background: none; color: var(--ink-3); cursor: pointer; }
 .comp__tools { display: flex; align-items: center; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
 .comp__modes { display: flex; gap: 6px; flex: 1; flex-wrap: wrap; }
 .comp__round { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border: 1px solid var(--line-bold); border-radius: var(--r); background: var(--surface); color: var(--ink-2); cursor: pointer; }

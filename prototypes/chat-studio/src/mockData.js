@@ -147,3 +147,36 @@ export const SUGGESTIONS = {
     'Riverside music festival with five stages',
   ],
 }
+
+/**
+ * Example prompts the home composer cycles through while it's empty, so people
+ * see what they can ask for. One set per mode; `tag` says what the example
+ * shows off, `attach` opens the file picker when it's used.
+ */
+export const PROMPT_IDEAS = {
+  logo: [
+    { tag: 'From a website', icon: 'link', text: 'Grab the logo from heartlandcup.org and clean it up' },
+    { tag: 'Upload a file', icon: 'clip', text: 'Our soccer cup logo is a blurry JPEG, make it crisp on a transparent background', attach: true },
+    { tag: 'Logo versions', icon: 'spark', text: 'Make a white version of the Lakeshore Half logo for dark banners' },
+    { tag: 'From a name', icon: 'pencil', text: 'Simple badge logo for the Prairie Ridge golf classic' },
+  ],
+  banners: [
+    { tag: 'From a website', icon: 'link', text: 'Use the colours from lakeshorehalf.com for a sunrise race banner' },
+    { tag: 'Describe a photo', icon: 'image', text: 'Floodlit soccer stadium at dusk, with room for our logo in the middle' },
+    { tag: 'Set a mood', icon: 'palette', text: 'Dark, electric neon arena banner for an esports invitational' },
+    { tag: 'Show the place', icon: 'map', text: 'New York skyline at night for our fintech summit' },
+  ],
+  ads: [
+    { tag: 'Sponsor ads', icon: 'megaphone', text: 'Ads for our 3 soccer tournament sponsors, each linking to their website' },
+    { tag: 'Point to a page', icon: 'link', text: 'An ad sending golf classic guests to our FAQ and parking info' },
+    { tag: 'Re-fit an ad', icon: 'clip', text: 'Re-fit our sponsor’s existing ad to every banner size', attach: true },
+    { tag: 'Whole package', icon: 'layers', text: 'Design the full ad package for riverbendfest.com' },
+  ],
+  full: [
+    { tag: 'From a website', icon: 'link', text: 'Brand our sales kickoff from altura.com' },
+    { tag: 'Describe the event', icon: 'pencil', text: 'Youth soccer tournament in Overland Park, June 2027' },
+    { tag: 'Upload a logo', icon: 'clip', text: 'Here’s our wedding logo, build the banners and hotel pages around it', attach: true },
+    { tag: 'Everything at once', icon: 'layers', text: 'Logo, banners, pages and sponsor ads for a charity golf classic' },
+    { tag: 'Paste a link', icon: 'link', text: 'apexarena.gg' },
+  ],
+}
