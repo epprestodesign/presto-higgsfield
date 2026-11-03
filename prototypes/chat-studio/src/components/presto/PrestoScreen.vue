@@ -7,6 +7,7 @@ import PrestoFrame from './PrestoFrame.vue'
 import ChromeWindow from '../devices/ChromeWindow.vue'
 import PhoneFrame from '../devices/PhoneFrame.vue'
 import { PAGE_H } from '../devices/ChromeMobile.vue'
+import { logoOf } from '../../mockAgent.js'
 
 defineProps({
   project: { type: Object, required: true }, // a project or a draft snapshot
@@ -19,7 +20,7 @@ const emit = defineEmits(['navigate'])
 </script>
 
 <template>
-  <ChromeWindow v-if="chrome && device === 'desktop'" :title="project.brand.name" :favicon="project.brand.logo" :design-width="1280">
+  <ChromeWindow v-if="chrome && device === 'desktop'" :title="project.brand.name" :favicon="logoOf(project)" :design-width="1280">
     <PrestoFrame :view="project" :page="screen" :width="1280" :height="760" @navigate="emit('navigate', $event)" />
   </ChromeWindow>
 

@@ -21,6 +21,9 @@ const wait = (ms) => (state.speed ? new Promise((r) => setTimeout(r, ms * state.
 
 export const activeProject = () => state.projects.find((p) => p.id === state.activeId) || null
 export const projectBySlug = (slug) => state.projects.find((p) => p.slug === slug) || null
+/** A project's (or draft's) logo: an uploaded one wins over the brand kit's. */
+export const logoOf = (v) => v.logo || v.brand.logo
+export const logoOnDarkOf = (v) => (v.logo ? null : v.brand.logoOnDark)
 
 export function toast(msg) {
   state.toast = msg
@@ -56,6 +59,8 @@ function newProject(brand, prompt) {
     sets: 0,
     look: 'badge',
     font: brand.fonts.display, // heading font on the Presto pages
+    logo: null, // an uploaded logo (object URL); null = the brand kit's
+    logoName: '',
     mode: 'full',
     stage: 0, // index into stagesFor(p)
     palette: [...brand.colors],
@@ -73,6 +78,7 @@ export function snapshot(p) {
     brand: p.brand,
     look: p.look,
     font: p.font,
+    logo: p.logo,
     palette: [...p.palette],
     selected: p.selected ? { ...p.selected } : null,
     copy: JSON.parse(JSON.stringify(p.copy)),
@@ -91,12 +97,12 @@ export function restoreDraft(p, d) {
   if (!d.snap || state.working) return
   const s = d.snap
   startDraft(p, `Restored draft ${d.n}`)
-  Object.assign(p, { look: s.look, font: s.font, palette: [...s.palette], selected: s.selected ? { ...s.selected } : null, copy: JSON.parse(JSON.stringify(s.copy)) })
+  Object.assign(p, { look: s.look, font: s.font, logo: s.logo, palette: [...s.palette], selected: s.selected ? { ...s.selected } : null, copy: JSON.parse(JSON.stringify(s.copy)) })
   p.messages.push({ id: nid('m'), role: 'agent', status: 'done', steps: [{ label: `Restoring draft ${d.n}`, done: true }], seconds: 1, text: `Restored **draft ${d.n}** (${d.label.toLowerCase()}). Keep going from here.`, card: { type: 'pages' }, chips: [], draft: p.drafts.length })
   p.updated = Date.now()
 }
 
-const userMsg = (p, text) => p.messages.push({ id: nid('m'), role: 'user', text, draft: p.drafts.length })
+const userMsg = (p, text, extra = {}) => p.messages.push({ id: nid('m'), role: 'user', text, draft: p.drafts.length, ...extra })
 
 /** Every banner the project has made, newest set first (for the rail strip). */
 export function projectBanners(p) {
@@ -172,13 +178,13 @@ const STEP = {
     steps: ['Reading your brief', `Looking up ${p.brand.website}`, 'Pulling the logo, colours and fonts'],
     text: `I found **${p.brand.name}**. Here’s the brand kit I’ll work from. Does it look right?`,
     card: { type: 'brand' },
-    chips: ['Change the colours', 'Use a different logo'],
+    chips: ['Change the colours', 'Add a new logo'],
   }),
   logo: () => ({
     steps: ['Cleaning up the logo', 'Making versions for light and dark'],
     text: 'Four ways to show the logo. I picked the one that reads best on a photo. Tap another to switch.',
     card: { type: 'looks' },
-    chips: ['Upload a different logo'],
+    chips: ['Add a new logo'],
   }),
   banners: (p) => {
     const set = bannerSet(p)
@@ -290,6 +296,28 @@ export async function reply(p, text) {
       card: set,
       chips: ['Warmer, golden hour', 'Show me the pages'],
     })
+  })
+}
+
+/** A new logo from a file upload: shown in the chat, "cleaned up", and used everywhere. */
+export async function uploadLogo(p, file, text = '') {
+  if (state.working || !file) return
+  const url = URL.createObjectURL(file)
+  if (p.drafts.length) startDraft(p, 'New logo')
+  userMsg(p, text || 'Here’s a new logo to use.', { image: url, fileName: file.name })
+  await run(async () => {
+    const atBrand = stagesFor(p)[p.stage]?.id === 'brand'
+    p.logo = url
+    p.logoName = file.name
+    const ok = await agentTurn(p, {
+      steps: ['Removing the background', 'Checking it on light and dark', 'Putting it on the Presto pages'],
+      text: atBrand
+        ? `Got it. I cleaned up **${file.name}** and put it in the brand kit. Does it look right?`
+        : `Got it. I cleaned up **${file.name}** and put it on everything. Pick how it should show on the pages.`,
+      card: { type: atBrand ? 'brand' : 'looks' },
+      chips: ['Change the colours', 'Add a new logo'],
+    })
+    if (ok) p.messages.at(-1).next = nextFor(p)
   })
 }
 

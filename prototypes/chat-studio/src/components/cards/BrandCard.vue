@@ -1,6 +1,6 @@
 <script setup>
 import CardShell from './CardShell.vue'
-import { toast } from '../../mockAgent.js'
+import { toast, logoOf } from '../../mockAgent.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
 const b = props.project.brand
@@ -14,7 +14,7 @@ function copy(hex) {
 <template>
   <CardShell kicker="Brand kit" :title="b.name" :aside="b.website">
     <div class="bk">
-      <div class="bk__logo"><img :src="b.logo" :alt="`${b.name} logo`" /></div>
+      <div class="bk__logo"><img :src="logoOf(project)" :alt="`${b.name} logo`" /></div>
       <div class="bk__info">
         <p class="bk__label">Colours</p>
         <ul class="bk__swatches">

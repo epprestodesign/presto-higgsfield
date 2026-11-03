@@ -3,7 +3,7 @@
 // screens. Click one to see it full size (desktop, then mobile).
 import { computed } from 'vue'
 import DraftStack from './presto/DraftStack.vue'
-import { draftView } from '../mockAgent.js'
+import { draftView, logoOf } from '../mockAgent.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
 const emit = defineEmits(['open', 'chat'])
@@ -33,7 +33,7 @@ function when(t) {
             <span v-if="!d.snap" class="ct__live">Current</span>
           </button>
           <div class="ct__meta">
-            <span class="ct__logo"><img :src="project.brand.logo" alt="" /></span>
+            <span class="ct__logo"><img :src="logoOf(draftView(project, d))" alt="" /></span>
             <span>
               <b>Draft {{ d.n }} · {{ d.label }}</b>
               <small>on {{ project.name }} · {{ when(d.at) }}</small>

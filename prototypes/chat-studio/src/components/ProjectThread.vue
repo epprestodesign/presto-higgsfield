@@ -17,7 +17,7 @@ import LooksCard from './cards/LooksCard.vue'
 import BannersCard from './cards/BannersCard.vue'
 import PagesCard from './cards/PagesCard.vue'
 import ExportCard from './cards/ExportCard.vue'
-import { reply, state, stopWorking, stagesFor, draftView, toast } from '../mockAgent.js'
+import { reply, state, stopWorking, stagesFor, draftView, toast, uploadLogo } from '../mockAgent.js'
 import { route, link, go } from '../router.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
@@ -66,14 +66,25 @@ function copyLink(at) {
   toast('Link copied')
 }
 
-function ask(text) {
+function ask(text, opts = {}) {
   if (state.working) return
   if (route.tab !== 'chat') tab.value = 'chat'
   route.at = ''
   following.value = true
   atBottom.value = true
-  reply(props.project, text)
+  // An image attached in the composer is taken as a new logo.
+  if (opts.logo?.file) uploadLogo(props.project, opts.logo.file, text)
+  else reply(props.project, text)
   nextTick(() => toBottom())
+}
+
+// "Add a new logo": a chip (or the header's logo menu) that asks for a file.
+const logoPicker = ref(null)
+function onChip(c) { if (c === 'Add a new logo') logoPicker.value?.click(); else ask(c) }
+function onLogoFile(e) {
+  const f = e.target.files?.[0]
+  e.target.value = ''
+  if (f) ask('', { logo: { file: f } })
 }
 function md(t) {
   return t.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -112,7 +123,8 @@ const lastAgent = computed(() => [...props.project.messages].reverse().find((m) 
 
 <template>
   <div class="th">
-    <ProjectHeader v-model:tab="tab" :project="project" :stages="stages" :brand-ready="brandReady" @jump="jumpTo" @close="go({ view: 'home' })" />
+    <ProjectHeader v-model:tab="tab" :project="project" :stages="stages" :brand-ready="brandReady" @jump="jumpTo" @close="go({ view: 'home' })" @upload="(f) => ask('', { logo: { file: f } })" />
+    <input ref="logoPicker" type="file" accept="image/*" hidden aria-label="Choose a logo file" @change="onLogoFile" />
 
     <div class="th__body">
       <div v-show="tab === 'chat'" ref="scroller" class="th__scroll" @scroll.passive="onScroll" @wheel.passive="onWheel" @touchmove.passive="onWheel">
@@ -137,7 +149,10 @@ const lastAgent = computed(() => [...props.project.messages].reverse().find((m) 
             </header>
             <ol class="th__msgs">
               <li v-for="m in seg.messages" :key="m.id" :data-mid="m.id" :class="`th__msg th__msg--${m.role}`">
-                <p v-if="m.role === 'user'" class="th__pill">{{ m.text }}</p>
+                <div v-if="m.role === 'user'" class="th__pill">
+                  <figure v-if="m.image" class="th__upload"><img :src="m.image" :alt="m.fileName" /><figcaption>{{ m.fileName }}</figcaption></figure>
+                  <p v-if="m.text">{{ m.text }}</p>
+                </div>
                 <template v-else>
                   <AgentStatus :message="m" />
                   <p v-if="m.text" class="th__text" v-html="md(m.text)" />
@@ -146,7 +161,7 @@ const lastAgent = computed(() => [...props.project.messages].reverse().find((m) 
                     <button v-if="m.next && m.id === lastAgent" type="button" class="cs-btn-dark th__next" :disabled="state.working" @click="ask(m.next.say)">
                       {{ m.next.label }} <Icon name="arrow" :size="18" />
                     </button>
-                    <button v-for="c in m.chips" :key="c" type="button" class="cs-chip" :disabled="state.working" @click="ask(c)">{{ c }}</button>
+                    <button v-for="c in m.chips" :key="c" type="button" class="cs-chip" :disabled="state.working" @click="onChip(c)"><Icon v-if="c === 'Add a new logo'" name="clip" :size="16" />{{ c }}</button>
                   </div>
                 </template>
               </li>
@@ -185,6 +200,10 @@ const lastAgent = computed(() => [...props.project.messages].reverse().find((m) 
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
 .th__msg--user { justify-items: end; }
 .th__pill { margin: 0; max-width: 78%; padding: 10px 16px; border-radius: 8px 8px 2px 8px; background: var(--pill); color: var(--pill-ink); font-size: 16px; }
+.th__pill p { margin: 0; }
+.th__upload { display: grid; gap: 6px; margin: 2px 0 8px; }
+.th__upload img { width: 180px; max-height: 140px; padding: 12px; border-radius: var(--r); background: #fff; object-fit: contain; }
+.th__upload figcaption { font-size: 12px; opacity: 0.8; }
 .th__text { margin: 0; font-size: 16px; color: var(--ink); }
 .th__chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .th__chips.has-foot { margin-top: 22px; }

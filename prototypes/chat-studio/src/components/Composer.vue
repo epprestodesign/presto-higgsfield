@@ -26,7 +26,7 @@ const picker = ref(null)
 const box = ref(null)
 function pick(e) {
   const f = e.target.files?.[0]
-  if (f) file.value = { name: f.name, url: URL.createObjectURL(f) }
+  if (f) file.value = { name: f.name, url: URL.createObjectURL(f), file: f }
   e.target.value = ''
 }
 function grow() {
@@ -37,7 +37,7 @@ function grow() {
 }
 function send() {
   const t = text.value.trim()
-  if (!t || props.working) return
+  if ((!t && !file.value) || props.working) return
   emit('send', t, { mode: mode.value, logo: file.value })
   text.value = ''
   file.value = null
@@ -67,7 +67,7 @@ defineExpose({ focus: () => box.value?.focus() })
         />
         <button
           v-if="variant === 'dock'" type="button" class="comp__send" :class="{ 'is-stop': working }"
-          :aria-label="working ? 'Stop' : 'Send'" :disabled="!working && !text.trim()" @click="working ? emit('stop') : send()"
+          :aria-label="working ? 'Stop' : 'Send'" :disabled="!working && !text.trim() && !file" @click="working ? emit('stop') : send()"
         >
           <Icon :name="working ? 'stop' : 'up'" :size="18" />
         </button>

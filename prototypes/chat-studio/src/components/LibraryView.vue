@@ -7,7 +7,7 @@ import Icon from './Icon.vue'
 import LogoMark from './LogoMark.vue'
 import DraftStack from './presto/DraftStack.vue'
 import DraftViewer from './DraftViewer.vue'
-import { state, openProject, draftView, LOGO_LOOKS, projectBySlug } from '../mockAgent.js'
+import { state, openProject, draftView, LOGO_LOOKS, projectBySlug, logoOf } from '../mockAgent.js'
 import { route } from '../router.js'
 
 const props = defineProps({ kind: { type: String, required: true } })
@@ -60,7 +60,7 @@ const count = computed(() => ({ banners: banners.value.length, logos: inScope.va
             <img class="lib__banner" :src="b.src" alt="" :style="{ filter: b.filter || undefined }" />
           </button>
           <div class="lib__meta">
-            <span class="lib__mark"><img :src="b.project.brand.logo" alt="" /></span>
+            <span class="lib__mark"><img :src="logoOf(b.project)" alt="" /></span>
             <span><b>{{ b.project.name }}</b><small>Set {{ b.set }}<template v-if="b.mood"> · {{ b.mood }}</template> · {{ b.kind }}</small></span>
           </div>
         </li>
@@ -85,7 +85,7 @@ const count = computed(() => ({ banners: banners.value.length, logos: inScope.va
             <DraftStack :views="[...p.drafts].reverse().map((d) => draftView(p, d))" />
           </button>
           <div class="lib__meta">
-            <span class="lib__mark"><img :src="p.brand.logo" alt="" /></span>
+            <span class="lib__mark"><img :src="logoOf(p)" alt="" /></span>
             <span><b>{{ p.brand.name }}</b><small>{{ p.drafts.length }} {{ p.drafts.length === 1 ? 'draft' : 'drafts' }} · latest: {{ p.drafts.at(-1).label }}</small></span>
           </div>
         </li>

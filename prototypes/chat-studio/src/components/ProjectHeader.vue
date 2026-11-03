@@ -14,7 +14,7 @@ const props = defineProps({
   stages: { type: Array, default: () => [] },
   brandReady: { type: Boolean, default: true },
 })
-const emit = defineEmits(['update:tab', 'jump', 'close'])
+const emit = defineEmits(['update:tab', 'jump', 'close', 'upload'])
 
 const ROLES = ['Main', 'Accent', 'Light', 'Dark']
 // Heading fonts the Presto pages support (plus the brand kit's own first).
@@ -47,7 +47,7 @@ function replaceLogo(e) {
   const f = e.target.files?.[0]
   e.target.value = ''
   open.value = ''
-  if (f) toast('Prototype: the new logo would be cleaned up and used everywhere')
+  if (f) emit('upload', f)
 }
 </script>
 
@@ -85,7 +85,7 @@ function replaceLogo(e) {
                 <span><b>{{ l.label }}</b><small>{{ l.note }}</small></span>
               </button>
               <hr />
-              <button type="button" class="ph__opt" @click="picker.click()"><Icon name="clip" /> <b>Replace the logo</b></button>
+              <button type="button" class="ph__opt" @click="picker.click()"><Icon name="clip" /> <b>Add a new logo</b></button>
               <input ref="picker" type="file" accept="image/*" hidden @change="replaceLogo" />
             </div>
           </div>

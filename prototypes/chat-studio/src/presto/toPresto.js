@@ -4,6 +4,7 @@
 // hotels, sections); the prototype supplies the logo, colours, fonts, banner
 // and page text.
 import { toPrestoProject } from '@bs/banner-lab/studioProjects.js'
+import { logoOf, logoOnDarkOf } from '../mockAgent.js'
 
 const FONT_IDS = { Oswald: 'oswald', 'Barlow Condensed': 'barlow-condensed', 'Playfair Display': 'playfair', Montserrat: 'montserrat', 'PT Sans': 'pt-sans' }
 const abs = (src) => (src ? new URL(src, window.location.href).href : src)
@@ -18,7 +19,7 @@ export function toPresto(view) {
     name: b.name,
     colors: { primary, secondary: dark, accent },
     typography: FONT_IDS[heading] ? { heading: FONT_IDS[heading] } : {},
-    logo: { src: abs(b.logo), onDarkSrc: abs(b.logoOnDark), name: `${b.name} logo` },
+    logo: { src: abs(logoOf(view)), onDarkSrc: abs(logoOnDarkOf(view)), name: `${b.name} logo` },
     banners: [{ id: `proto-${sel.key}`, src: abs(sel.src), alt: `${b.name} banner`, kind: 'photo' }],
     selectedBannerId: `proto-${sel.key}`,
     copy: JSON.parse(JSON.stringify(view.copy)),

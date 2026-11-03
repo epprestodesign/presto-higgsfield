@@ -1,5 +1,6 @@
 <script setup>
 // The project logo in one of its four looks (see LOGO_LOOKS).
+import { logoOf, logoOnDarkOf } from '../mockAgent.js'
 defineProps({
   project: { type: Object, required: true },
   look: { type: String, default: null },
@@ -9,7 +10,7 @@ defineProps({
 
 <template>
   <span class="lm" :class="`lm--${look || project.look}`" :style="{ '--s': `${size}px` }">
-    <img :src="(look || project.look) === 'dark' && project.brand.logoOnDark ? project.brand.logoOnDark : project.brand.logo" :alt="`${project.brand.name} logo`" />
+    <img :src="(look || project.look) === 'dark' && logoOnDarkOf(project) ? logoOnDarkOf(project) : logoOf(project)" :alt="`${project.brand.name} logo`" />
   </span>
 </template>
 

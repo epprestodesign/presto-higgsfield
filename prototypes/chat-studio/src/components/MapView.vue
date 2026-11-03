@@ -4,7 +4,7 @@
 // the headline is too big"). Click to open, or copy.
 import { computed } from 'vue'
 import Icon from './Icon.vue'
-import { state, toast } from '../mockAgent.js'
+import { state, toast, logoOf } from '../mockAgent.js'
 import { format, link, DEFAULTS } from '../router.js'
 import { SUGGESTIONS } from '../mockData.js'
 
@@ -65,7 +65,7 @@ function copy(url) {
 
       <h2 class="map__h">Projects</h2>
       <article v-for="pr in projects" :key="pr.p.id" class="map__proj">
-        <h3><span class="map__mark"><img :src="pr.p.brand.logo" alt="" /></span>{{ pr.p.brand.name }} <code>{{ pr.p.slug }}</code></h3>
+        <h3><span class="map__mark"><img :src="logoOf(pr.p)" alt="" /></span>{{ pr.p.brand.name }} <code>{{ pr.p.slug }}</code></h3>
         <ul class="map__list">
           <li v-for="l in pr.main" :key="l.hash"><a :href="l.hash">{{ l.label }}</a><code>{{ l.hash }}</code><button type="button" :aria-label="`Copy the link to ${l.label}`" @click="copy(l.url)"><Icon name="link" :size="16" /></button></li>
         </ul>
