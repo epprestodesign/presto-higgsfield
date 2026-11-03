@@ -12,6 +12,7 @@ import { state, openProject, draftView, LOGO_LOOKS, projectBySlug, logoOf } from
 import { route, go } from '../router.js'
 import AdPreview from './ads/AdPreview.vue'
 import LibrarySearch from './LibrarySearch.vue'
+import BannerStack from './BannerStack.vue'
 import { readySizes, AD_SIZES, PURPOSES } from '../ads.js'
 import { facetItems, facetCategories, applyFacets } from '../libraryFacets.js'
 
@@ -58,6 +59,13 @@ const all = computed(() => ({
 const categories = computed(() => facetCategories(props.kind, all.value, projects.value))
 const shown = computed(() => applyFacets(all.value, tags.value, route.q))
 const banners = computed(() => props.kind === 'banners' ? shown.value : [])
+// Banners are shown per project, as a stack (newest in front).
+const bannerGroups = computed(() => {
+  const by = new Map()
+  for (const b of banners.value) { if (!by.has(b.project.id)) by.set(b.project.id, { project: b.project, items: [] }); by.get(b.project.id).items.push(b) }
+  return [...by.values()]
+})
+const setsOf = (g) => new Set(g.items.map((b) => b.set)).size
 const logos = computed(() => props.kind === 'logos' ? shown.value.map((x) => x.project) : [])
 const pages = computed(() => props.kind === 'pages' ? shown.value.map((x) => x.project) : [])
 const adList = computed(() => props.kind === 'ads' ? shown.value : [])
@@ -88,14 +96,12 @@ const filtered = computed(() => tags.value.length || !!route.q)
       />
 
       <!-- Banners -->
-      <ul v-if="kind === 'banners'" class="lib__grid">
-        <li v-for="b in banners" :key="b.key">
-          <button type="button" class="lib__card" :aria-label="`${b.project.name}, banner set ${b.set}`" @click="openProject(b.project.id)">
-            <img class="lib__banner" :src="b.src" alt="" :style="{ filter: b.filter || undefined }" />
-          </button>
+      <ul v-if="kind === 'banners'" class="lib__grid is-pages">
+        <li v-for="g in bannerGroups" :key="g.project.id">
+          <BannerStack :banners="g.items" :label="g.project.name" @open="openProject(g.project.id)" />
           <div class="lib__meta">
-            <span class="lib__mark"><img :src="logoOf(b.project)" alt="" /></span>
-            <span><b>{{ b.project.name }}</b><small>Set {{ b.set }}<template v-if="b.mood"> · {{ b.mood }}</template> · {{ b.kind }}</small></span>
+            <span class="lib__mark"><img :src="logoOf(g.project)" alt="" /></span>
+            <span><b>{{ g.project.brand.name }}</b><small>{{ g.items.length }} {{ g.items.length === 1 ? 'banner' : 'banners' }} · {{ setsOf(g) }} {{ setsOf(g) === 1 ? 'set' : 'sets' }}<template v-if="g.items[0].mood"> · latest: {{ g.items[0].mood.replace(/^./, (c) => c.toUpperCase()) }}</template></small></span>
           </div>
         </li>
       </ul>
@@ -161,7 +167,6 @@ const filtered = computed(() => tags.value.length || !!route.q)
 .lib__grid.is-pages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .lib__card { display: block; width: 100%; padding: 0; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface-3); overflow: hidden; cursor: pointer; }
 .lib__card:hover { box-shadow: var(--shadow-overlay); border-color: var(--line-bold); }
-.lib__banner { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 .lib__logo { display: grid; place-items: center; aspect-ratio: 1; background: #fff; }
 .lib__stack { padding: 6% 4% 0; }
 .lib__ad { display: grid; place-items: center; aspect-ratio: 16 / 10; padding: 16px; }
