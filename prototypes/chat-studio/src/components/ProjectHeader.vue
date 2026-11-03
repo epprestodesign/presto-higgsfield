@@ -1,12 +1,12 @@
 <script setup>
 // Project header, after the reference: the original prompt in a large rounded
-// bar (with the step progress and a close button), then a row of chips —
-// brand on the left (logo look, colours, heading font), and on the right
-// Chat / Concepts, which are chips that switch the view.
+// bar (with the step progress and a close button), then a row of chips — the
+// logo on the left (colours and fonts aren't customisable on Presto pages),
+// and on the right Chat / Concepts, which are chips that switch the view.
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import Icon from './Icon.vue'
 import LogoMark from './LogoMark.vue'
-import { LOGO_LOOKS, toast } from '../mockAgent.js'
+import { LOGO_LOOKS } from '../mockAgent.js'
 
 const props = defineProps({
   project: { type: Object, required: true },
@@ -16,11 +16,6 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:tab', 'jump', 'close', 'upload'])
 
-const ROLES = ['Main', 'Accent', 'Light', 'Dark']
-// Heading fonts the Presto pages support (plus the brand kit's own first).
-const FONTS = ['Oswald', 'Barlow Condensed', 'Montserrat', 'Playfair Display', 'PT Sans']
-const fonts = computed(() => [props.project.brand.fonts.display, ...FONTS.filter((f) => f !== props.project.brand.fonts.display)])
-const font = computed(() => props.project.font || props.project.brand.fonts.display)
 const look = computed(() => LOGO_LOOKS.find((l) => l.id === props.project.look))
 const current = computed(() => props.stages.findIndex((s) => s.state === 'current'))
 const stepLabel = computed(() => {
@@ -39,9 +34,6 @@ onMounted(() => { document.addEventListener('pointerdown', outside); document.ad
 onBeforeUnmount(() => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', esc) })
 
 function setLook(id) { props.project.look = id; open.value = '' }
-function setFont(f) { props.project.font = f; props.project.updated = Date.now(); open.value = '' }
-function setColor(i, e) { props.project.palette[i] = e.target.value.toUpperCase(); props.project.updated = Date.now() }
-function resetColors() { props.project.palette.splice(0, 4, ...props.project.brand.colors); toast('Colours reset to the brand kit') }
 const picker = ref(null)
 function replaceLogo(e) {
   const f = e.target.files?.[0]
@@ -90,38 +82,6 @@ function replaceLogo(e) {
             </div>
           </div>
 
-          <!-- Colours -->
-          <div class="ph__pop">
-            <button type="button" class="ph__chip" :class="{ 'is-open': open === 'colours' }" :aria-expanded="open === 'colours'" @click="toggle('colours')">
-              <span class="ph__swatches"><i v-for="(c, i) in project.palette" :key="i" :style="{ background: c }" /></span>
-              Colours <Icon name="down" :size="16" />
-            </button>
-            <div v-if="open === 'colours'" class="ph__menu ph__menu--colours">
-              <label v-for="(c, i) in project.palette" :key="i" class="ph__colour">
-                <span :style="{ background: c }" /><b>{{ ROLES[i] }}</b><small>{{ c }}</small>
-                <input type="color" :value="c" :aria-label="`${ROLES[i]} colour, ${c}`" @input="setColor(i, $event)" />
-              </label>
-              <hr />
-              <button type="button" class="ph__opt" @click="resetColors"><Icon name="refresh" /> <b>Reset to the brand kit</b></button>
-            </div>
-          </div>
-
-          <!-- Font -->
-          <div class="ph__pop">
-            <button type="button" class="ph__chip" :class="{ 'is-open': open === 'font' }" :aria-expanded="open === 'font'" @click="toggle('font')">
-              <span class="ph__aa" :style="{ fontFamily: `'${font}', 'PT Sans', sans-serif` }">Aa</span>
-              {{ font }} <Icon name="down" :size="16" />
-            </button>
-            <div v-if="open === 'font'" class="ph__menu" role="radiogroup" aria-label="Heading font">
-              <button
-                v-for="(f, i) in fonts" :key="f" type="button" role="radio" :aria-checked="font === f"
-                class="ph__opt" :class="{ 'is-on': font === f }" @click="setFont(f)"
-              >
-                <span class="ph__fontname" :style="{ fontFamily: `'${f}', 'PT Sans', sans-serif` }">{{ project.brand.short }}</span>
-                <span><b>{{ f }}</b><small>{{ i === 0 ? 'From the brand kit' : f === 'PT Sans' ? 'Presto default' : 'Headline font' }}</small></span>
-              </button>
-            </div>
-          </div>
         </template>
         <span v-else class="ph__chip is-wait"><span class="ph__pulse" /> Reading the brand…</span>
       </div>
@@ -165,10 +125,6 @@ function replaceLogo(e) {
 .ph__count { min-width: 22px; padding: 0 7px; border-radius: 999px; background: var(--pill); color: var(--pill-ink); font-size: 12px; font-weight: 700; line-height: 20px; text-align: center; }
 .ph__chip:not(.is-on) .ph__count { background: var(--surface-3); color: var(--ink-2); }
 .ph__logo { display: grid; place-items: center; width: 32px; height: 32px; margin-left: -4px; border-radius: 50%; background: #fff; border: 1px solid var(--line); overflow: hidden; }
-.ph__swatches { display: flex; }
-.ph__swatches i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line-bold); }
-.ph__swatches i + i { margin-left: -6px; }
-.ph__aa { font-size: 20px; font-weight: 700; color: var(--ink); line-height: 1; }
 .ph__pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--navy-200); animation: pulse 1s ease-in-out infinite alternate; }
 @keyframes pulse { to { opacity: 0.3; } }
 
@@ -182,13 +138,6 @@ function replaceLogo(e) {
 .ph__opt b { display: block; font-size: 14px; }
 .ph__opt small { color: var(--ink-3); font-size: 12px; }
 .ph__stage { display: grid; place-items: center; width: 52px; height: 40px; flex: none; border-radius: var(--r); background: #475569; }
-.ph__fontname { width: 112px; flex: none; font-size: 18px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ph__colour { position: relative; display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 10px; padding: 8px; border-radius: var(--r); cursor: pointer; }
-.ph__colour:hover { background: var(--surface-3); }
-.ph__colour span { width: 28px; height: 28px; border-radius: var(--r); box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.15); }
-.ph__colour b { font-size: 14px; }
-.ph__colour small { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.ph__colour input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
 @media (max-width: 1100px) { .ph__steplabel { display: none; } }
 @media (max-width: 760px) {

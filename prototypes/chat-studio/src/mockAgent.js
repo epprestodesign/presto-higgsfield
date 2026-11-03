@@ -178,7 +178,7 @@ const STEP = {
     steps: ['Reading your brief', `Looking up ${p.brand.website}`, 'Pulling the logo, colours and fonts'],
     text: `I found **${p.brand.name}**. Here’s the brand kit I’ll work from. Does it look right?`,
     card: { type: 'brand' },
-    chips: ['Change the colours', 'Add a new logo'],
+    chips: ['Add a new logo'],
   }),
   logo: () => ({
     steps: ['Cleaning up the logo', 'Making versions for light and dark'],
@@ -315,7 +315,7 @@ export async function uploadLogo(p, file, text = '') {
         ? `Got it. I cleaned up **${file.name}** and put it in the brand kit. Does it look right?`
         : `Got it. I cleaned up **${file.name}** and put it on everything. Pick how it should show on the pages.`,
       card: { type: atBrand ? 'brand' : 'looks' },
-      chips: ['Change the colours', 'Add a new logo'],
+      chips: ['Add a new logo'],
     })
     if (ok) p.messages.at(-1).next = nextFor(p)
   })
