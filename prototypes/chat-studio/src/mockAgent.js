@@ -182,10 +182,9 @@ export const MODES = [
   { id: 'ads', label: 'Ads', icon: 'megaphone', stages: ['brand', 'ads', 'pages', 'files'], credits: 'About 1 credit per ad size (4 sizes for the standard placements).' },
   { id: 'full', label: 'Full suite', icon: 'layers', stages: ['brand', 'logo', 'banners', 'pages', 'ads', 'files'], credits: 'About 11 credits: logo clean-up, 3 banners and an ad package.' },
 ]
-export const stagesFor = (p) => {
-  const m = MODES.find((x) => x.id === p.mode) || MODES[3]
-  return STAGES.filter((s) => m.stages.includes(s.id))
-}
+// In the mode's own order (Ads: brand → ads → pages → files).
+export const modeOf = (p) => MODES.find((x) => x.id === p.mode) || MODES[3]
+export const stagesFor = (p) => modeOf(p).stages.map((id) => STAGES.find((s) => s.id === id))
 
 const STEP = {
   brand: (p) => ({
@@ -210,12 +209,19 @@ const STEP = {
       chips: ['Moodier, at night', 'Brighter, daytime'],
     }
   },
-  pages: () => ({
-    steps: ['Placing everything on the Presto pages'],
-    text: 'Here’s how it looks on the landing page and the hotel pages. Check the text, then I’ll make the files.',
-    card: { type: 'pages' },
-    chips: ['Edit the text', 'Try another banner'],
-  }),
+  pages: (p) => (p.mode === 'ads'
+    ? {
+        steps: ['Placing your ads in the Presto pages'],
+        text: 'Here are your ads on the Presto pages: the right rail on hotel browse, the billboard below the landing page description, and the leaderboard at the bottom of hotel details.',
+        card: { type: 'pages', screen: 'browse' },
+        chips: ['Open Advertisements'],
+      }
+    : {
+        steps: ['Placing everything on the Presto pages'],
+        text: 'Here’s how it looks on the landing page and the hotel pages. Check the text, then I’ll make the files.',
+        card: { type: 'pages' },
+        chips: ['Edit the text', 'Try another banner'],
+      }),
   ads: (p) => {
     // The standard approved placements, and a first ad pointing at the event's
     // About page, made in every size they need. Sponsors are added in Advertisements.

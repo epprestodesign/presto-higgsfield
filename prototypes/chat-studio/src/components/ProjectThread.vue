@@ -108,6 +108,7 @@ const segments = computed(() => {
   }
   return out
 })
+const setupLine = computed(() => stagesFor(props.project).filter((s) => !['pages', 'files'].includes(s.id)).map((s) => ({ brand: 'Brand kit', logo: 'logo', banners: 'first banners', ads: 'ads' })[s.id]).join(', ').replace(/, ([^,]*)$/, ' and $1'))
 const brandReady = computed(() => props.project.messages.some((m) => m.card?.type === 'brand'))
 function time(t) { return new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }
 
@@ -150,7 +151,7 @@ const lastAgent = computed(() => [...props.project.messages].reverse().find((m) 
                 <button type="button" class="cs-btn-ghost" @click="viewing = seg.draft">View</button>
               </template>
               <template v-else>
-                <span class="th__segtext"><b>Setup</b><small>Brand kit, logo and first banners</small></span>
+                <span class="th__segtext"><b>Setup</b><small>{{ setupLine }}</small></span>
                 <button type="button" class="th__link" aria-label="Copy a link to the setup" title="Copy a link to the setup" @click="copyLink('setup')"><Icon name="link" :size="16" /></button>
               </template>
             </header>

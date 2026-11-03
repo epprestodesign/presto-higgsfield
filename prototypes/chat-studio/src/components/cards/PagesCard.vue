@@ -53,7 +53,7 @@ const LINES = [
       </div>
     </div>
 
-    <ScreensCarousel :view="view || project" :device="device" @edit="editing = live" />
+    <ScreensCarousel :view="view || project" :device="device" :screen="card.screen || ''" @edit="editing = live" />
   </CardShell>
 </template>
 
