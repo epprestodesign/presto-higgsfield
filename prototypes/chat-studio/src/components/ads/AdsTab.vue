@@ -5,11 +5,11 @@
 // (Banner 1, 2, 3 on the landing page, each skyscraper…), each made just for
 // its spot's size, designed with Higgsfield or re-fitted from an uploaded ad.
 // See them on the real Presto pages from the header.
-import { computed, nextTick, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import Icon from '../Icon.vue'
 import AdSuite from './AdSuite.vue'
 import AdSpot from './AdSpot.vue'
-import { OFFERS, PAGES, AD_SIZES, PURPOSES, offerMobile, purposeDefaults, createAd, designPackage, restoreAd, spotsOf, adInSpot, spotLabel, pageLabel, adSizes } from '../../ads.js'
+import { OFFERS, PAGES, AD_SIZES, PURPOSES, offerMobile, purposeDefaults, createAd, designPackage, restoreAd, spotsOf, adInSpot, spotLabel, pageLabel, adSizes, adsUi } from '../../ads.js'
 import { adsChat, packageAds, state } from '../../mockAgent.js'
 import { route } from '../../router.js'
 
@@ -66,6 +66,10 @@ function openFill(sp) {
   fillId.value = fillId.value === sp.id ? '' : sp.id
   if (fillId.value) nextTick(() => document.querySelector('.ad__form')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }))
 }
+// "A sponsor…" in the chat opens this form on that spot.
+function takeFill() { const sp = spots.value.find((s) => s.id === adsUi.fill); adsUi.fill = ''; if (sp && !adInSpot(ads.value, sp.id)) { fillId.value = ''; openFill(sp) } }
+onMounted(takeFill)
+watch(() => adsUi.fill, (v) => { if (v) takeFill() })
 const form = reactive({ purpose: 'sponsor', how: 'package', name: '', tagline: '', cta: 'Learn more', url: '', logo: null, logoName: '', upload: null, uploadName: '' })
 function pickPurpose(p) {
   form.purpose = p

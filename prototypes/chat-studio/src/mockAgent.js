@@ -4,7 +4,7 @@
 import { reactive } from 'vue'
 import { BRANDS, brandFor } from './mockData.js'
 import { route, go } from './router.js'
-import { newAds, seedAds, createAd, purposeDefaults, readySizes, designSize, AD_SIZES, adSizes, firstEmptySpot, spotsOf, pageLabel } from './ads.js'
+import { newAds, seedAds, createAd, purposeDefaults, readySizes, designSize, designPackage, AD_SIZES, adSizes, firstEmptySpot, spotsOf, pageLabel, offerById, PURPOSES } from './ads.js'
 
 export const state = reactive({
   projects: [],
@@ -222,21 +222,15 @@ const STEP = {
         card: { type: 'pages' },
         chips: ['Edit the text', 'Try another banner'],
       }),
-  ads: (p) => {
-    // The standard approved placements, and a first ad pointing at the event's
-    // About page, in the first open spot. Each spot holds its own ad; the rest
-    // are filled in Advertisements (sponsors, the FAQ, the Sponsors page…).
-    if (!p.ads.offers.length) p.ads.offers.push('landing-banners', 'browse-rail', 'details-bottom')
-    const spot = firstEmptySpot(p.ads)
-    const ad = createAd(p, { purpose: 'about', how: 'package', ...purposeDefaults('about', p.brand), spot: spot?.id })
-    adSizes(p.ads, ad).forEach((z) => { ad.sizes[z] = 'ready' })
-    return {
-      steps: ['Picking the approved ad placements', `Designing an ad for your About page${spot ? ` for ${spot.label} on the ${pageLabel(spot.page).toLowerCase()}` : ''}`],
-      text: `I picked three approved placements (${spotsOf(p.ads).length} ad spots) and made an ad that links to your **About page**${spot ? ` for **${spot.label}** on the ${pageLabel(spot.page).toLowerCase()}` : ''}. Each spot holds its own ad: fill the others with sponsors, your FAQ or your Sponsors page, in Advertisements.`,
-      card: { type: 'ads', adId: ad.id },
-      chips: ['Open Advertisements'],
-    }
-  },
+  // Ads, in the chat, a step at a time: which pages → which placements (the
+  // sizes) → the spots on each page, filled one by one. See chooseAdPages /
+  // chooseAdPlacements / fillSpotInChat.
+  ads: () => ({
+    steps: ['Checking the ad placements Presto approves'],
+    text: 'Where should ads run? Pick the pages, and I’ll show you the placements and sizes on each.',
+    card: { type: 'adsWhere' },
+    chips: [],
+  }),
   files: (p) => ({
     steps: [
       p.mode === 'ads' ? 'Exporting each ad size' : 'Sizing the logo for the Presto pages',
@@ -271,7 +265,8 @@ async function runStage(p, i) {
   if (!st) return false
   p.stage = i
   const ok = await agentTurn(p, STEP[st.id](p))
-  if (ok) p.messages.at(-1).next = nextFor(p)
+  // While it asks where ads go, the go-ahead is a way to skip them.
+  if (ok) p.messages.at(-1).next = st.id === 'ads' ? { label: 'Skip ads for now', say: 'Continue without ads' } : nextFor(p)
   return ok
 }
 
@@ -312,8 +307,8 @@ export async function reply(p, text) {
     p.stalled = false
     const turn = (opts) => agentTurn(p, opts).then((ok) => { if (ok) p.messages.at(-1).next = nextFor(p); return ok })
     if (/\bads?\b|advert|sponsor/.test(t)) {
-      const ad = p.ads.items.find((a) => readySizes(a).length)
-      return turn({ steps: ['Opening your ads'], text: 'Here are your ads. Add sponsors, or change them, in **Advertisements**.', card: ad ? { type: 'ads', adId: ad.id } : null, chips: ['Open Advertisements'] })
+      if (!p.ads.offers.length) return turn({ ...STEP.ads(p), steps: ['Opening your ads'] })
+      return turn({ steps: ['Opening your ads'], text: 'Here are your ad spots, page by page. Fill or change them here, or in **Advertisements**.', card: { type: 'adsSpots' }, chips: ['Open Advertisements'] })
     }
     if (/export|download|files|zip/.test(t)) {
       if (!finished) return runStage(p, stagesFor(p).length - 1)
@@ -407,6 +402,57 @@ export async function packageAds(p, ads, userText) {
 }
 export const sizeName = (s) => `${s.replace('x', '×')} ${AD_SIZES[s]?.name || ''}`.trim()
 
+// ---------- Ads in the chat: pages → placements → spots ----------
+const lower = (t) => t.charAt(0).toLowerCase() + t.slice(1)
+const and = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`)
+
+/** Ads, 1 of 3: the pages picked ("Landing page", "Hotel browse"…). Next: their placements. */
+export function chooseAdPages(p, pages, card) {
+  if (state.working || !pages.length) return
+  if (card) card.picked = [...pages]
+  return run(async () => {
+    userMsg(p, `Ads on the ${and(pages.map((x) => pageLabel(x).toLowerCase()))}`)
+    await agentTurn(p, {
+      steps: [`Finding the approved placements on ${pages.length === 1 ? 'that page' : `those ${pages.length} pages`}`],
+      text: 'Here are the approved placements and sizes. I ticked the usual ones; change them, then confirm.',
+      card: { type: 'adsSizes', pages: [...pages] },
+      chips: [],
+    })
+  })
+}
+
+/** Ads, 2 of 3: the placements picked. Makes the spots and puts an About ad in the first. */
+export function chooseAdPlacements(p, offerIds, card) {
+  if (state.working || !offerIds.length) return
+  if (card) card.picked = [...offerIds]
+  p.ads.offers.splice(0, p.ads.offers.length, ...offerIds)
+  return run(async () => {
+    const said = and(offerIds.map((id) => offerById(id).say))
+    userMsg(p, said.charAt(0).toUpperCase() + said.slice(1))
+    const spots = spotsOf(p.ads)
+    const spot = p.ads.items.some((a) => a.purpose === 'about') ? null : firstEmptySpot(p.ads)
+    const ad = spot && createAd(p, { purpose: 'about', how: 'package', ...purposeDefaults('about', p.brand), spot: spot.id })
+    if (ad) adSizes(p.ads, ad).forEach((z) => { ad.sizes[z] = 'ready' })
+    const pages = [...new Set(spots.map((s) => s.page))]
+    const ok = await agentTurn(p, {
+      steps: [`Setting up ${spots.length} ad spots`, ...(ad ? [`Designing an ad for your About page for ${spot.label}`] : [])],
+      text: `That’s **${spots.length} ad spots** ${pages.length === 1 ? `on the ${pageLabel(pages[0]).toLowerCase().replace(/(?<!page)$/, ' page')}` : `across the ${and(pages.map((x) => pageLabel(x).toLowerCase()))}`}.${ad ? ` I put an ad for your **About page** in **${spot.label}**.` : ''} Each spot holds its own ad: fill the others with your FAQ, your Sponsors page or a sponsor.`,
+      card: { type: 'adsSpots' },
+      chips: ['Open Advertisements'],
+    })
+    if (ok) p.messages.at(-1).next = nextFor(p)
+  })
+}
+
+/** Ads, 3 of 3: fill a spot from the chat with a house ad (About, FAQ, Sponsors page). */
+export function fillSpotInChat(p, spot, purpose) {
+  if (state.working) return
+  const ad = createAd(p, { purpose, how: 'package', ...purposeDefaults(purpose, p.brand), spot: spot.id })
+  const what = { about: 'About page', faq: 'FAQ', sponsors: 'Sponsors page' }[purpose] || lower(PURPOSES.find((x) => x.id === purpose).label)
+  adsChat(p, `Put our ${what} in ${spot.label}`, `Designing **${ad.name}** for **${spot.label}** on the ${pageLabel(spot.page).toLowerCase()} (${spot.size.replace('x', '×')}${spot.mobile ? `, and ${spot.mobile.replace('x', '×')} for phones` : ''}).`, ad.id)
+  designPackage(p, ad)
+}
+
 /** Send the go-ahead for the step a project is waiting on. */
 export function goAhead(p) {
   const nx = nextFor(p)
@@ -438,7 +484,14 @@ export async function seed() {
   ]
   for (const [prompt, ago, upTo, changes] of plan) {
     const p = await createProject(prompt, { open: false })
-    while (p.stage < stagesFor(p).length - 1 && stagesFor(p)[p.stage].id !== upTo) await reply(p, nextFor(p).say)
+    while (p.stage < stagesFor(p).length - 1 && stagesFor(p)[p.stage].id !== upTo) {
+      // At the ads step, answer its questions the usual way: every page, the usual placements.
+      if (stagesFor(p)[p.stage].id === 'ads' && !p.ads.offers.length) {
+        await chooseAdPages(p, ['landing', 'browse', 'details'], p.messages.at(-1).card)
+        await chooseAdPlacements(p, ['landing-banners', 'browse-rail', 'details-bottom'], p.messages.at(-1).card)
+      }
+      await reply(p, nextFor(p).say)
+    }
     for (const [i, ask] of changes.entries()) {
       await reply(p, ask)
       select(p, projectBanners(p)[i % 2 ? 1 : 0])

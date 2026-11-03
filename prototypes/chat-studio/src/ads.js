@@ -14,14 +14,14 @@ export { AD_SIZES }
 
 /** The approved placements an event can offer (from the preset layouts). */
 export const OFFERS = [
-  { id: 'landing-banners', page: 'landing', slot: 'landing.afterContent', size: LANDING_SIZE, count: 3, label: '3 banners (340×215) below the event description' },
-  { id: 'landing-billboard', page: 'landing', slot: 'landing.afterContent', size: '970x250', count: 1, label: 'Billboard below the event description' },
-  { id: 'browse-top', page: 'browse', slot: 'browse.top', size: '970x90', count: 1, label: 'Leaderboard above the results' },
-  { id: 'browse-rail', page: 'browse', slot: 'browse.rail', size: '160x600', count: 2, label: 'Right rail · 2 skyscrapers' },
-  { id: 'browse-bottom', page: 'browse', slot: 'browse.bottom', size: '970x250', count: 1, label: 'Billboard below the results' },
-  { id: 'details-rooms', page: 'details', slot: 'details.afterRooms', size: '970x250', count: 1, label: 'Billboard after room selection' },
-  { id: 'details-rail', page: 'details', slot: 'details.rail', size: '160x600', count: 2, label: 'Info rail · 2 skyscrapers' },
-  { id: 'details-bottom', page: 'details', slot: 'details.bottom', size: '970x90', count: 1, label: 'Leaderboard at the page bottom' },
+  { id: 'landing-banners', page: 'landing', slot: 'landing.afterContent', size: LANDING_SIZE, count: 3, label: '3 banners (340×215) below the event description', say: '3 banners below the event description' },
+  { id: 'landing-billboard', page: 'landing', slot: 'landing.afterContent', size: '970x250', count: 1, label: 'Billboard below the event description', say: 'a billboard below the event description' },
+  { id: 'browse-top', page: 'browse', slot: 'browse.top', size: '970x90', count: 1, label: 'Leaderboard above the results', say: 'a leaderboard above the results' },
+  { id: 'browse-rail', page: 'browse', slot: 'browse.rail', size: '160x600', count: 2, label: 'Right rail · 2 skyscrapers', say: '2 skyscrapers in the right rail' },
+  { id: 'browse-bottom', page: 'browse', slot: 'browse.bottom', size: '970x250', count: 1, label: 'Billboard below the results', say: 'a billboard below the results' },
+  { id: 'details-rooms', page: 'details', slot: 'details.afterRooms', size: '970x250', count: 1, label: 'Billboard after room selection', say: 'a billboard after room selection' },
+  { id: 'details-rail', page: 'details', slot: 'details.rail', size: '160x600', count: 2, label: 'Info rail · 2 skyscrapers', say: '2 skyscrapers in the info rail' },
+  { id: 'details-bottom', page: 'details', slot: 'details.bottom', size: '970x90', count: 1, label: 'Leaderboard at the page bottom', say: 'a leaderboard at the page bottom' },
 ]
 export const PAGES = [
   { id: 'landing', label: 'Landing page' },
@@ -57,6 +57,8 @@ export function spotsOf(ads) {
     label: `${KIND[o.size] || 'Ad'}${o.count > 1 ? ` ${i + 1}` : ''}`,
   })))
 }
+// A spot to open the Advertisements form on (set from the chat: "A sponsor…").
+export const adsUi = reactive({ fill: '' })
 export const spotById = (ads, id) => spotsOf(ads).find((s) => s.id === id)
 export const adInSpot = (ads, spotId) => ads.items.find((a) => a.spot === spotId)
 export const firstEmptySpot = (ads) => spotsOf(ads).find((s) => !adInSpot(ads, s.id)) || null
