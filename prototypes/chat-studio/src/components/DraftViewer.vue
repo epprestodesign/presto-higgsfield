@@ -1,10 +1,14 @@
 <script setup>
 // A draft full size: its three screens in a carousel, Desktop / Mobile, with
-// arrows to step through the other drafts and a way to bring it back.
+// arrows to step through the other drafts. At the bottom: change the logo
+// (its look, or upload a new one), bring an older draft back, and export the
+// graphics for this draft.
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import Icon from './Icon.vue'
 import ScreensCarousel from './presto/ScreensCarousel.vue'
-import { draftView, restoreDraft, state } from '../mockAgent.js'
+import LogoMark from './LogoMark.vue'
+import ExportCard from './cards/ExportCard.vue'
+import { draftView, restoreDraft, state, LOGO_LOOKS, uploadLogo } from '../mockAgent.js'
 import { route } from '../router.js'
 
 const props = defineProps({
@@ -22,8 +26,25 @@ const i = computed(() => props.project.drafts.indexOf(props.draft))
 const dialog = ref(null)
 
 function restore() { restoreDraft(props.project, props.draft); emit('restored') }
+
+// Logo: the look applies to the draft you're looking at (the live project for
+// the current draft). A new logo goes through the chat and becomes a new draft,
+// which the viewer then shows.
+function setLook(id) { view.value.look = id }
+const picker = ref(null)
+function onLogoFile(e) {
+  const f = e.target.files?.[0]
+  e.target.value = ''
+  if (!f) return
+  uploadLogo(props.project, f)
+  route.draft = props.project.drafts.length || route.draft
+}
+const banner = computed(() => (view.value.selected || view.value.brand.images[0]).src)
+
+// Export graphics (?sheet=export).
+const exporting = computed({ get: () => route.sheet === 'export', set: (v) => { route.sheet = v ? 'export' : '' } })
 function key(e) {
-  if (e.key === 'Escape') emit('close')
+  if (e.key === 'Escape') { if (exporting.value) exporting.value = false; else emit('close') }
   if (e.key === 'ArrowLeft' && e.altKey && i.value > 0) emit('go', props.project.drafts[i.value - 1])
   if (e.key === 'ArrowRight' && e.altKey && i.value < props.project.drafts.length - 1) emit('go', props.project.drafts[i.value + 1])
 }
@@ -58,11 +79,38 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key))
           </template>
         </ScreensCarousel>
       </div>
-      <!-- Restoring sits at the bottom, after you've looked the draft over. -->
-      <footer v-if="draft.snap && !readonly" class="dv__foot">
-        <p>Bring this draft back as the current one. Your newer drafts stay in Concepts.</p>
-        <button type="button" class="cs-btn-dark" :disabled="state.working" @click="restore"><Icon name="refresh" :size="16" /> Restore this draft</button>
+      <!-- Actions sit at the bottom, after you've looked the draft over. -->
+      <footer class="dv__foot">
+        <div v-if="!readonly" class="dv__logo">
+          <span class="dv__label">Logo</span>
+          <div class="cs-tabs" role="radiogroup" aria-label="Logo look">
+            <button
+              v-for="l in LOGO_LOOKS" :key="l.id" type="button" role="radio" class="cs-tab cs-tab--sm" :class="{ 'is-on': view.look === l.id }"
+              :aria-checked="view.look === l.id" :title="l.note" @click="setLook(l.id)"
+            >
+              <span class="dv__stage" :style="{ backgroundImage: `url(${banner})` }"><LogoMark :project="view" :look="l.id" :size="20" /></span>
+              {{ l.label }}
+            </button>
+            <button type="button" class="cs-tab cs-tab--sm" :disabled="state.working" @click="picker.click()"><Icon name="clip" :size="16" /> Add a new logo</button>
+            <input ref="picker" type="file" accept="image/*" hidden aria-label="Choose a logo file" @change="onLogoFile" />
+          </div>
+        </div>
+        <div class="dv__actions">
+          <button v-if="draft.snap && !readonly" type="button" class="cs-btn-ghost dv__restore" :disabled="state.working" title="Bring this draft back as the current one. Newer drafts stay in Concepts." @click="restore">
+            <Icon name="refresh" :size="16" /> Restore this draft
+          </button>
+          <button type="button" class="cs-btn-dark" @click="exporting = true"><Icon name="download" :size="18" /> Export graphics</button>
+        </div>
       </footer>
+
+      <!-- Export graphics: the files for this draft. -->
+      <div v-if="exporting" class="dv__sheet" @click.self="exporting = false">
+        <div class="dv__sheetbox" role="dialog" aria-modal="true" aria-label="Export graphics">
+          <button type="button" class="dv__icon dv__sheetclose" aria-label="Close export" @click="exporting = false"><Icon name="x" :size="18" /></button>
+          <ExportCard :project="view" />
+          <p class="dv__sheetnote">From {{ readonly ? draft.label : `draft ${draft.n} · ${draft.label}` }}: the logo as it shows on this draft, and its banner, sized for Presto.</p>
+        </div>
+      </div>
     </section>
   </div>
 </template>
@@ -82,7 +130,16 @@ onBeforeUnmount(() => document.removeEventListener('keydown', key))
 .dv__icon:hover:not(:disabled) { background: var(--surface-3); }
 .dv__icon:disabled { opacity: 0.4; cursor: default; }
 .dv__body { padding: 18px 28px 24px; }
-.dv__foot { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 14px 18px; border-top: 1px solid var(--line); background: var(--surface); }
-.dv__foot p { flex: 1; margin: 0; font-size: 14px; color: var(--ink-2); }
-@media (max-width: 640px) { .dv__head { grid-template-columns: 1fr auto; } .dv__spacer { display: none; } .dv__nav { justify-self: start; } .dv__name { min-width: 0; } .dv { padding: 0; } .dv__panel { border-radius: 0; height: 100%; } .dv__body { padding: 14px; } .dv__foot p { display: none; } .dv__foot .cs-btn-dark { flex: 1; justify-content: center; } }
+.dv__foot { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; padding: 12px 18px; border-top: 1px solid var(--line); background: var(--surface); }
+.dv__logo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.dv__label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.dv__stage { display: grid; place-items: center; width: 34px; height: 24px; margin-left: -6px; border-radius: 999px; background: center / cover; }
+.dv__actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.dv__restore { min-height: 44px; }
+.dv__sheet { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; padding: 24px; background: rgba(3, 10, 38, 0.45); }
+.dv__sheetbox { position: relative; width: min(620px, 100%); max-height: 100%; overflow-y: auto; }
+.dv__sheetclose { position: absolute; top: 16px; right: 16px; z-index: 1; }
+.dv__sheetbox :deep(.card__aside) { margin-right: 48px; }
+.dv__sheetnote { margin: 10px 4px 0; font-size: 13px; color: #fff; }
+@media (max-width: 640px) { .dv__head { grid-template-columns: 1fr auto; } .dv__spacer { display: none; } .dv__nav { justify-self: start; } .dv__name { min-width: 0; } .dv { padding: 0; } .dv__panel { border-radius: 0; height: 100%; } .dv__body { padding: 14px; } .dv__actions { width: 100%; } .dv__actions > * { flex: 1; justify-content: center; } .dv__sheet { padding: 12px; } }
 </style>

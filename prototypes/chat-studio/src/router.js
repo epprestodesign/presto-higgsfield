@@ -13,6 +13,7 @@
 //                                               A draft, full size
 //   #/library/banners?project=heartland         Banners / Logos / Pages libraries
 //   #/library/pages/heartland/draft/2?screen=details   A project's pages, full size
+//   …/draft/3?sheet=export                      A draft with Export graphics open
 //   #/map                                       Every link, for this prototype
 import { reactive, watch } from 'vue'
 
@@ -31,6 +32,7 @@ const DEFAULTS = Object.freeze({
   open: '', // team feed: item id
   prompt: '', // new
   mode: 'full', // new
+  sheet: '', // viewer: 'export' opens the export panel
 })
 export const route = reactive({ ...DEFAULTS })
 
@@ -56,7 +58,7 @@ export function parse(hash) {
     if (c === 'draft') r.draft = Number(parts[4]) || 0
     r.filter = q.get('project') || 'all'
   } else if (head === 'map') r.view = 'map'
-  for (const k of ['device', 'screen', 'theme', 'show', 'open']) if (q.get(k)) r[k] = q.get(k)
+  for (const k of ['device', 'screen', 'theme', 'show', 'open', 'sheet']) if (q.get(k)) r[k] = q.get(k)
   return r
 }
 
@@ -83,6 +85,7 @@ export function format(r) {
   if (viewer || r.open) {
     if (r.device !== 'desktop') q.set('device', r.device)
     if (r.screen !== 'landing') q.set('screen', r.screen)
+    if (r.sheet) q.set('sheet', r.sheet)
   }
   const s = q.toString().replace(/\+/g, '%20')
   return `#${path}${s ? `?${s}` : ''}`
