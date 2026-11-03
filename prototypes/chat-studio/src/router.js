@@ -13,6 +13,7 @@
 //                                               A draft, full size
 //   #/project/heartland/ads                     Advertisements (offered banners + ads)
 //   #/library/banners?project=heartland         Banners / Logos / Pages / Ads libraries
+//   #/library/banners?q=night&tags=theme:Sports  … searched and filtered
 //   #/library/pages/heartland/draft/2?screen=details   A project's pages, full size
 //   …/draft/3?sheet=export                      A draft with Export graphics open
 //   #/map                                       Every link, for this prototype
@@ -27,6 +28,8 @@ const DEFAULTS = Object.freeze({
   screen: 'landing',
   library: '', // banners | logos | pages
   filter: 'all', // library: project slug
+  q: '', // library: search text
+  tags: '', // library: picked filters, 'theme:Sports|mood:…'
   at: '', // home: 'team' · chat: 'draft-2' | 'setup'
   theme: 'All', // team feed
   open: '', // team feed: item id
@@ -58,6 +61,8 @@ export function parse(hash) {
     if (b) r.project = b
     if (c === 'draft') r.draft = Number(parts[4]) || 0
     r.filter = q.get('project') || 'all'
+    r.q = q.get('q') || ''
+    r.tags = q.get('tags') || ''
   } else if (head === 'map') r.view = 'map'
   for (const k of ['device', 'screen', 'theme', 'open', 'sheet']) if (q.get(k)) r[k] = q.get(k)
   return r
@@ -81,6 +86,8 @@ export function format(r) {
   } else if (r.view === 'library') {
     path = `/library/${r.library}${r.library === 'pages' && r.project ? `/${r.project}${r.draft ? `/draft/${r.draft}` : ''}` : ''}`
     if (r.filter !== 'all') q.set('project', r.filter)
+    if (r.q) q.set('q', r.q)
+    if (r.tags) q.set('tags', r.tags)
   } else if (r.view === 'map') path = '/map'
   if (viewer || r.open) {
     if (r.device !== 'desktop') q.set('device', r.device)

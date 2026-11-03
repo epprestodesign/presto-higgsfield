@@ -1,7 +1,8 @@
 <script setup>
 // Everything you've made, by kind (from the rail): every banner, every logo,
-// or every project's pages (its drafts stacked). Filter by project; click a
-// banner or logo to open its project, or pages to see them full size.
+// or every project's pages (its drafts stacked), plus every ad. Search and
+// browse by theme, style, size… (LibrarySearch); click a banner or logo to open
+// its project, or pages to see them full size.
 import { computed } from 'vue'
 import Icon from './Icon.vue'
 import LogoMark from './LogoMark.vue'
@@ -10,7 +11,9 @@ import DraftViewer from './DraftViewer.vue'
 import { state, openProject, draftView, LOGO_LOOKS, projectBySlug, logoOf } from '../mockAgent.js'
 import { route, go } from '../router.js'
 import AdPreview from './ads/AdPreview.vue'
+import LibrarySearch from './LibrarySearch.vue'
 import { readySizes, AD_SIZES, PURPOSES } from '../ads.js'
+import { facetItems, facetCategories, applyFacets } from '../libraryFacets.js'
 
 const props = defineProps({ kind: { type: String, required: true } })
 const COPY = {
@@ -20,17 +23,44 @@ const COPY = {
   ads: { title: 'Advertisements', sub: 'Every ad across your events: sponsors, and links to each event’s own pages.', icon: 'megaphone' },
 }
 
-// Filter and open project live in the route (deep links).
-const filter = computed({ get: () => route.filter, set: (v) => { route.filter = v } })
-const projects = computed(() => [...state.projects].sort((a, b) => b.updated - a.updated))
-const inScope = computed(() => projects.value.filter((p) => filter.value === 'all' || p.id === filter.value))
+const KINDS = [
+  { id: 'banners', label: 'Banners', icon: 'image' },
+  { id: 'logos', label: 'Logos', icon: 'spark' },
+  { id: 'ads', label: 'Advertisements', icon: 'megaphone' },
+  { id: 'pages', label: 'Pages', icon: 'layers' },
+]
+const SEARCH = { banners: 'Search banners: night, golden hour, soccer…', logos: 'Search logos: badge, uploaded, a website…', ads: 'Search ads: sponsor, FAQ, billboard…', pages: 'Search pages: wedding, fintech…' }
 
-const banners = computed(() => inScope.value.flatMap((p) => p.messages
+// Search, filters and the open project live in the route (deep links). The
+// project filter keeps its own ?project= param; the rest are ?tags=.
+const projects = computed(() => [...state.projects].sort((a, b) => b.updated - a.updated))
+const tags = computed(() => [...(route.filter !== 'all' ? [`project:${route.filter}`] : []), ...(route.tags ? route.tags.split('|') : [])])
+function toggle(key) {
+  if (key.startsWith('project:')) { const id = key.slice(8); route.filter = route.filter === id ? 'all' : id; return }
+  const list = route.tags ? route.tags.split('|') : []
+  route.tags = (list.includes(key) ? list.filter((t) => t !== key) : [...list, key]).join('|')
+}
+function clear() { route.filter = 'all'; route.tags = ''; route.q = '' }
+const q = computed({ get: () => route.q, set: (v) => { route.q = v } })
+function switchKind(k) { go({ view: 'library', library: k }) }
+
+const allBanners = computed(() => projects.value.flatMap((p) => p.messages
   .filter((m) => m.card?.type === 'banners')
   .reverse()
   .flatMap((m) => m.card.images.map((img) => ({ ...img, project: p, set: m.card.set, mood: m.card.mood })))))
 
-const pages = computed(() => inScope.value.filter((p) => p.drafts.length))
+const all = computed(() => ({
+  banners: facetItems('banners', allBanners.value),
+  logos: facetItems('logos', projects.value.map((p) => ({ id: p.id, project: p }))),
+  pages: facetItems('pages', projects.value.filter((p) => p.drafts.length).map((p) => ({ id: p.id, project: p }))),
+  ads: facetItems('ads', allAds.value),
+})[props.kind])
+const categories = computed(() => facetCategories(props.kind, all.value, projects.value))
+const shown = computed(() => applyFacets(all.value, tags.value, route.q))
+const banners = computed(() => props.kind === 'banners' ? shown.value : [])
+const logos = computed(() => props.kind === 'logos' ? shown.value.map((x) => x.project) : [])
+const pages = computed(() => props.kind === 'pages' ? shown.value.map((x) => x.project) : [])
+const adList = computed(() => props.kind === 'ads' ? shown.value : [])
 const viewing = computed({
   get: () => (props.kind === 'pages' && route.project ? projectBySlug(route.project) : null),
   set: (p) => { route.project = p?.slug || ''; route.draft = 0; if (!p) { route.device = 'desktop'; route.screen = 'landing' } },
@@ -38,9 +68,10 @@ const viewing = computed({
 const viewingDraft = computed(() => viewing.value && (viewing.value.drafts[route.draft - 1] || viewing.value.drafts.at(-1)))
 const lookLabel = (p) => LOGO_LOOKS.find((l) => l.id === p.look)?.label
 // Ads: every ad with at least one finished size, shown at its largest finished size.
-const adList = computed(() => inScope.value.flatMap((p) => p.ads.items.filter((a) => readySizes(a).length).map((a) => ({ a, p, size: readySizes(a).sort((x, y) => AD_SIZES[y].width * AD_SIZES[y].height - AD_SIZES[x].width * AD_SIZES[x].height)[0] }))))
+const allAds = computed(() => projects.value.flatMap((p) => p.ads.items.filter((a) => readySizes(a).length).map((a) => { const sizes = readySizes(a).sort((x, y) => AD_SIZES[y].width * AD_SIZES[y].height - AD_SIZES[x].width * AD_SIZES[x].height); return { id: a.id, a, p, sizes, size: sizes[0] } })))
 const purposeLabel = (id) => PURPOSES.find((x) => x.id === id)?.label
-const count = computed(() => ({ banners: banners.value.length, logos: inScope.value.length, pages: pages.value.length, ads: adList.value.length })[props.kind])
+const count = computed(() => shown.value.length)
+const filtered = computed(() => tags.value.length || !!route.q)
 </script>
 
 <template>
@@ -51,13 +82,10 @@ const count = computed(() => ({ banners: banners.value.length, logos: inScope.va
         <p class="lib__sub">{{ COPY[kind].sub }}</p>
       </header>
 
-      <div class="lib__filters cs-tabs" role="group" aria-label="Project">
-        <button type="button" class="cs-tab" :class="{ 'is-on': filter === 'all' }" :aria-pressed="filter === 'all'" @click="filter = 'all'">All projects</button>
-        <button
-          v-for="p in projects" :key="p.id" type="button" class="cs-tab" :class="{ 'is-on': filter === p.id }"
-          :aria-pressed="filter === p.id" @click="filter = p.id"
-        >{{ p.name }}</button>
-      </div>
+      <LibrarySearch
+        class="lib__search" :kind="kind" :kinds="KINDS" :categories="categories" :tags="tags" :q="q" :placeholder="SEARCH[kind]"
+        @update:q="q = $event" @toggle="toggle" @clear="clear" @kind="switchKind"
+      />
 
       <!-- Banners -->
       <ul v-if="kind === 'banners'" class="lib__grid">
@@ -74,7 +102,7 @@ const count = computed(() => ({ banners: banners.value.length, logos: inScope.va
 
       <!-- Logos -->
       <ul v-else-if="kind === 'logos'" class="lib__grid is-logos">
-        <li v-for="p in inScope" :key="p.id">
+        <li v-for="p in logos" :key="p.id">
           <button type="button" class="lib__card lib__logo" :aria-label="`Open ${p.name}`" @click="openProject(p.id)">
             <LogoMark :project="p" look="original" :size="130" />
           </button>
@@ -110,7 +138,10 @@ const count = computed(() => ({ banners: banners.value.length, logos: inScope.va
         </li>
       </ul>
 
-      <p v-if="!count" class="lib__empty">Nothing here yet<template v-if="filter !== 'all'"> for this project</template>.</p>
+      <p v-if="!count" class="lib__empty">
+        <template v-if="filtered">Nothing matches. <button type="button" @click="clear">Clear the search and filters</button></template>
+        <template v-else>Nothing here yet.</template>
+      </p>
     </div>
 
     <DraftViewer v-if="viewing && viewingDraft" :project="viewing" :draft="viewingDraft" @close="viewing = null" @go="route.draft = $event.n" @restored="viewing = null" />
@@ -123,7 +154,8 @@ const count = computed(() => ({ banners: banners.value.length, logos: inScope.va
 .lib__title { display: flex; align-items: center; gap: 12px; margin: 0; font-size: 34px; }
 .lib__title span { padding: 0 10px; border-radius: 999px; background: var(--navy-50); color: var(--navy-900); font-size: 15px; line-height: 26px; }
 .lib__sub { margin: 6px 0 0; color: var(--ink-2); font-size: 16px; }
-.lib__filters { margin: 24px 0 28px; }
+.lib__search { margin: 24px 0 28px; }
+.lib__empty button { border: 0; background: none; padding: 0; font: inherit; color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .lib__grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 24px; }
 .lib__grid.is-logos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .lib__grid.is-pages { grid-template-columns: repeat(2, minmax(0, 1fr)); }

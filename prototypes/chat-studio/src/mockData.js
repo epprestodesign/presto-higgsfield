@@ -107,6 +107,15 @@ for (const [id, b] of Object.entries(BRANDS)) {
   b.images = ['photo', 'photo2', 'abstract'].map((v) => ({ id: `${id}-${v}`, src: banner(`${id}-${v}`), kind: v === 'abstract' ? 'Graphic' : 'Photo' }))
 }
 
+/** Event themes, by sample brand (team feed and library filters). */
+export const THEMES = {
+  Sports: ['heartland', 'lakeshore', 'golf', 'esports'],
+  Business: ['fintech', 'corporate'],
+  Celebrations: ['wedding'],
+  Festivals: ['music-festival'],
+}
+export const themeOf = (brandId) => Object.keys(THEMES).find((t) => THEMES[t].includes(brandId)) || 'Business'
+
 /** Which sample brand a prompt is closest to (the prototype's stand-in for real generation). */
 export function brandFor(prompt) {
   const t = (prompt || '').toLowerCase()

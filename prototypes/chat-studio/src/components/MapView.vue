@@ -20,6 +20,8 @@ const general = computed(() => [
   { label: 'Logos', ...L({ view: 'library', library: 'logos' }) },
   { label: 'Pages', ...L({ view: 'library', library: 'pages' }) },
   { label: 'Advertisements', ...L({ view: 'library', library: 'ads' }) },
+  { label: 'Banners · searched “night”, Sports only', ...L({ view: 'library', library: 'banners', q: 'night', tags: 'theme:Sports' }) },
+  { label: 'Advertisements · sponsors only', ...L({ view: 'library', library: 'ads', tags: 'purpose:sponsor' }) },
 ])
 const MODE_LABEL = { logo: 'Logo only', banners: 'Banners', ads: 'Ads', full: 'Full suite' }
 const starts = computed(() => ['full', 'logo', 'banners', 'ads'].map((m, i) => { const p = SUGGESTIONS.Popular[i]; return { label: `${MODE_LABEL[m]}: “${p}”`, ...L({ view: 'new', prompt: p, mode: m }) } }))

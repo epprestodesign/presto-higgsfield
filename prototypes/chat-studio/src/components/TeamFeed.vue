@@ -5,15 +5,9 @@ import { computed, nextTick, ref, watch } from 'vue'
 import Icon from './Icon.vue'
 import DraftStack from './presto/DraftStack.vue'
 import DraftViewer from './DraftViewer.vue'
-import { BRANDS } from '../mockData.js'
+import { BRANDS, THEMES, themeOf } from '../mockData.js'
 import { route } from '../router.js'
 
-const THEMES = {
-  Sports: ['heartland', 'lakeshore', 'golf', 'esports'],
-  Business: ['fintech', 'corporate'],
-  Celebrations: ['wedding'],
-  Festivals: ['music-festival'],
-}
 const PEOPLE = [
   { name: 'Maya Ruiz', initials: 'MR', hue: '#2c4380' },
   { name: 'Devin Kerr', initials: 'DK', hue: '#16a34a' },
@@ -22,7 +16,6 @@ const PEOPLE = [
   { name: 'Lena Ortiz', initials: 'LO', hue: '#0e7490' },
 ]
 const LOOKS = ['badge', 'original', 'badge', 'dark']
-const themeOf = (id) => Object.keys(THEMES).find((t) => THEMES[t].includes(id))
 const MOODS = ['', 'brightness(.75) saturate(1.15)', 'sepia(.25) saturate(1.2)']
 function look(b, img, logoLook, filter = '') {
   return {
