@@ -1,12 +1,19 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import CardShell from './CardShell.vue'
 import LogoMark from '../LogoMark.vue'
 import Icon from '../Icon.vue'
+import ScreensCarousel from '../presto/ScreensCarousel.vue'
 import { toast, has } from '../../mockAgent.js'
 import { readySizes, AD_SIZES } from '../../ads.js'
+import { route } from '../../router.js'
 
-const props = defineProps({ project: { type: Object, required: true } })
+const props = defineProps({
+  project: { type: Object, required: true },
+  // The pages with everything in the package. Off where the pages are already
+  // on screen (the draft viewer's Export sheet).
+  preview: { type: Boolean, default: true },
+})
 const bg = computed(() => props.project.selected || { src: props.project.brand.images[0].src, filter: '' })
 const slug = computed(() => props.project.brand.id)
 // What's in the package follows the steps the project has: its mode (Logo only
@@ -30,11 +37,28 @@ const files = computed(() => {
   }
   return out
 })
+// Preview on Presto: the three pages as they'll go live, and a link to the
+// newest draft full size (#/project/…/concepts/draft/N).
+const device = ref('desktop')
+const draftN = computed(() => props.project.drafts?.length || 0)
+function openFull() { Object.assign(route, { draft: draftN.value, device: device.value, screen: 'landing', sheet: '' }) }
 const fake = (what) => toast(`Prototype: ${what} would download here`)
 </script>
 
 <template>
   <CardShell kicker="Files" title="Ready for Presto" :aside="`${files.length} ${files.length === 1 ? 'file' : 'files'}`">
+    <section v-if="preview" class="ex__preview" aria-label="Preview on Presto">
+      <ScreensCarousel :view="project" :device="device">
+        <template #toolbar>
+          <div class="cs-tabs" role="radiogroup" aria-label="Device">
+            <button type="button" role="radio" :aria-checked="device === 'desktop'" class="cs-tab cs-tab--sm" :class="{ 'is-on': device === 'desktop' }" @click="device = 'desktop'"><Icon name="monitor" :size="15" /> Desktop</button>
+            <button type="button" role="radio" :aria-checked="device === 'mobile'" class="cs-tab cs-tab--sm" :class="{ 'is-on': device === 'mobile' }" @click="device = 'mobile'"><Icon name="phone" :size="15" /> Mobile</button>
+          </div>
+          <button v-if="draftN" type="button" class="cs-btn-ghost ex__full" @click="openFull">Open full size <Icon name="arrow" :size="16" /></button>
+        </template>
+      </ScreensCarousel>
+    </section>
+
     <ul class="ex">
       <li v-for="f in files" :key="f.name">
         <span class="ex__thumb">
@@ -51,6 +75,8 @@ const fake = (what) => toast(`Prototype: ${what} would download here`)
 </template>
 
 <style scoped>
+.ex__preview { margin: 0 0 20px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.ex__full { white-space: nowrap; }
 .ex { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 8px; }
 .ex li { display: flex; align-items: center; gap: 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface-2); }
 .ex__thumb { display: grid; place-items: center; width: 120px; height: 56px; flex: none; border-radius: var(--r); background: var(--surface-3); overflow: hidden; }

@@ -120,7 +120,7 @@ onBeforeUnmount(() => { document.removeEventListener('keydown', key); document.r
       <div v-if="exporting" class="dv__sheet" @click.self="exporting = false">
         <div class="dv__sheetbox" role="dialog" aria-modal="true" aria-label="Export graphics">
           <button type="button" class="dv__icon dv__sheetclose" aria-label="Close export" @click="exporting = false"><Icon name="x" :size="18" /></button>
-          <ExportCard :project="view" />
+          <ExportCard :project="view" :preview="false" />
           <p class="dv__sheetnote">From {{ readonly ? draft.label : `draft ${draft.n} · ${draft.label}` }}: the logo as it shows on this draft, and its banner, sized for Presto.</p>
         </div>
       </div>
