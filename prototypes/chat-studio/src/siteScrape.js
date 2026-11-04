@@ -36,10 +36,22 @@ function generic(b) {
   ]
 }
 
-/** The site's pages, ranked (travel and hotels first), with full URLs. */
+// No website (the brief had none, and the organiser uploaded a logo or went
+// without): nothing to scrape, so the ads link to the event's own Presto pages.
+function presto(b) {
+  const where = b.place ? b.place.split(',')[0].toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) : 'the venue'
+  return [
+    { path: '/', kind: 'travel', title: 'Book your stay', found: 'The event’s Presto page: event rates at hotels near the venue.', ad: { name: 'Book your stay', tagline: `${b.short} · event rates nearby`, cta: 'Find a hotel' } },
+    { path: '/hotels', kind: 'venue', title: 'Hotels near the venue', found: 'Hotel browse, sorted by distance from the venue.', ad: { name: `Hotels near ${where}`, tagline: 'Sorted by distance from the venue', cta: 'See the hotels' } },
+    { path: '/manage', kind: 'faq', title: 'Manage your booking', found: 'Change or cancel a room, or contact the hotel.', ad: { name: 'Already booked?', tagline: 'Change or cancel your room', cta: 'Manage booking' } },
+  ]
+}
+
+/** The site's pages, ranked (travel and hotels first), with full URLs (`where` is the short form shown). */
 export function scrapeSite(brand) {
+  if (brand.noSite) return presto(brand).map((pg, i) => ({ ...pg, id: pg.path, rank: i + 1, url: `presto:/${brand.id}${pg.path}`, where: `Presto · ${pg.title}` }))
   const pages = SITES[brand.id] || generic(brand)
-  return [...pages].sort((a, b) => RANK[a.kind] - RANK[b.kind]).map((pg, i) => ({ ...pg, id: pg.path, rank: i + 1, url: `https://${brand.website}${pg.path}` }))
+  return [...pages].sort((a, b) => RANK[a.kind] - RANK[b.kind]).map((pg, i) => ({ ...pg, id: pg.path, rank: i + 1, url: `https://${brand.website}${pg.path}`, where: `${brand.website}${pg.path}` }))
 }
 
 /** The pages picked to start with: travel and hotels, plus the next two most useful. */

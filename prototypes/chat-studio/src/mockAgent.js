@@ -255,6 +255,14 @@ const STEP = {
   // website (no brand kit or logo questions), and it goes straight to the ads.
   ads: (p) => {
     const first = stagesFor(p)[0].id === 'ads' && !p.ads.offers.length
+    if (p.brand.noSite) {
+      return {
+        steps: [...(first ? ['Reading your brief'] : []), 'No website: linking to the event’s Presto pages', 'Checking the ad placements Presto approves'],
+        text: `${first ? `Let’s make the ads for **${p.brand.name}**, ${p.logoName === 'Name in type' ? 'with its name set in type' : 'with your logo'}. ` : ''}With no website, the ads link to the event’s own Presto pages. Pick where they run and what they link to.`,
+        card: { type: 'adsWhere' },
+        chips: [],
+      }
+    }
     return {
       steps: [...(first ? ['Reading your brief'] : []), `Scraping ${p.brand.website}: ${scrapeSite(p.brand).length} pages found`, 'Ranking the pages for hotels and getting there', 'Checking the ad placements Presto approves'],
       text: `${first ? `Let’s make the ads for **${p.brand.name}**, in its own logo and colours. ` : ''}I read **${p.brand.website}** and ranked its pages by what helps guests most, starting with hotels. Pick where the ads run and which pages they link to.`,
@@ -293,10 +301,22 @@ function nextFor(p) {
   return { label, say: label }
 }
 
+// No website in the brief: before the first step, ask for it (the logo, the
+// colours and the pages ads link to all come from the site), with two ways
+// out: upload a logo, or go without one (the name set in type).
+const SITE_IN = /\b[\w-]+\.(com|org|io|gg|net|co|us|events?|wedding|club|run|golf)\b/i
+const askSite = (p) => ({
+  steps: ['Reading your brief', 'Looking for a website'],
+  text: `I couldn’t find a website in your brief. The site gives me **${p.brand.short}**’s logo and colours, and the pages your ads link to. What’s the address?`,
+  card: { type: 'siteAsk' },
+  chips: [],
+})
+
 async function runStage(p, i) {
   const st = stagesFor(p)[i]
   if (!st) return false
   p.stage = i
+  if (i === 0 && p.site === 'ask') return agentTurn(p, askSite(p))
   const ok = await agentTurn(p, STEP[st.id](p))
   // While it asks where ads go, the go-ahead is a way to skip them (not in Ads
   // mode, where the ads are the point).
@@ -307,9 +327,13 @@ async function runStage(p, i) {
 const APPROVE = /^(yes|yep|yeah|ok|okay|sure|great|perfect|next|continue|go ahead|go on|looks (right|good|great)|use this|carry on|approve|love it)/
 
 /** Start a project from the home composer: runs the first step, then waits. */
-export async function createProject(prompt, { mode = 'full', open = true } = {}) {
+export async function createProject(prompt, { mode = 'full', open = true, ask = true } = {}) {
   const brand = brandFor(prompt)
-  const p = newProject(brand, prompt)
+  const p = newProject({ ...brand }, prompt)
+  // The sample projects (seed) skip the question.
+  const site = prompt.match(SITE_IN)?.[0]
+  p.site = site ? 'brief' : ask ? 'ask' : 'sample'
+  if (site) p.brand.website = site.toLowerCase()
   // A short, stable name for links (heartland, heartland-2, …).
   const taken = state.projects.filter((x) => x.brand.id === brand.id).length
   p.slug = taken ? `${brand.id}-${taken + 1}` : brand.id
@@ -321,9 +345,55 @@ export async function createProject(prompt, { mode = 'full', open = true } = {})
   return p
 }
 
+/** The answer to "What's the address?": the website, a logo, or neither. */
+export function giveWebsite(p, url) {
+  if (state.working) return
+  p.site = 'given'
+  p.brand.website = url.replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase()
+  userMsg(p, `Our website is ${p.brand.website}`)
+  return run(() => runStage(p, 0))
+}
+export function giveLogoNoSite(p, file) {
+  if (state.working || !file) return
+  Object.assign(p.brand, { website: '', noSite: true })
+  p.site = 'none'
+  p.logo = URL.createObjectURL(file)
+  p.logoName = file.name
+  userMsg(p, 'No website. Here’s our logo.', { image: p.logo, fileName: file.name })
+  return run(() => runStage(p, 0))
+}
+export function goWithoutLogo(p) {
+  if (state.working) return
+  Object.assign(p.brand, { website: '', noSite: true })
+  p.site = 'none'
+  p.logo = wordmark(p)
+  p.logoName = 'Name in type'
+  userMsg(p, 'No website or logo. Go without a logo.')
+  return run(() => runStage(p, 0))
+}
+/** The event's name set in type, in its main colour: the logo when there isn't one. */
+function wordmark(p) {
+  const c = document.createElement('canvas')
+  c.width = 640; c.height = 640
+  const g = c.getContext('2d')
+  const words = p.brand.short.toUpperCase().split(/\s+/)
+  g.fillStyle = p.palette?.[0] || p.brand.colors?.[0] || '#0f172a'
+  g.textAlign = 'center'; g.textBaseline = 'middle'
+  const size = Math.min(150, 560 / Math.max(...words.map((w) => w.length)) * 1.6)
+  g.font = `800 ${size}px system-ui, sans-serif`
+  words.forEach((w, i) => g.fillText(w, 320, 320 + (i - (words.length - 1) / 2) * size * 1.05))
+  return c.toDataURL('image/png')
+}
+
 /** A follow-up in an open project. */
 export async function reply(p, text) {
   const t = text.toLowerCase().trim()
+  // Still waiting on the website: a typed address answers it, and so does "no logo".
+  if (p.site === 'ask' && p.stage === 0) {
+    const url = text.match(SITE_IN)?.[0]
+    if (url) return giveWebsite(p, url)
+    if (/no (website|site|logo)|without (a )?logo/.test(t)) return goWithoutLogo(p)
+  }
   const finished = p.stage >= stagesFor(p).length - 1
   const approving = APPROVE.test(t) && (p.stalled || !finished)
   const upcoming = approving ? stagesFor(p)[p.stalled ? p.stage : p.stage + 1] : null
@@ -547,7 +617,7 @@ export function chooseAdLooks(p, types, card) {
     const open = openSpots.length
     const ok = await agentTurn(p, {
       steps: made.length ? made.map((m) => `Generating “${m.page.title}” (${typeById(m.ad.type).label}) for ${m.spot.label} with ${modelById(pickModel(m.ad, m.spot.size).id).label}`) : ['Saving your looks'],
-      text: `${made.length ? `I made ${and(made.map((m) => `**${m.page.title}** as **${typeById(m.ad.type).label}** in **${m.spot.label}**`))}, each linking back to ${p.brand.website}.` : 'Your looks are saved.'}${open === 1 ? ` **${openSpots[0].label}** is open${promote.includes('sponsor') ? ' for a sponsor' : ''}: fill it below.` : open ? ` ${made.length ? 'The rest are' : 'They’re'} open${promote.includes('sponsor') ? ' for sponsors' : ''}: fill them below.` : ''} Change any ad’s look or model on its spot.`,
+      text: `${made.length ? `I made ${and(made.map((m) => `**${m.page.title}** as **${typeById(m.ad.type).label}** in **${m.spot.label}**`))}, ${p.brand.noSite ? 'each linking to the event’s Presto pages' : `each linking back to ${p.brand.website}`}.` : 'Your looks are saved.'}${open === 1 ? ` **${openSpots[0].label}** is open${promote.includes('sponsor') ? ' for a sponsor' : ''}: fill it below.` : open ? ` ${made.length ? 'The rest are' : 'They’re'} open${promote.includes('sponsor') ? ' for sponsors' : ''}: fill them below.` : ''} Change any ad’s look or model on its spot.`,
       card: { type: 'adsSpots' },
       chips: adsChips(p),
     })
@@ -610,7 +680,7 @@ export async function seed() {
     ['Youth soccer tournament in Overland Park, June 2027', 40 * 6e4, 'done', ['Moodier, at night', 'Warmer, golden hour']],
   ]
   for (const [prompt, ago, upTo, changes] of plan) {
-    const p = await createProject(prompt, { open: false })
+    const p = await createProject(prompt, { open: false, ask: false })
     while (p.stage < stagesFor(p).length - 1 && stagesFor(p)[p.stage].id !== upTo) {
       // At the ads step, answer its questions the usual way: every page, the usual placements.
       if (stagesFor(p)[p.stage].id === 'ads' && !p.ads.offers.length) {

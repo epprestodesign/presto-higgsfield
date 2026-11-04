@@ -42,7 +42,8 @@ const count = (id) => OFFERS.filter((o) => o.page === id).length
         <span class="aw__check"><Icon v-if="on(pg.id)" name="check" :size="16" /></span>
       </button>
     </div>
-    <p class="aw__q">Which pages of {{ project.brand.website }} should they link to? <small>Ranked by what helps guests most, hotels first</small></p>
+    <p v-if="project.brand.noSite" class="aw__q">What should they link to? <small>No website, so they link to the event’s own Presto pages</small></p>
+    <p v-else class="aw__q">Which pages of {{ project.brand.website }} should they link to? <small>Ranked by what helps guests most, hotels first</small></p>
     <ol class="aw__links" aria-label="Pages found on the event's website">
       <li v-for="x in site" :key="x.id" v-show="!done || pOn(x.id)">
         <button type="button" class="aw__link" :class="{ 'is-on': pOn(x.id) }" :aria-pressed="pOn(x.id)" :disabled="done" @click="pToggle(x.id)">
@@ -50,7 +51,7 @@ const count = (id) => OFFERS.filter((o) => o.page === id).length
           <span class="aw__ltext">
             <b>{{ x.title }} <em>{{ KIND_LABEL[x.kind] }}</em></b>
             <small>{{ x.found }}</small>
-            <code>{{ project.brand.website }}{{ x.path }}</code>
+            <code>{{ x.where }}</code>
           </span>
           <span class="aw__check"><Icon v-if="pOn(x.id)" name="check" :size="16" /></span>
         </button>

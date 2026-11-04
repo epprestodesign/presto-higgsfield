@@ -19,7 +19,7 @@ export function facetItems(kind, list) {
     const p = it.project || it.p || it
     const f = { theme: [theme(p)], project: [p.id] }
     if (kind === 'banners') Object.assign(f, { type: [it.kind], mood: [it.mood || 'As generated'], set: [`Set ${it.set}`] })
-    if (kind === 'logos') Object.assign(f, { look: [p.look || 'original'], source: [p.logoName ? 'Uploaded' : `From ${p.brand.website}`] })
+    if (kind === 'logos') Object.assign(f, { look: [p.look || 'original'], source: [p.logoName === 'Name in type' ? 'Name in type' : p.logoName ? 'Uploaded' : `From ${p.brand.website}`] })
     if (kind === 'ads') Object.assign(f, { purpose: [it.a.purpose], how: [it.a.how], size: it.sizes })
     if (kind === 'pages') Object.assign(f, { drafts: [p.drafts.length > 1 ? 'With earlier drafts' : 'One draft'] })
     const words = [p.name, p.brand.name, p.brand.place, ...Object.entries(f).flatMap(([k, v]) => v.map((x) => optionLabel(k, x)))]

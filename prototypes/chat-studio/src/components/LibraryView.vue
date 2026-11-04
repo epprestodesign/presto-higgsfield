@@ -71,7 +71,7 @@ const setsOf = (g) => new Set(g.items.map((b) => b.set)).size
 // Logos: every version tried, as a stack — each look, on the logo in use and
 // (after an upload) on the logo from the website. The look in use is in front.
 function logoVersions(p) {
-  const sources = p.logo ? [{ view: p, from: p.logoName ? `Uploaded · ${p.logoName}` : 'Uploaded' }, { view: { brand: p.brand, logo: null }, from: `From ${p.brand.website}` }] : [{ view: p, from: `From ${p.brand.website}` }]
+  const sources = p.logo ? [{ view: p, from: p.logoName === 'Name in type' ? 'Name in type' : p.logoName ? `Uploaded · ${p.logoName}` : 'Uploaded' }, ...(p.brand.noSite ? [] : [{ view: { brand: p.brand, logo: null }, from: `From ${p.brand.website}` }])] : [{ view: p, from: `From ${p.brand.website}` }]
   const bg = p.selected?.src || p.brand.images[0].src
   return sources.flatMap((s, si) => LOGO_LOOKS.map((l) => ({
     key: `${si}-${l.id}`, view: s.view, look: l.id, bg, inUse: si === 0 && l.id === p.look,

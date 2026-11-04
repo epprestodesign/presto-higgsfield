@@ -17,6 +17,7 @@ import LooksCard from './cards/LooksCard.vue'
 import BannersCard from './cards/BannersCard.vue'
 import PagesCard from './cards/PagesCard.vue'
 import ExportCard from './cards/ExportCard.vue'
+import SiteAskCard from './cards/SiteAskCard.vue'
 import AdCard from './cards/AdCard.vue'
 import AdsStepCard from './cards/AdsStepCard.vue'
 import AdPackageCard from './cards/AdPackageCard.vue'
@@ -32,7 +33,7 @@ import { route, link, go } from '../router.js'
 
 const props = defineProps({ project: { type: Object, required: true } })
 const adOf = (r) => props.project.ads?.items.find((a) => a.id === r.adId)
-const CARDS = { brand: BrandCard, looks: LooksCard, banners: BannersCard, pages: PagesCard, export: ExportCard, ad: AdCard, ads: AdsStepCard, adPackage: AdPackageCard, adsWhere: AdsWhereCard, adsSizes: AdsSizesCard, adsSpots: AdsSpotsCard, adsLooks: AdsLooksCard }
+const CARDS = { brand: BrandCard, looks: LooksCard, banners: BannersCard, pages: PagesCard, export: ExportCard, ad: AdCard, ads: AdsStepCard, adPackage: AdPackageCard, adsWhere: AdsWhereCard, adsSizes: AdsSizesCard, adsSpots: AdsSpotsCard, adsLooks: AdsLooksCard, siteAsk: SiteAskCard }
 
 // Tab and open draft live in the route, so they deep-link.
 const tab = computed({ get: () => route.tab, set: (t) => { route.tab = t; route.draft = 0; route.at = '' } })
