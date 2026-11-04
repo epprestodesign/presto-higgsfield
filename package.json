@@ -16,7 +16,8 @@
     "test-stories": "node scripts/run-stories.mjs brand-studio http://localhost:6006",
     "banner-lab": "vite --config brand-studio/banner-lab/vite.config.js",
     "build-banner-lab": "vite build --config brand-studio/banner-lab/vite.config.js",
-    "chat-studio": "vite --config prototypes/chat-studio/vite.config.js"
+    "chat-studio": "vite --config prototypes/chat-studio/vite.config.js",
+    "build-chat-studio": "vite build --config prototypes/chat-studio/vite.config.js"
   },
   "dependencies": {
     "@clerk/backend": "^3.26.5",
