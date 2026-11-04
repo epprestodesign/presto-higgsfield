@@ -17,6 +17,7 @@ const config = {
     '../brand-studio/src/**/*.stories.@(js|jsx|ts|tsx)',
     '../src/**/*.mdx',
     '../src/**/*.stories.@(js|jsx|ts|tsx)',
+    '../prototypes/**/*.stories.@(js|jsx|ts|tsx)',
   ],
   addons: ['@storybook/addon-themes', '@storybook/addon-docs', '@storybook/addon-a11y'],
   framework: {
