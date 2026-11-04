@@ -181,10 +181,12 @@ export const STAGES = [
 export const MODES = [
   { id: 'logo', label: 'Logo only', icon: 'spark', stages: ['brand', 'logo', 'files'], credits: 'About 1 credit for a logo clean-up.' },
   { id: 'banners', label: 'Banners', icon: 'image', stages: ['brand', 'banners', 'pages', 'files'], credits: 'About 6 credits for a first set of 3 banners.' },
-  { id: 'ads', label: 'Ads', icon: 'megaphone', stages: ['ads', 'pages', 'files'], credits: 'About 1 credit per ad spot (6 spots for the standard placements).' },
+  { id: 'ads', label: 'Ads', icon: 'megaphone', stages: ['ads', 'files'], credits: 'About 1 credit per ad spot (6 spots for the standard placements).' },
   { id: 'full', label: 'Full suite', icon: 'layers', stages: ['brand', 'logo', 'banners', 'pages', 'ads', 'files'], credits: 'About 11 credits: logo clean-up, 3 banners and an ad package.' },
 ]
-// In the mode's own order (Ads starts on the ads: ads → pages → files).
+// In the mode's own order. Ads is just the ads, then the package: the pages are
+// there to look at when asked ("View the ads on the pages") or to design
+// ("Design the pages" adds banners, which end on the pages as a concept).
 export const modeOf = (p) => MODES.find((x) => x.id === p.mode) || MODES[3]
 // Steps added later ("Tweak the logo", "Add banners", "Add ads") go in before
 // the files, so the go-ahead after them remakes the files with them in.
@@ -201,6 +203,10 @@ export const stagesFor = (p) => {
 export const has = (p, id) => stagesFor(p).some((s) => s.id === id)
 // What a project that started small can still add, to grow into a full suite.
 const GROW = { logo: 'Tweak the logo', banners: 'Add banners', ads: 'Add ads' }
+// What an Ads project offers once its spots are made.
+const VIEW_ADS = 'View the ads on the pages'
+const DESIGN_PAGES = 'Design the pages'
+const adsChips = (p) => [VIEW_ADS, ...(has(p, 'banners') ? [] : [DESIGN_PAGES]), 'Open Advertisements']
 export function growChips(p) {
   const missing = Object.keys(GROW).filter((id) => !has(p, id))
   return [...missing.map((id) => GROW[id]), ...(missing.length > 1 ? ['Make it a full suite'] : [])]
@@ -264,7 +270,7 @@ const STEP = {
     ],
     text: `All done. Your files are sized for Presto. You can keep changing things; I’ll remake the files when you ask.${growChips(p).length ? ' You can also add what this project skipped, below.' : ''}`,
     card: { type: 'export' },
-    chips: [...(has(p, 'banners') ? ['Try another banner', 'Edit the text'] : has(p, 'ads') ? ['Open Advertisements'] : ['Add a new logo']), ...growChips(p)],
+    chips: [...(has(p, 'banners') ? ['Try another banner', 'Edit the text'] : has(p, 'ads') ? [VIEW_ADS, 'Open Advertisements'] : ['Add a new logo']), ...growChips(p).map((c) => (c === GROW.banners && p.mode === 'ads' ? DESIGN_PAGES : c))],
   }),
 }
 const GO = {
@@ -280,6 +286,7 @@ function nextFor(p) {
   const st = all[p.stage]
   const next = all[p.stage + 1]
   if (!st || !next) return null
+  if (next.id === 'files' && st.id === 'ads' && p.mode === 'ads') return { label: 'Package the ads', say: 'Package the ads' }
   const label = next.id === 'files'
     ? { logo: 'Use this look, make the files', pages: 'Looks good, make the files', ads: 'Looks good, make the files' }[st.id] || 'Looks good, make the files'
     : next.id === 'ads' ? 'Looks good, now the ads' : GO[st.id] || 'Looks good'
@@ -323,11 +330,11 @@ export async function reply(p, text) {
   // A change after the first preview starts a new draft (named after the ask);
   // reaching the pages for the first time starts draft 1.
   // New banners or a new logo reaching the pages is a new concept too.
-  const growing = t === 'make it a full suite' || Object.values(GROW).some((g) => t === g.toLowerCase())
+  const growing = t === 'make it a full suite' || t === DESIGN_PAGES.toLowerCase() || Object.values(GROW).some((g) => t === g.toLowerCase())
   const from = approving ? stagesFor(p)[p.stalled ? p.stage - 1 : p.stage]?.id : null
   if (!p.drafts.length && upcoming?.id === 'pages') startDraft(p, 'First look')
   else if (upcoming?.id === 'pages' && (from === 'banners' || from === 'logo')) startDraft(p, from === 'banners' ? 'New banner' : 'New logo')
-  else if (p.drafts.length && !approving && !growing && !/export|download|files|zip|preview|show me|how does it look/.test(t)) startDraft(p, text.replace(/^./, (ch) => ch.toUpperCase()))
+  else if (p.drafts.length && !approving && !growing && !/export|download|files|zip|package|preview|view|show me|how does it look/.test(t)) startDraft(p, text.replace(/^./, (ch) => ch.toUpperCase()))
   userMsg(p, text)
   await run(async () => {
     if (APPROVE.test(t) && (p.stalled || !finished)) {
@@ -340,12 +347,18 @@ export async function reply(p, text) {
     // the missing steps and run the first; their go-aheads lead on to the files.
     const add = /^make it a full suite/.test(t)
       ? Object.keys(GROW).filter((id) => !has(p, id))
+      : t === DESIGN_PAGES.toLowerCase() ? ['banners'].filter((id) => !has(p, id))
       : Object.keys(GROW).filter((id) => t === GROW[id].toLowerCase() && !has(p, id))
     if (add.length) {
       p.extras = [...(p.extras || []), ...add]
       return runStage(p, stagesFor(p).findIndex((s) => s.id === add[0]))
     }
     const turn = (opts) => agentTurn(p, opts).then((ok) => { if (ok) p.messages.at(-1).next = nextFor(p); return ok })
+    // Looking at the ads in place: the live pages, not a new concept.
+    if (/^(view|see|show me) the ads/.test(t)) {
+      return turn({ steps: ['Placing your ads in the Presto pages'], text: 'Here are your ads where they’ll run: three banners below the landing page description, the right rail on hotel browse, and the leaderboard at the bottom of hotel details.', card: { type: 'pages', screen: 'landing' }, chips: [...(has(p, 'banners') ? [] : [DESIGN_PAGES]), 'Open Advertisements'] })
+    }
+    if (/^package the ads/.test(t)) return runStage(p, stagesFor(p).length - 1)
     if (/\bads?\b|advert|sponsor/.test(t)) {
       if (!p.ads.offers.length) return turn({ ...STEP.ads(p), steps: ['Opening your ads'] })
       return turn({ steps: ['Opening your ads'], text: 'Here are your ad spots, page by page. Fill or change them here, or in **Advertisements**.', card: { type: 'adsSpots' }, chips: ['Open Advertisements'] })
@@ -536,7 +549,7 @@ export function chooseAdLooks(p, types, card) {
       steps: made.length ? made.map((m) => `Generating “${m.page.title}” (${typeById(m.ad.type).label}) for ${m.spot.label} with ${modelById(pickModel(m.ad, m.spot.size).id).label}`) : ['Saving your looks'],
       text: `${made.length ? `I made ${and(made.map((m) => `**${m.page.title}** as **${typeById(m.ad.type).label}** in **${m.spot.label}**`))}, each linking back to ${p.brand.website}.` : 'Your looks are saved.'}${open === 1 ? ` **${openSpots[0].label}** is open${promote.includes('sponsor') ? ' for a sponsor' : ''}: fill it below.` : open ? ` ${made.length ? 'The rest are' : 'They’re'} open${promote.includes('sponsor') ? ' for sponsors' : ''}: fill them below.` : ''} Change any ad’s look or model on its spot.`,
       card: { type: 'adsSpots' },
-      chips: ['Open Advertisements'],
+      chips: adsChips(p),
     })
     if (ok) p.messages.at(-1).next = nextFor(p)
   })

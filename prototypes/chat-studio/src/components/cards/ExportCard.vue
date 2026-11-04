@@ -47,7 +47,7 @@ const fake = (what) => toast(`Prototype: ${what} would download here`)
 
 <template>
   <CardShell kicker="Files" title="Ready for Presto" :aside="`${files.length} ${files.length === 1 ? 'file' : 'files'}`">
-    <section v-if="preview" class="ex__preview" aria-label="Preview on Presto">
+    <section v-if="preview && has(project, 'pages')" class="ex__preview" aria-label="Preview on Presto">
       <ScreensCarousel :view="project" :device="device">
         <template #toolbar>
           <div class="cs-tabs" role="radiogroup" aria-label="Device">
