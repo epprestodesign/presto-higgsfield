@@ -188,10 +188,15 @@ export const MODES = [
 export const modeOf = (p) => MODES.find((x) => x.id === p.mode) || MODES[3]
 // Steps added later ("Tweak the logo", "Add banners", "Add ads") go in before
 // the files, so the go-ahead after them remakes the files with them in.
+// New banners or a new logo always end on the Presto pages (a new concept), so
+// a project that skipped them (Ads, Logo only) shows the pages again after.
 export const stagesFor = (p) => {
   const extras = p.extras || []
   const base = modeOf(p).stages.filter((id) => id !== 'files' && !extras.includes(id))
-  return [...base, ...extras, 'files'].map((id) => STAGES.find((s) => s.id === id))
+  const ids = [...base, ...extras]
+  const last = Math.max(ids.lastIndexOf('banners'), ids.lastIndexOf('logo'))
+  if (extras.some((id) => id === 'banners' || id === 'logo') && !ids.slice(last).includes('pages')) ids.splice(last + 1, 0, 'pages')
+  return [...ids, 'files'].map((id) => STAGES.find((s) => s.id === id))
 }
 export const has = (p, id) => stagesFor(p).some((s) => s.id === id)
 // What a project that started small can still add, to grow into a full suite.
@@ -224,7 +229,7 @@ const STEP = {
       chips: ['Moodier, at night', 'Brighter, daytime'],
     }
   },
-  pages: (p) => (p.mode === 'ads'
+  pages: (p) => (p.mode === 'ads' && !has(p, 'banners') && !has(p, 'logo')
     ? {
         steps: ['Placing your ads in the Presto pages'],
         text: 'Here are your ads on the Presto pages: the right rail on hotel browse, the three banners below the landing page description, and the leaderboard at the bottom of hotel details.',
@@ -317,8 +322,12 @@ export async function reply(p, text) {
   const upcoming = approving ? stagesFor(p)[p.stalled ? p.stage : p.stage + 1] : null
   // A change after the first preview starts a new draft (named after the ask);
   // reaching the pages for the first time starts draft 1.
+  // New banners or a new logo reaching the pages is a new concept too.
+  const growing = t === 'make it a full suite' || Object.values(GROW).some((g) => t === g.toLowerCase())
+  const from = approving ? stagesFor(p)[p.stalled ? p.stage - 1 : p.stage]?.id : null
   if (!p.drafts.length && upcoming?.id === 'pages') startDraft(p, 'First look')
-  else if (p.drafts.length && !approving && !/export|download|files|zip|preview|show me|how does it look/.test(t)) startDraft(p, text.replace(/^./, (ch) => ch.toUpperCase()))
+  else if (upcoming?.id === 'pages' && (from === 'banners' || from === 'logo')) startDraft(p, from === 'banners' ? 'New banner' : 'New logo')
+  else if (p.drafts.length && !approving && !growing && !/export|download|files|zip|preview|show me|how does it look/.test(t)) startDraft(p, text.replace(/^./, (ch) => ch.toUpperCase()))
   userMsg(p, text)
   await run(async () => {
     if (APPROVE.test(t) && (p.stalled || !finished)) {
